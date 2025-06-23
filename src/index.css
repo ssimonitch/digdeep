@@ -1,0 +1,199 @@
+@import 'tailwindcss';
+
+/* CSS Variables for Dynamic Color System */
+:root {
+  /* Default (Daytime) Palette */
+  --pixel-darkest: #1a1c2c;
+  --pixel-dark: #5d275d;
+  --pixel-light: #b13e53;
+  --pixel-lightest: #ffcd75;
+
+  /* UI colors (modern) */
+  --ui-background: #fdfdf8;
+  --ui-surface: #ffffff;
+  --ui-text: #2d2d2d;
+  --ui-accent: #7c3aed;
+  --ui-success: #10b981;
+  --ui-warning: #f59e0b;
+}
+
+/* Palette Variations */
+.palette-morning {
+  --pixel-darkest: #2d1b2e;
+  --pixel-dark: #574435;
+  --pixel-light: #b86f3e;
+  --pixel-lightest: #ffd4a3;
+}
+
+.palette-evening {
+  --pixel-darkest: #1f1833;
+  --pixel-dark: #3d2f6b;
+  --pixel-light: #6b5b95;
+  --pixel-lightest: #d4bff9;
+}
+
+.palette-happy {
+  --pixel-darkest: #2d1f00;
+  --pixel-dark: #d4532a;
+  --pixel-light: #fbae3c;
+  --pixel-lightest: #fff0a5;
+}
+
+.palette-sad {
+  --pixel-darkest: #1a1c2c;
+  --pixel-dark: #333c57;
+  --pixel-light: #566c86;
+  --pixel-lightest: #94a1b2;
+}
+
+/* Tailwind v4 Theme Configuration */
+@theme {
+  /* Color System - Dynamic palettes */
+  --color-pixel-darkest: var(--pixel-darkest);
+  --color-pixel-dark: var(--pixel-dark);
+  --color-pixel-light: var(--pixel-light);
+  --color-pixel-lightest: var(--pixel-lightest);
+
+  /* UI Colors */
+  --color-ui-background: var(--ui-background);
+  --color-ui-surface: var(--ui-surface);
+  --color-ui-text: var(--ui-text);
+  --color-ui-accent: var(--ui-accent);
+  --color-ui-success: var(--ui-success);
+  --color-ui-warning: var(--ui-warning);
+
+  /* Typography */
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-ui: Inter, system-ui, sans-serif;
+
+  /* Spacing Scale */
+  --spacing-px: 1px;
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+
+  /* Border Radius */
+  --radius-pixel: 0;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+
+  /* Animations */
+  --animate-pet-bounce: pet-bounce 0.5s ease-in-out;
+  --animate-palette-shift: palette-shift 1s ease-in-out;
+
+  @keyframes pet-bounce {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes palette-shift {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+}
+
+/* Base styles */
+body {
+  font-family: var(--font-ui);
+  background: var(--ui-background);
+  color: var(--ui-text);
+}
+
+/* Utility Classes */
+.palette-transition {
+  transition: background-color 1s ease-in-out, color 1s ease-in-out;
+}
+
+/* Device Frame Styles */
+.device-frame {
+  @apply relative mx-auto;
+  width: min(100vw - 32px, 400px);
+  height: calc(100vh - 32px);
+  background: #e0e0e0;
+  border-radius: 24px;
+  padding: 16px;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.device-screen {
+  @apply relative w-full h-full;
+  background: var(--ui-background);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Pet Display Styles */
+.pet-canvas {
+  @apply relative;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pet-sprite {
+  width: 128px;
+  height: 128px;
+  image-rendering: pixelated;
+  transition: transform 0.3s ease-out;
+}
+
+.pet-sprite:hover {
+  transform: translateY(-4px);
+}
+
+
+/* Teaching Interface Styles */
+.teaching-prompt {
+  @apply bg-ui-surface rounded-2xl p-4 shadow-sm;
+  @apply border border-ui-text/5;
+}
+
+.teaching-phrase {
+  @apply font-ui text-lg text-center mb-4;
+  @apply text-ui-text font-medium;
+}
+
+.waveform-container {
+  @apply h-16 bg-ui-background rounded-lg;
+  @apply flex items-center justify-center;
+}
+
+.record-button {
+  @apply w-16 h-16 rounded-full;
+  @apply bg-red-500 hover:bg-red-600;
+  @apply flex items-center justify-center;
+  @apply transition-all duration-200;
+  @apply active:scale-90;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ui-transition {
+    @apply transition-none;
+  }
+
+  .pet-sprite {
+    animation: none !important;
+  }
+}

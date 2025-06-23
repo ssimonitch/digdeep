@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerLift Component Library</title>
+    <style>
+        /* Design Tokens */
+        :root {
+            /* Base Colors */
+            --color-background: #0A0A0B;
+            --color-surface: #1A1A1C;
+            --color-surface-elevated: #2A2A2C;
+            
+            /* Brand Colors - Updated */
+            --color-primary: #4DB1FF;
+            --color-primary-light: #6BC0FF;
+            --color-primary-dark: #3A9EEC;
+            
+            /* Feedback Colors */
+            --color-success: #10B981;
+            --color-warning: #F59E0B;
+            --color-error: #EF4444;
+            --color-info: #06B6D4;
+            
+            /* Text Colors - Enhanced */
+            --color-text-primary: #FFFFFF;
+            --color-text-secondary: #9CA3AF;
+            --color-text-tertiary: #6B7280;
+            --color-text-muted: #4B5563;
+            
+            /* State Colors */
+            --color-disabled: #4B5563;
+            --color-overlay: rgba(0, 0, 0, 0.5);
+            --color-focus-ring: rgba(77, 177, 255, 0.4);
+            
+            /* Spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+            
+            /* Typography */
+            --font-size-xs: 14px;
+            --font-size-sm: 16px;
+            --font-size-base: 18px;
+            --font-size-lg: 20px;
+            --font-size-xl: 24px;
+            --font-size-2xl: 32px;
+            --font-size-3xl: 48px;
+            
+            /* Animation */
+            --duration-fast: 150ms;
+            --duration-normal: 250ms;
+            --duration-slow: 350ms;
+            --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-background);
+            color: var(--color-text-primary);
+            padding: var(--space-lg);
+            line-height: 1.5;
+        }
+        
+        /* Layout */
+        .showcase-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .section {
+            margin-bottom: var(--space-2xl);
+        }
+        
+        .section-title {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            margin-bottom: var(--space-lg);
+            color: var(--color-text-primary);
+        }
+        
+        .component-group {
+            display: grid;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-xl);
+        }
+        
+        .component-label {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-sm);
+        }
+        
+        /* Button Component */
+        .button {
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--duration-fast) var(--easing-default);
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+        
+        /* Button Variants */
+        .button-primary {
+            background: var(--color-primary);
+            color: var(--color-background);
+        }
+        
+        .button-primary:hover:not(:disabled) {
+            background: var(--color-primary-light);
+        }
+        
+        .button-secondary {
+            background: var(--color-surface-elevated);
+            color: var(--color-text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .button-secondary:hover:not(:disabled) {
+            background: #3A3A3C;
+        }
+        
+        .button-ghost {
+            background: transparent;
+            color: var(--color-primary);
+        }
+        
+        .button-ghost:hover:not(:disabled) {
+            background: rgba(77, 177, 255, 0.1);
+        }
+        
+        .button-danger {
+            background: var(--color-error);
+            color: white;
+        }
+        
+        .button-danger:hover:not(:disabled) {
+            background: #DC2626;
+        }
+        
+        /* Button States */
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .button-loading {
+            color: transparent;
+        }
+        
+        .button-loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Button Sizes */
+        .button-large {
+            height: 80px;
+            padding: 0 32px;
+            font-size: var(--font-size-xl);
+            border-radius: 16px;
+        }
+        
+        .button-medium {
+            height: 60px;
+            padding: 0 24px;
+            font-size: var(--font-size-base);
+        }
+        
+        .button-small {
+            height: 48px;
+            padding: 0 20px;
+            font-size: var(--font-size-sm);
+        }
+        
+        .button-full {
+            width: 100%;
+        }
+        
+        /* Card Component */
+        .card {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: var(--space-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all var(--duration-normal) var(--easing-default);
+            position: relative;
+        }
+        
+        .card-tappable {
+            cursor: pointer;
+        }
+        
+        .card-tappable:hover {
+            background: var(--color-surface-elevated);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: var(--space-xs);
+            padding-right: 28px; /* Space for action menu */
+        }
+        
+        .card-title-group {
+            flex: 1;
+        }
+        
+        .card-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .card-subtitle {
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+        }
+        
+        /* Card Actions Menu */
+        .card-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+        
+        .action-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--duration-fast);
+        }
+        
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--color-text-primary);
+        }
+        
+        .action-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: var(--color-surface-elevated);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: all var(--duration-fast);
+        }
+        
+        .action-menu.open {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        
+        .action-menu-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background var(--duration-fast);
+            white-space: nowrap;
+            font-size: var(--font-size-sm);
+        }
+        
+        .action-menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .action-menu-item.danger {
+            color: var(--color-error);
+        }
+        
+        /* Metric Pills */
+        .metric-list {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+        
+        .metric-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .metric-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--color-success);
+        }
+        
+        .metric-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--color-warning);
+        }
+        
+        .metric-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--color-error);
+        }
+        
+        /* Input Component */
+        .input-group {
+            margin-bottom: var(--space-md);
+        }
+        
+        .input-label {
+            display: block;
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .input {
+            width: 100%;
+            background: var(--color-surface);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--color-text-primary);
+            font-size: var(--font-size-base);
+            font-family: inherit;
+            transition: all var(--duration-fast) var(--easing-default);
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-focus-ring);
+        }
+        
+        .input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .input-error {
+            border-color: var(--color-error);
+        }
+        
+        .input-error:focus {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+        }
+        
+        .input-helper {
+            font-size: var(--font-size-sm);
+            margin-top: var(--space-xs);
+        }
+        
+        .input-helper.error {
+            color: var(--color-error);
+        }
+        
+        .input-large {
+            height: 60px;
+            padding: 0 var(--space-md);
+            font-size: var(--font-size-lg);
+        }
+        
+        .input-medium {
+            height: 48px;
+            padding: 0 var(--space-md);
+        }
+        
+        /* Toggle Component */
+        .toggle-group {
+            display: flex;
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .toggle-option {
+            flex: 1;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all var(--duration-fast) var(--easing-default);
+            font-weight: 500;
+        }
+        
+        .toggle-option:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .toggle-option.active {
+            background: var(--color-primary);
+            color: var(--color-background);
+        }
+        
+        /* Balance Meter Component - Now Horizontal! */
+        .balance-meter {
+            width: 300px;
+            height: 60px;
+            background: var(--color-surface);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .balance-zones {
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+        
+        .balance-zone {
+            flex: 1;
+            position: relative;
+        }
+        
+        .zone-red { background: rgba(239, 68, 68, 0.3); }
+        .zone-gold { background: rgba(245, 158, 11, 0.3); }
+        .zone-green { background: rgba(16, 185, 129, 0.3); }
+        
+        .balance-indicator {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 40px;
+            background: white;
+            border-radius: 2px;
+            transition: left var(--duration-normal) var(--easing-default);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .balance-arrows {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+        }
+        
+        .balance-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+        }
+        
+        /* Depth Indicator Component */
+        .depth-indicator {
+            width: 80px;
+            height: 120px;
+            position: relative;
+        }
+        
+        .depth-arc {
+            width: 100%;
+            height: 100%;
+            border: 8px solid var(--color-surface-elevated);
+            border-radius: 0 60px 60px 0;
+            border-left: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .depth-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--color-primary);
+            transition: height var(--duration-normal) var(--easing-default);
+            border-radius: 0 0 52px 0;
+        }
+        
+        .depth-fill.at-depth {
+            background: var(--color-success);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .depth-marker {
+            position: absolute;
+            right: -4px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background: var(--color-surface-elevated);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--color-primary);
+            transition: width var(--duration-normal) var(--easing-default);
+        }
+        
+        /* Rep Selector */
+        .rep-selector {
+            display: flex;
+            gap: var(--space-sm);
+        }
+        
+        .rep-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: var(--color-surface);
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all var(--duration-fast) var(--easing-default);
+            font-weight: 600;
+        }
+        
+        .rep-button:hover {
+            background: var(--color-surface-elevated);
+        }
+        
+        .rep-button.active {
+            background: var(--color-primary);
+            color: var(--color-background);
+            border-color: var(--color-primary);
+        }
+        
+        .rep-button.warning {
+            border-color: var(--color-warning);
+            color: var(--color-warning);
+        }
+        
+        .rep-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Focus Cue - Updated styling */
+        .focus-cue {
+            background: var(--color-surface-elevated);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+        
+        .focus-cue-header {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        
+        .focus-cue-icon {
+            color: var(--color-warning);
+        }
+        
+        .focus-cue-list {
+            list-style: none;
+        }
+        
+        .focus-cue-item {
+            font-size: var(--font-size-lg);
+            font-weight: 500;
+            margin-bottom: var(--space-xs);
+            padding-left: var(--space-md);
+            position: relative;
+            color: var(--color-text-primary);
+        }
+        
+        .focus-cue-item:before {
+            content: attr(data-number);
+            position: absolute;
+            left: 0;
+            color: var(--color-text-tertiary);
+            font-weight: 400;
+        }
+        
+        /* Rating */
+        .rating {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .star {
+            color: var(--color-warning);
+        }
+        
+        .star.empty {
+            color: var(--color-text-tertiary);
+        }
+        
+        /* Loading States */
+        .skeleton {
+            background: linear-gradient(90deg, 
+                var(--color-surface) 25%, 
+                var(--color-surface-elevated) 50%, 
+                var(--color-surface) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-2xl);
+            color: var(--color-text-secondary);
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: var(--space-md);
+            opacity: 0.5;
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: var(--space-lg);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--color-surface-elevated);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: var(--space-md);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+        }
+        
+        .toast-success {
+            border-color: var(--color-success);
+        }
+        
+        .toast-error {
+            border-color: var(--color-error);
+        }
+        
+        /* Grid Layout */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-lg);
+        }
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--space-md);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: var(--space-md);
+            }
+            
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="showcase-container">
+        <h1 class="section-title">PowerLift Component Library</h1>
+        
+        <!-- Color Palette -->
+        <section class="section">
+            <h2 class="section-title">Updated Color System</h2>
+            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <div style="text-align: center;">
+                    <div style="width: 100px; height: 100px; background: var(--color-primary); border-radius: 8px; margin-bottom: 8px;"></div>
+                    <div class="component-label">Primary</div>
+                    <div style="font-size: 12px; color: var(--color-text-tertiary);">#4DB1FF</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="width: 100px; height: 100px; background: var(--color-success); border-radius: 8px; margin-bottom: 8px;"></div>
+                    <div class="component-label">Success</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="width: 100px; height: 100px; background: var(--color-warning); border-radius: 8px; margin-bottom: 8px;"></div>
+                    <div class="component-label">Warning</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="width: 100px; height: 100px; background: var(--color-error); border-radius: 8px; margin-bottom: 8px;"></div>
+                    <div class="component-label">Error</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="width: 100px; height: 100px; background: var(--color-surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 8px;"></div>
+                    <div class="component-label">Surface</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Buttons with States -->
+        <section class="section">
+            <h2 class="section-title">Buttons - All States</h2>
+            
+            <div class="component-group">
+                <div>
+                    <div class="component-label">Primary Buttons</div>
+                    <div class="button-grid">
+                        <button class="button button-primary button-medium">Default</button>
+                        <button class="button button-primary button-medium" disabled>Disabled</button>
+                        <button class="button button-primary button-medium button-loading">Loading</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="component-label">Secondary Buttons</div>
+                    <div class="button-grid">
+                        <button class="button button-secondary button-medium">Default</button>
+                        <button class="button button-secondary button-medium" disabled>Disabled</button>
+                        <button class="button button-secondary button-medium button-loading">Loading</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="component-label">Ghost Buttons</div>
+                    <div class="button-grid">
+                        <button class="button button-ghost button-medium">Default</button>
+                        <button class="button button-ghost button-medium" disabled>Disabled</button>
+                        <button class="button button-ghost button-medium button-loading">Loading</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="component-label">Danger Buttons</div>
+                    <div class="button-grid">
+                        <button class="button button-danger button-medium">Delete</button>
+                        <button class="button button-danger button-medium" disabled>Disabled</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="component-label">Size Variations</div>
+                    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                        <button class="button button-primary button-large">Large</button>
+                        <button class="button button-primary button-medium">Medium</button>
+                        <button class="button button-primary button-small">Small</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Cards with Actions -->
+        <section class="section">
+            <h2 class="section-title">Cards with Quick Actions</h2>
+            
+            <div class="grid-2">
+                <div class="card card-tappable">
+                    <div class="card-actions">
+                        <button class="action-button" onclick="toggleMenu(this)">⋮</button>
+                        <div class="action-menu">
+                            <div class="action-menu-item">✏️ Edit</div>
+                            <div class="action-menu-item">📊 View Stats</div>
+                            <div class="action-menu-item">🔗 Share</div>
+                            <div class="action-menu-item danger">🗑️ Delete</div>
+                        </div>
+                    </div>
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <div class="card-title">Today - Squat</div>
+                            <div class="card-subtitle">5x5 @ 225lbs</div>
+                        </div>
+                    </div>
+                    <div class="rating" style="margin-bottom: 12px;">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                    <div class="metric-list">
+                        <span class="metric-pill metric-success">✓ Depth</span>
+                        <span class="metric-pill metric-warning">⚠️ Balance</span>
+                        <span class="metric-pill metric-success">✓ Path</span>
+                    </div>
+                </div>
+                
+                <div class="card card-tappable">
+                    <div class="card-actions">
+                        <button class="action-button" onclick="toggleMenu(this)">⋮</button>
+                        <div class="action-menu">
+                            <div class="action-menu-item">✏️ Edit</div>
+                            <div class="action-menu-item">📊 View Stats</div>
+                            <div class="action-menu-item danger">🗑️ Delete</div>
+                        </div>
+                    </div>
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <div class="card-title">Quick Stats</div>
+                            <div class="card-subtitle">Last 7 days</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Form Score</span>
+                            <span style="color: var(--color-success);">4.2/5</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 84%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 12px; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                            <span>12 sets completed</span>
+                            <span>+0.3 pts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Form Controls with States -->
+        <section class="section">
+            <h2 class="section-title">Form Controls - All States</h2>
+            
+            <div class="grid-2">
+                <div>
+                    <div class="input-group">
+                        <label class="input-label">Weight (Normal)</label>
+                        <input type="number" class="input input-large" value="225" />
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label">Reps (Error)</label>
+                        <input type="number" class="input input-medium input-error" value="0" />
+                        <div class="input-helper error">Reps must be greater than 0</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label">Notes (Disabled)</label>
+                        <input type="text" class="input input-medium" disabled placeholder="Add notes..." />
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="component-label">Recording Mode</div>
+                    <div class="toggle-group">
+                        <div class="toggle-option active">Auto-Start</div>
+                        <div class="toggle-option">10s Timer</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Custom Components - Updated Balance Meter -->
+        <section class="section">
+            <h2 class="section-title">Custom Feedback Components</h2>
+            
+            <div style="display: flex; gap: 48px; flex-wrap: wrap; align-items: center;">
+                <div>
+                    <div class="component-label">Horizontal Balance Meter</div>
+                    <div style="position: relative; padding: 30px 0;">
+                        <div class="balance-arrows">
+                            <span>← Left</span>
+                            <span>Right →</span>
+                        </div>
+                        <div class="balance-meter">
+                            <div class="balance-zones">
+                                <div class="balance-zone zone-red"></div>
+                                <div class="balance-zone zone-gold"></div>
+                                <div class="balance-zone zone-green"></div>
+                                <div class="balance-zone zone-gold"></div>
+                                <div class="balance-zone zone-red"></div>
+                            </div>
+                            <div class="balance-indicator" style="left: 50%;"></div>
+                        </div>
+                        <div class="balance-label">CENTERED</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="component-label">Depth Indicator</div>
+                    <div class="depth-indicator">
+                        <div class="depth-arc">
+                            <div class="depth-fill" style="height: 60%;"></div>
+                            <div class="depth-marker" style="bottom: 60%;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="component-label">Rep Selector</div>
+                    <div class="rep-selector">
+                        <button class="rep-button active">1</button>
+                        <button class="rep-button">2</button>
+                        <button class="rep-button warning">3</button>
+                        <button class="rep-button">4</button>
+                        <button class="rep-button" disabled>5</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Focus Cues - Updated -->
+        <section class="section">
+            <h2 class="section-title">Focus Cue Component - Improved</h2>
+            
+            <div style="max-width: 500px;">
+                <div class="focus-cue">
+                    <div class="focus-cue-header">
+                        <span class="focus-cue-icon">📍</span>
+                        <span>Today's Focus Cues</span>
+                    </div>
+                    <ol class="focus-cue-list">
+                        <li class="focus-cue-item" data-number="1.">Push knees out on ascent</li>
+                        <li class="focus-cue-item" data-number="2.">Keep chest up</li>
+                    </ol>
+                    <button class="button button-ghost button-small" style="margin-top: 12px;">Edit Cues</button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Empty States -->
+        <section class="section">
+            <h2 class="section-title">Empty & Loading States</h2>
+            
+            <div class="grid-2">
+                <div class="card">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div>No workouts yet</div>
+                        <button class="button button-primary button-small" style="margin-top: 16px;">Start First Workout</button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎥</div>
+                        <div>No recordings found</div>
+                        <div style="font-size: 14px; color: var(--color-text-tertiary); margin-top: 8px;">
+                            Record your first set to start tracking form
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Toast Notifications -->
+        <div class="toast toast-success" id="toast" style="display: none;">
+            <span>✓</span>
+            <span>Set saved successfully!</span>
+        </div>
+    </div>
+    
+    <script>
+        // Toggle menu function
+        function toggleMenu(button) {
+            const menu = button.nextElementSibling;
+            const isOpen = menu.classList.contains('open');
+            
+            // Close all menus
+            document.querySelectorAll('.action-menu').forEach(m => m.classList.remove('open'));
+            
+            // Toggle this menu
+            if (!isOpen) {
+                menu.classList.add('open');
+            }
+        }
+        
+        // Close menus when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.card-actions')) {
+                document.querySelectorAll('.action-menu').forEach(m => m.classList.remove('open'));
+            }
+        });
+        
+        // Rep selector interaction
+        document.querySelectorAll('.rep-button').forEach(button => {
+            button.addEventListener('click', function() {
+                if (!this.disabled) {
+                    document.querySelectorAll('.rep-button').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+        
+        // Toggle interaction
+        document.querySelectorAll('.toggle-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.toggle-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Animate horizontal balance meter
+        const balanceIndicator = document.querySelector('.balance-indicator');
+        const balanceLabel = document.querySelector('.balance-label');
+        let position = 50;
+        let direction = 1;
+        
+        setInterval(() => {
+            position += direction * 0.5;
+            if (position > 70 || position < 30) direction *= -1;
+            balanceIndicator.style.left = position + '%';
+            
+            // Update label based on position
+            if (position > 45 && position < 55) {
+                balanceLabel.textContent = 'CENTERED';
+                balanceLabel.style.color = 'var(--color-success)';
+            } else if (position > 40 && position < 60) {
+                balanceLabel.textContent = 'GOOD';
+                balanceLabel.style.color = 'var(--color-warning)';
+            } else {
+                balanceLabel.textContent = position < 50 ? 'LEFT SHIFT' : 'RIGHT SHIFT';
+                balanceLabel.style.color = 'var(--color-error)';
+            }
+        }, 50);
+        
+        // Animate depth indicator
+        const depthFill = document.querySelector('.depth-fill');
+        const depthMarker = document.querySelector('.depth-marker');
+        let depth = 0;
+        let increasing = true;
+        
+        setInterval(() => {
+            if (increasing) {
+                depth += 2;
+                if (depth >= 80) {
+                    increasing = false;
+                    depthFill.classList.add('at-depth');
+                }
+            } else {
+                depth -= 2;
+                if (depth <= 0) {
+                    increasing = true;
+                    depthFill.classList.remove('at-depth');
+                }
+            }
+            depthFill.style.height = depth + '%';
+            depthMarker.style.bottom = depth + '%';
+        }, 50);
+        
+        // Show toast example
+        document.querySelectorAll('.action-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const toast = document.getElementById('toast');
+                toast.style.display = 'flex';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 3000);
+            });
+        });
+    </script>
+</body>
+</html>

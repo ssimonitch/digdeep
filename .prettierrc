@@ -1,0 +1,12 @@
+{
+  "singleQuote": true,
+  "trailingComma": "all",
+  "arrowParens": "always",
+  "tabWidth": 2,
+  "semi": true,
+  "printWidth": 120,
+  "bracketSpacing": true,
+  "jsxBracketSameLine": true,
+  "endOfLine": "auto",
+  "tailwindStylesheet": "./src/index.css"
+}
