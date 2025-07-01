@@ -1,8 +1,8 @@
-# PowerLift - Technical Architecture Document
+# DigDeep - Technical Architecture Document
 
 ## Overview
 
-This document outlines the technical architecture for the PowerLift form analysis app, optimized for solo development and free tier services while maintaining scalability and performance.
+This document outlines the technical architecture for the DigDeep form analysis app, optimized for solo development and free tier services while maintaining scalability and performance.
 
 ## Technology Stack
 
@@ -30,7 +30,7 @@ This document outlines the technical architecture for the PowerLift form analysi
 ## Project Structure
 
 ```
-powerlifting-app/
+digdeep-app/
 ├── src/
 │   ├── components/           # Reusable UI components
 │   │   ├── ui/              # Base components (Button, Card, etc.)

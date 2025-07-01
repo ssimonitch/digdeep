@@ -1,4 +1,4 @@
-# Powerlifting Form Analysis App - UI/UX Design Document
+# DigDeep Form Analysis App - UI/UX Design Document
 
 ## Design Philosophy
 
@@ -119,7 +119,6 @@ Home → View All History → Filter by Exercise/Date → Select Session → Det
 
 3. **Quick Actions Bar**
    - "Last Workout" pill button
-   - "Compare Form" pill button  
    - "Quick Check" pill button
 
 4. **Recent Workouts List**
@@ -231,10 +230,9 @@ Home → View All History → Filter by Exercise/Date → Select Session → Det
 - Frame scrubber for specific moments
 - Metrics charts (bar path, angles over time)
 
-**Level 3 - Comparison Mode:**
-- Side-by-side video comparison
-- Overlay previous best form
+**Level 3 - Advanced Analysis:**
 - Progress tracking graphs
+- Historical trend analysis
 
 ## Interaction Patterns
 
@@ -315,7 +313,7 @@ Home → View All History → Filter by Exercise/Date → Select Session → Det
    - Quick metrics glance
 
 2. **Voice Interface**
-   - "Hey PowerLift, start recording"
+   - "Hey DigDeep, start recording"
    - Audio-only form cues
    - Rep counting
 

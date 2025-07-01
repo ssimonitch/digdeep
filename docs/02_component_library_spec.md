@@ -1,4 +1,4 @@
-# Powerlifting App - Component Library
+# DigDeep App - Component Library
 
 ## Design Tokens
 

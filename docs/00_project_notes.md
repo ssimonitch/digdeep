@@ -1,4 +1,4 @@
-# Powerlifting Form Analysis App - Project Document
+# DigDeep Form Analysis App - Project Document
 
 ## Project Overview
 
@@ -67,7 +67,6 @@ A web-based application that uses ML/AI to analyze powerlifting form, provide re
 - Frame-by-frame breakdown
 - Bar path visualization
 - Joint angle measurements
-- Side-by-side comparison with previous lifts
 - Key metrics:
   - Hip below knee angle (depth)
   - Left/right hip alignment
@@ -89,7 +88,6 @@ A web-based application that uses ML/AI to analyze powerlifting form, provide re
 - Volume progression visualization
 - Bench & deadlift analysis
 - Form consistency scoring
-- Progressive baseline comparison
 
 ### Phase 3: Advanced Features (Future)
 - Multi-angle recording
