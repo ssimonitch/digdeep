@@ -41,6 +41,7 @@
     "@vitest/browser": "^3.2.3",
     "eslint": "^9.25.0",
     "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-erasable-syntax-only": "^0.3.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.4.1",
     "eslint-plugin-react-dom": "^1.52.2",

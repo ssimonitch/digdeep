@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is PowerLift, a web-based powerlifting form analysis application that uses machine learning for real-time feedback and training progress tracking. The project is designed for personal use as both a learning project and training tool, using only free-tier services.
+This is DigDeep, a web-based powerlifting form analysis application that uses machine learning for real-time feedback and training progress tracking. The project is designed for personal use as both a learning project and training tool, using only free-tier services.
 
 ## Development Commands
 

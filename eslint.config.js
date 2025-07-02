@@ -1,5 +1,6 @@
 import eslintJs from '@eslint/js';
 import globals from 'globals';
+import erasableSyntaxOnly from 'eslint-plugin-erasable-syntax-only';
 import eslintReact from 'eslint-plugin-react-x';
 import eslintReactDom from 'eslint-plugin-react-dom';
 import eslintReactHooks from 'eslint-plugin-react-hooks';
@@ -19,6 +20,7 @@ export default tseslint.config(
       eslintReact.configs['recommended-typescript'],
       eslintReactDom.configs.recommended,
       eslintReactHooks.configs['recommended-latest'],
+      erasableSyntaxOnly.configs.recommended,
     ],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
