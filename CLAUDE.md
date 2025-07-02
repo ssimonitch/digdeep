@@ -4,7 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is DigDeep, a web-based powerlifting form analysis application that uses machine learning for real-time feedback and training progress tracking. The project is designed for personal use as both a learning project and training tool, using only free-tier services.
+This is DigDeep, a web-based powerlifting form analysis application that uses machine learning for real-time feedback and training progress tracking. 
+
+### Project Goals
+
+- Designeded for personal use as both a learning project and powerlifting training tool
+- Solo-development using only free-tier services
+- Showcase developer's knowledge of fullstack web development, applied machine learning, and technical architecture
 
 ## Development Commands
 
@@ -56,12 +62,11 @@ pnpm tsc --noEmit
 
 ```
 src/
-├── components/       # React components
-├── stores/          # Zustand state stores
-├── hooks/           # Custom React hooks
-├── utils/           # Utility functions
-├── types/           # TypeScript type definitions
-└── styles/          # CSS and styling files
+├── components/              # Shared UI components
+├── features/               # Feature modules with co-located concerns
+├── shared/                 # Cross-cutting concerns
+├── services/               # Infrastructure integrations
+└── workers/                # High-performance Web Workers
 ```
 
 ### Module Aliases
@@ -87,25 +92,9 @@ src/
 
 3. **Technical Constraints**:
    - Must use only free-tier services
-   - Web-first approach (PWA capabilities)
+   - Web-first approach
    - Phone camera based (rear view for MVP)
    - Real-time processing with MediaPipe
-
-### Component Library
-
-The project has detailed component specifications in `docs/02_component_library_spec.md`. Key components include:
-
-- Button (Primary, Secondary, Ghost variants)
-- Card components
-- Form controls optimized for gym use
-- Feedback components (BalanceMeter, DepthIndicator)
-- Video components (VideoRecorder, VideoPlayer)
-
-### Development Phases
-
-- **Phase 1 (MVP)**: Basic recording, pose detection, real-time feedback
-- **Phase 2**: Workout logging, volume progression, bench & deadlift analysis
-- **Phase 3**: Multi-angle recording, custom ML models, fatigue detection
 
 ## Code Standards
 
@@ -134,6 +123,34 @@ The project has detailed component specifications in `docs/02_component_library_
 - Use Vitest for unit and integration tests
 - Test files should be colocated with components (`.test.tsx`)
 - Focus on user behavior over implementation details
+
+## Feature Implementation System Guidelines
+
+### Feature Implementation Priority Rules
+- IMMEDIATE EXECUTION: Launch parallel Tasks immediately upon feature requests
+- NO CLARIFICATION: Skip asking what type of implementation unless absolutely critical
+- PARALLEL BY DEFAULT: Always use 7-parallel-Task method for efficiency
+
+### Parallel Feature Implementation Workflow
+1. **Component**: Create main component file
+2. **Styles**: Create component styles/CSS
+3. **Tests**: Create test files  
+4. **Types**: Create type definitions
+5. **Hooks**: Create custom hooks/utilities
+6. **Integration**: Update routing, imports, exports
+7. **Remaining**: Update package.json, documentation, configuration files
+8. **Review and Validation**: Coordinate integration, run tests, verify build, check for conflicts
+
+### Context Optimization Rules
+- Strip out all comments when reading code files for analysis
+- Each task handles ONLY specified files or file types
+- Task 7 combines small config/doc updates to prevent over-splitting
+
+### Feature Implementation Guidelines
+- **CRITICAL**: Make MINIMAL CHANGES to existing patterns and structures
+- **CRITICAL**: Preserve existing naming conventions and file organization
+- Follow project's established architecture and component patterns
+- Use existing utility functions and avoid duplicating functionality
 
 ## Important Notes
 

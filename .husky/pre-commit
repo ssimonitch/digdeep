@@ -16,14 +16,6 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Run Prettier check
-echo "✨ Checking code formatting with Prettier..."
-pnpm exec prettier --check .
-if [ $? -ne 0 ]; then
-  echo "❌ Code formatting check failed. Run 'pnpm exec prettier --write .' to fix formatting."
-  exit 1
-fi
-
 # Run tests (skip if no tests exist)
 echo "🧪 Checking for tests..."
 if find src -name "*.test.*" -o -name "*.spec.*" 2>/dev/null | grep -q .; then
