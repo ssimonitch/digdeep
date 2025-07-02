@@ -49,5 +49,15 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  // Disable react-refresh warnings for shared UI components
+  // These are foundational components that export utilities alongside components,
+  // which is a common pattern in UI libraries (shadcn/ui, Radix UI)
+  {
+    files: ['src/shared/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {},
   eslintPluginPrettierRecommended,
 );
