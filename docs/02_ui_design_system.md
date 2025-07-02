@@ -15,12 +15,14 @@
 ## Design Philosophy
 
 ### Core Principles
+
 1. **Gym-First Design**: Interface optimized for use during workouts with sweaty/chalky hands
 2. **Minimal Cognitive Load**: Maximum 2 taps to critical actions
 3. **Glanceable Feedback**: Information visible at a distance and in peripheral vision
 4. **Progressive Enhancement**: Full functionality on all devices, enhanced on touch
 
 ### Target Environment
+
 - **Poor gym lighting conditions**: High contrast design with large visual indicators
 - **User attention split**: Between app and lifting, requiring minimal cognitive overhead
 - **Hands occupied or dirty**: Large touch targets, gesture alternatives
@@ -28,6 +30,7 @@
 - **Phone mounted on tripod**: Interface visible from distance
 
 ### Design Validation Metrics
+
 - Time to start recording: < 5 seconds
 - Touch target success rate: > 95% (all buttons 48px+ height)
 - Form feedback visibility: 100% (clear indicators, high contrast)
@@ -41,31 +44,31 @@
 
 ```css
 /* Base Colors */
---color-background: #0A0A0B;          /* Deep charcoal */
---color-surface: #1A1A1C;             /* Dark gray */
---color-surface-elevated: #2A2A2C;    /* Lighter gray */
+--color-background: #0a0a0b; /* Deep charcoal */
+--color-surface: #1a1a1c; /* Dark gray */
+--color-surface-elevated: #2a2a2c; /* Lighter gray */
 
 /* Brand Colors - Updated Modern Palette */
---color-primary: #4DB1FF;             /* Light blue (modern, softer) */
---color-primary-light: #6BC1FF;       /* Lighter blue for hover states */
---color-primary-dark: #2E9FFF;        /* Darker blue for active states */
+--color-primary: #4db1ff; /* Light blue (modern, softer) */
+--color-primary-light: #6bc1ff; /* Lighter blue for hover states */
+--color-primary-dark: #2e9fff; /* Darker blue for active states */
 
 /* Feedback Colors */
---color-success: #10B981;             /* Emerald - Good form indicators */
---color-warning: #F59E0B;             /* Amber - Minor form issues */
---color-error: #EF4444;               /* Red - Critical form problems */
---color-info: #06B6D4;                /* Cyan - Informational feedback */
+--color-success: #10b981; /* Emerald - Good form indicators */
+--color-warning: #f59e0b; /* Amber - Minor form issues */
+--color-error: #ef4444; /* Red - Critical form problems */
+--color-info: #06b6d4; /* Cyan - Informational feedback */
 
 /* Text Colors */
---color-text-primary: #FFFFFF;        /* White - Primary text */
---color-text-secondary: #9CA3AF;      /* Light gray - Secondary text */
---color-text-tertiary: #6B7280;       /* Medium gray - Tertiary text */
---color-text-muted: #4B5563;          /* Dark gray - Muted text */
---color-text-inverse: #0A0A0B;        /* Black - Text on light backgrounds */
+--color-text-primary: #ffffff; /* White - Primary text */
+--color-text-secondary: #9ca3af; /* Light gray - Secondary text */
+--color-text-tertiary: #6b7280; /* Medium gray - Tertiary text */
+--color-text-muted: #4b5563; /* Dark gray - Muted text */
+--color-text-inverse: #0a0a0b; /* Black - Text on light backgrounds */
 
 /* State Colors */
---color-disabled: #4B5563;            /* Disabled elements */
---color-overlay: rgba(0, 0, 0, 0.5);  /* Modal overlays */
+--color-disabled: #4b5563; /* Disabled elements */
+--color-overlay: rgba(0, 0, 0, 0.5); /* Modal overlays */
 --color-focus-ring: rgba(77, 177, 255, 0.5); /* Focus indicators */
 ```
 
@@ -77,13 +80,13 @@
 --font-family-mono: 'SF Mono', Consolas, monospace;
 
 /* Font Sizes - Gym-optimized scale */
---font-size-xs: 14px;      /* Fine print, least important info */
---font-size-sm: 16px;      /* Captions, minimum for gym visibility */
---font-size-base: 18px;    /* Body text, optimized for gym lighting */
---font-size-lg: 20px;      /* Emphasized body text */
---font-size-xl: 24px;      /* Subheadings */
---font-size-2xl: 32px;     /* Headings */
---font-size-3xl: 48px;     /* Hero text (quick start button) */
+--font-size-xs: 14px; /* Fine print, least important info */
+--font-size-sm: 16px; /* Captions, minimum for gym visibility */
+--font-size-base: 18px; /* Body text, optimized for gym lighting */
+--font-size-lg: 20px; /* Emphasized body text */
+--font-size-xl: 24px; /* Subheadings */
+--font-size-2xl: 32px; /* Headings */
+--font-size-3xl: 48px; /* Hero text (quick start button) */
 
 /* Font Weights */
 --font-weight-regular: 400;
@@ -92,22 +95,22 @@
 --font-weight-bold: 700;
 
 /* Line Heights */
---line-height-tight: 1.2;     /* Headlines */
---line-height-normal: 1.5;    /* Body text */
---line-height-relaxed: 1.75;  /* Reading content */
+--line-height-tight: 1.2; /* Headlines */
+--line-height-normal: 1.5; /* Body text */
+--line-height-relaxed: 1.75; /* Reading content */
 ```
 
 ### Spacing System
 
 ```css
 /* Base unit: 8px grid system */
---space-xs: 4px;      /* Fine adjustments */
---space-sm: 8px;      /* Base spacing unit */
---space-md: 16px;     /* Standard spacing */
---space-lg: 24px;     /* Large spacing */
---space-xl: 32px;     /* Extra large spacing */
---space-2xl: 48px;    /* Section spacing */
---space-3xl: 64px;    /* Page-level spacing */
+--space-xs: 4px; /* Fine adjustments */
+--space-sm: 8px; /* Base spacing unit */
+--space-md: 16px; /* Standard spacing */
+--space-lg: 24px; /* Large spacing */
+--space-xl: 32px; /* Extra large spacing */
+--space-2xl: 48px; /* Section spacing */
+--space-3xl: 64px; /* Page-level spacing */
 
 /* Component-specific spacing */
 --space-card-padding: 16px;
@@ -116,24 +119,24 @@
 --space-input-padding: 12px;
 
 /* Touch Targets - Gym optimized */
---touch-target-min: 48px;      /* Minimum touch target */
+--touch-target-min: 48px; /* Minimum touch target */
 --touch-target-preferred: 60px; /* Preferred for primary actions */
---touch-target-hero: 80px;     /* Hero actions (start recording) */
+--touch-target-hero: 80px; /* Hero actions (start recording) */
 ```
 
 ### Motion & Animation
 
 ```css
 /* Durations */
---duration-fast: 150ms;      /* Micro-interactions */
---duration-normal: 250ms;    /* Standard transitions */
---duration-slow: 350ms;      /* Complex animations */
+--duration-fast: 150ms; /* Micro-interactions */
+--duration-normal: 250ms; /* Standard transitions */
+--duration-slow: 350ms; /* Complex animations */
 
 /* Easings */
---easing-default: cubic-bezier(0.4, 0, 0.2, 1);    /* Material Design standard */
+--easing-default: cubic-bezier(0.4, 0, 0.2, 1); /* Material Design standard */
 --easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Playful interactions */
---easing-sharp: cubic-bezier(0.4, 0, 1, 1);        /* Entrance animations */
---easing-soft: cubic-bezier(0, 0, 0.2, 1);         /* Exit animations */
+--easing-sharp: cubic-bezier(0.4, 0, 1, 1); /* Entrance animations */
+--easing-soft: cubic-bezier(0, 0, 0.2, 1); /* Exit animations */
 ```
 
 ---
@@ -339,7 +342,7 @@ interface MetricPillProps {
 interface BalanceMeterProps {
   value: number; // -100 to 100 (0 is centered)
   threshold: {
-    good: number;    // ±25
+    good: number; // ±25
     warning: number; // ±50
   };
   height?: number;
@@ -356,12 +359,12 @@ interface BalanceMeterProps {
   height: 8px;
   background: linear-gradient(
     90deg,
-    var(--color-error) 0%,           /* Left extreme */
-    var(--color-warning) 25%,        /* Left warning */
-    var(--color-success) 45%,        /* Left good */
-    var(--color-success) 55%,        /* Center good */
-    var(--color-warning) 75%,        /* Right warning */
-    var(--color-error) 100%          /* Right extreme */
+    var(--color-error) 0%,
+    /* Left extreme */ var(--color-warning) 25%,
+    /* Left warning */ var(--color-success) 45%,
+    /* Left good */ var(--color-success) 55%,
+    /* Center good */ var(--color-warning) 75%,
+    /* Right warning */ var(--color-error) 100% /* Right extreme */
   );
   border-radius: 4px;
   position: relative;
@@ -393,8 +396,12 @@ interface BalanceMeterProps {
 }
 
 @keyframes balance-pulse {
-  from { opacity: 1; }
-  to { opacity: 0.6; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.6;
+  }
 }
 ```
 
@@ -402,8 +409,8 @@ interface BalanceMeterProps {
 
 ```typescript
 interface DepthIndicatorProps {
-  currentDepth: number;   // 0-100 percentage
-  targetDepth: number;    // Usually 100 for parallel
+  currentDepth: number; // 0-100 percentage
+  targetDepth: number; // Usually 100 for parallel
   size?: 'small' | 'large';
   showNumeric?: boolean;
 }
@@ -467,11 +474,11 @@ interface DepthIndicatorProps {
 }
 
 @keyframes depth-pulse {
-  from { 
+  from {
     border-color: var(--color-success);
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
   }
-  to { 
+  to {
     border-color: var(--color-success);
     box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
   }
@@ -671,52 +678,58 @@ interface FocusCueProps {
 ### Key User Flows
 
 #### 1. Quick Start Workout Flow
+
 ```
-Home → Tap "START SQUAT SESSION" → 
-Recording Setup (Focus Cues + Mode) → 
-Start Recording → 
-Active Recording with Real-time Feedback → 
-Auto-stop → 
-Analysis Summary → 
+Home → Tap "START SQUAT SESSION" →
+Recording Setup (Focus Cues + Mode) →
+Start Recording →
+Active Recording with Real-time Feedback →
+Auto-stop →
+Analysis Summary →
 Save/Discard
 ```
 
 #### 2. Review Previous Workout Flow
+
 ```
-Home → Recent Workouts → 
-Tap Card (or use ⋮ menu) → 
-View Analysis → 
-Select Rep → 
-View Detailed Metrics → 
+Home → Recent Workouts →
+Tap Card (or use ⋮ menu) →
+View Analysis →
+Select Rep →
+View Detailed Metrics →
 Share/Export
 ```
 
 #### 3. Form Check Flow (No Save)
+
 ```
-Home → Quick Check → 
-Recording Setup (simplified) → 
-Record → 
-Instant Feedback → 
+Home → Quick Check →
+Recording Setup (simplified) →
+Record →
+Instant Feedback →
 Auto-discard
 ```
 
 ### Interaction Patterns
 
 #### Navigation Methods
+
 1. **Primary**: Tap/click navigation (all users)
 2. **Enhancement**: Swipe gestures where supported (touch devices)
 3. **Accessibility**: Keyboard navigation and screen reader support
 
 #### Gesture Support Matrix
-| Gesture | Touch Device | Desktop | Action |
-|---------|--------------|---------|---------|
-| Tap | ✓ | ✓ (click) | Primary interaction |
-| Swipe Horizontal | ✓ | → (arrow buttons) | Navigate days/reps |
-| Swipe Vertical | ✓ | ✓ (scroll) | Scroll content |
-| Long Press | ✓ | → (right-click) | Context menu |
-| Pull to Refresh | ✓ | → (refresh button) | Update content |
+
+| Gesture          | Touch Device | Desktop            | Action              |
+| ---------------- | ------------ | ------------------ | ------------------- |
+| Tap              | ✓            | ✓ (click)          | Primary interaction |
+| Swipe Horizontal | ✓            | → (arrow buttons)  | Navigate days/reps  |
+| Swipe Vertical   | ✓            | ✓ (scroll)         | Scroll content      |
+| Long Press       | ✓            | → (right-click)    | Context menu        |
+| Pull to Refresh  | ✓            | → (refresh button) | Update content      |
 
 #### Touch Target Guidelines
+
 - **Minimum**: 48x48px (accessibility standard)
 - **Preferred**: 60x60px (primary actions, gym conditions)
 - **Hero**: 80x80px (critical actions like start recording)
@@ -729,6 +742,7 @@ Auto-discard
 ### Home Screen Layout
 
 #### Structure & Hierarchy
+
 ```
 ┌─────────────────────────┐
 │ Header (Fixed)          │
@@ -758,6 +772,7 @@ Auto-discard
 ```
 
 #### Component Specifications
+
 - **Header**: Fixed position with streak counter and settings
 - **Hero Button**: 80px height, full-width, primary color
 - **Quick Actions**: Pill buttons, horizontal layout
@@ -767,6 +782,7 @@ Auto-discard
 ### Active Recording Screen
 
 #### Layout Structure
+
 ```
 ┌─────────────────────────┐
 │ ⏱️ 0:23  🔄 Rep 3   ⏹️ │ ← Minimal status bar
@@ -789,6 +805,7 @@ Auto-discard
 ```
 
 #### Real-time Feedback Elements
+
 1. **Balance Meter**: Bottom center, horizontal gradient with zones
 2. **Depth Indicator**: Right edge, arc that fills during descent
 3. **Focus Cues**: Overlay with backdrop blur, auto-cycling
@@ -797,6 +814,7 @@ Auto-discard
 ### Pre-Recording Setup Screen
 
 #### Focus Cues Section
+
 ```
 ┌─────────────────────────┐
 │   Today's Focus Cues    │
@@ -819,6 +837,7 @@ Auto-discard
 ```
 
 #### Focus Cues Logic
+
 - Auto-populated based on last session's weakest metrics
 - User can override with custom cues
 - Maximum 2 cues to maintain focus
@@ -832,11 +851,11 @@ Auto-discard
 
 ```typescript
 // Base component structure pattern
-const Component: FC<Props> = ({ 
+const Component: FC<Props> = ({
   variant = 'default',
   size = 'medium',
   className,
-  ...props 
+  ...props
 }) => {
   const classes = cn(
     'base-component',
@@ -844,7 +863,7 @@ const Component: FC<Props> = ({
     `component-${size}`,
     className
   );
-  
+
   return <div className={classes} {...props} />;
 };
 ```
@@ -852,18 +871,21 @@ const Component: FC<Props> = ({
 ### Performance Considerations
 
 #### Animation Guidelines
+
 1. **Use CSS transforms** for animations (GPU accelerated)
 2. **Prefer opacity and transform** over layout-affecting properties
 3. **Implement reduced motion** for accessibility preferences
 4. **Limit simultaneous animations** to maintain 60fps
 
 #### Memory Management
+
 1. **Lazy load heavy components** (analysis views, detailed metrics)
 2. **Implement virtual scrolling** for workout history
 3. **Debounce rapid interactions** (search, filtering)
 4. **Clean up event listeners** in component unmount
 
 #### Loading States
+
 ```css
 /* Skeleton loading for cards */
 .skeleton {
@@ -878,17 +900,22 @@ const Component: FC<Props> = ({
 }
 
 @keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 ```
 
 ### Accessibility Implementation
 
 #### Screen Reader Support
+
 ```typescript
 // Proper ARIA labeling for complex components
-<div 
+<div
   role="progressbar"
   aria-label={`Squat depth: ${depthPercentage}%`}
   aria-valuenow={depthPercentage}
@@ -900,6 +927,7 @@ const Component: FC<Props> = ({
 ```
 
 #### Keyboard Navigation
+
 ```css
 /* Focus indicators for keyboard users */
 .focusable:focus-visible {
@@ -926,6 +954,7 @@ const Component: FC<Props> = ({
 ```
 
 #### Color Contrast Compliance
+
 - **Text on dark backgrounds**: 15:1 ratio (exceeds WCAG AAA)
 - **Interactive elements**: 4.5:1 minimum contrast
 - **Error states**: Use both color and iconography
@@ -934,6 +963,7 @@ const Component: FC<Props> = ({
 ### Responsive Design Strategy
 
 #### Breakpoint System
+
 ```css
 /* Mobile First Approach */
 @media (min-width: 768px) {
@@ -949,7 +979,7 @@ const Component: FC<Props> = ({
   .container {
     max-width: 1024px;
   }
-  
+
   /* Enable hover states */
   .hover-enabled:hover {
     /* Hover effects only on non-touch devices */
@@ -958,6 +988,7 @@ const Component: FC<Props> = ({
 ```
 
 #### Touch vs. Desktop Adaptations
+
 ```typescript
 // Detect touch capability
 const useTouch = () => {
@@ -967,9 +998,9 @@ const useTouch = () => {
 // Conditional touch targets
 const TouchTarget = ({ children, ...props }) => {
   const isTouch = useTouch();
-  
+
   return (
-    <button 
+    <button
       className={cn(
         'button',
         isTouch ? 'button-touch' : 'button-desktop'
@@ -989,6 +1020,7 @@ const TouchTarget = ({ children, ...props }) => {
 ### Component Testing Strategy
 
 #### Visual Regression Testing
+
 ```typescript
 // Storybook stories for all component states
 export default {
@@ -1016,13 +1048,14 @@ export const AllStates = () => (
 ```
 
 #### Interaction Testing
+
 ```typescript
 // Test touch target sizes
 test('buttons meet minimum touch target requirements', () => {
   render(<Button>Test Button</Button>);
   const button = screen.getByRole('button');
   const rect = button.getBoundingClientRect();
-  
+
   expect(rect.width).toBeGreaterThanOrEqual(48);
   expect(rect.height).toBeGreaterThanOrEqual(48);
 });
@@ -1030,33 +1063,34 @@ test('buttons meet minimum touch target requirements', () => {
 // Test keyboard navigation
 test('components are keyboard accessible', () => {
   render(<WorkoutCard title="Test Workout" />);
-  
+
   const card = screen.getByRole('article');
   card.focus();
-  
+
   fireEvent.keyDown(card, { key: 'Enter' });
   expect(mockOnClick).toHaveBeenCalled();
 });
 ```
 
 #### Performance Benchmarks
+
 ```typescript
 // Animation performance testing
 test('animations maintain 60fps', async () => {
   const { container } = render(<BalanceMeter value={50} animated />);
-  
+
   // Start performance measurement
   const startTime = performance.now();
-  
+
   // Trigger animation
   fireEvent.click(container.firstChild);
-  
+
   // Wait for animation to complete
   await waitFor(() => {
     const endTime = performance.now();
     const duration = endTime - startTime;
     const fps = 1000 / (duration / 60); // Assuming 60 frames
-    
+
     expect(fps).toBeGreaterThanOrEqual(60);
   });
 });
@@ -1065,6 +1099,7 @@ test('animations maintain 60fps', async () => {
 ### Accessibility Testing Checklist
 
 #### Automated Testing
+
 - [ ] axe-core accessibility violations: 0
 - [ ] Color contrast ratios meet WCAG AAA standards
 - [ ] All interactive elements have accessible names
@@ -1072,6 +1107,7 @@ test('animations maintain 60fps', async () => {
 - [ ] Focus order is logical and predictable
 
 #### Manual Testing
+
 - [ ] Screen reader compatibility (VoiceOver, NVDA, JAWS)
 - [ ] Keyboard-only navigation works for all functions
 - [ ] Touch targets are large enough for gym conditions
@@ -1081,12 +1117,14 @@ test('animations maintain 60fps', async () => {
 ### Design Validation Metrics
 
 #### Performance Targets
+
 - **Time to start recording**: < 5 seconds
 - **Touch target success rate**: > 95%
 - **Form feedback visibility**: 100% in gym lighting
 - **Navigation clarity**: Single-tap access to all primary functions
 
 #### User Experience Validation
+
 ```typescript
 // Track user interaction success rates
 const trackInteraction = (action: string, success: boolean) => {
@@ -1099,7 +1137,7 @@ const trackInteraction = (action: string, success: boolean) => {
 };
 
 // Example usage
-<Button 
+<Button
   onClick={() => {
     const success = startRecording();
     trackInteraction('start_recording', success);
@@ -1124,6 +1162,7 @@ This unified design system provides comprehensive guidance for creating a gym-op
 The design system serves as the single source of truth for all UI/UX decisions, ensuring consistency across the application while maintaining the flexibility needed for future enhancements.
 
 **Key Differentiators**:
+
 - Large touch targets optimized for gym gloves
 - High contrast visuals for poor lighting conditions
 - Minimal cognitive load during workouts

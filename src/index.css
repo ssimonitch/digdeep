@@ -132,7 +132,7 @@
     --accent: oklch(0.279 0.041 260.031);
     --accent-foreground: oklch(0.984 0.003 247.858);
   }
-  
+
   .dark .theme-invert {
     --background: oklch(1 0 0);
     --foreground: oklch(0.129 0.042 264.695);

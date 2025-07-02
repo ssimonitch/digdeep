@@ -11,7 +11,7 @@ import eslintPluginImport from 'eslint-plugin-import';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'vitest.config.ts'] },
   {
     extends: [
       eslintJs.configs.recommended,

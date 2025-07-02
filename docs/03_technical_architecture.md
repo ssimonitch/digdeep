@@ -22,6 +22,7 @@ This document defines the complete technical architecture for DigDeep, a web-bas
 ## Technology Stack
 
 ### Frontend (Unified)
+
 - **Build Tool**: Vite 7.0.0 with SWC (fastest compilation)
 - **Framework**: React 19.1.0 with TypeScript 5.8.3 (strict mode)
 - **Styling**: Tailwind CSS 4.1.10 with CSS-in-JS for dynamic styles
@@ -31,12 +32,14 @@ This document defines the complete technical architecture for DigDeep, a web-bas
 - **UI Components**: Radix UI + custom gym-optimized components
 
 ### Backend & Services
+
 - **BaaS**: Supabase 2.50.0 (PostgreSQL + Auth + Realtime + Storage)
 - **Video Storage**: Cloudinary (25GB free, automatic optimization)
 - **Deployment**: Vercel (Vite optimized, edge functions)
 - **Error Tracking**: Sentry (free tier, performance monitoring)
 
 ### Development Tools
+
 - **Code Quality**: ESLint 9.25.0 + Prettier + Husky
 - **Testing**: Vitest 3.2.3 + @vitest/browser + React Testing Library
 - **Type Safety**: TypeScript strict mode with project references
@@ -140,7 +143,7 @@ class HighPerformancePipeline {
       this.analysisWorker.postMessage({
         type: 'ANALYZE_POSE',
         poseData: data.landmarks,
-        timestamp: data.timestamp
+        timestamp: data.timestamp,
       });
     };
 
@@ -150,7 +153,7 @@ class HighPerformancePipeline {
       this.feedbackWorker.postMessage({
         type: 'GENERATE_FEEDBACK',
         analysis: data,
-        timestamp: data.timestamp
+        timestamp: data.timestamp,
       });
     };
 
@@ -162,12 +165,12 @@ class HighPerformancePipeline {
 
   processFrame(videoFrame: VideoFrame) {
     const timestamp = performance.now();
-    
+
     // Send to pose detection worker (non-blocking)
     this.poseWorker.postMessage({
       type: 'DETECT_POSE',
       imageData: videoFrame.getImageData(),
-      timestamp
+      timestamp,
     });
   }
 }
@@ -188,13 +191,13 @@ class OptimizedPoseDetector {
     this.detector = await PoseDetector.createFromOptions({
       baseOptions: {
         modelAssetPath: '/models/pose_landmarker.task',
-        delegate: 'GPU' // Use GPU acceleration for 30+ FPS
+        delegate: 'GPU', // Use GPU acceleration for 30+ FPS
       },
       runningMode: 'VIDEO',
       numPoses: 1, // Single person optimization
       minPoseDetectionConfidence: 0.5,
       minPosePresenceConfidence: 0.5,
-      minTrackingConfidence: 0.5
+      minTrackingConfidence: 0.5,
     });
   }
 
@@ -207,16 +210,13 @@ class OptimizedPoseDetector {
     this.lastDetectionTime = timestamp;
 
     try {
-      const results = await this.detector.detectForVideo(
-        imageData, 
-        timestamp
-      );
+      const results = await this.detector.detectForVideo(imageData, timestamp);
 
       return {
         landmarks: results.landmarks[0] || [],
         worldLandmarks: results.worldLandmarks[0] || [],
         timestamp,
-        confidence: results.landmarks[0] ? 1.0 : 0.0
+        confidence: results.landmarks[0] ? 1.0 : 0.0,
       };
     } catch (error) {
       console.error('Pose detection error:', error);
@@ -253,10 +253,8 @@ class VideoFramePool {
   private readonly MAX_POOL_SIZE = 10;
 
   acquire(width: number, height: number): VideoFrame {
-    const reusableFrame = this.pool.find(f => 
-      f.displayWidth === width && f.displayHeight === height
-    );
-    
+    const reusableFrame = this.pool.find((f) => f.displayWidth === width && f.displayHeight === height);
+
     if (reusableFrame) {
       this.pool.splice(this.pool.indexOf(reusableFrame), 1);
       return reusableFrame;
@@ -290,9 +288,8 @@ class PerformanceMonitor {
 
   getCurrentFPS(): number {
     if (this.frameTimestamps.length < 2) return 0;
-    
-    const timeSpan = this.frameTimestamps[this.frameTimestamps.length - 1] - 
-                    this.frameTimestamps[0];
+
+    const timeSpan = this.frameTimestamps[this.frameTimestamps.length - 1] - this.frameTimestamps[0];
     return (this.frameTimestamps.length - 1) / (timeSpan / 1000);
   }
 
@@ -324,23 +321,23 @@ CREATE TABLE user_profiles (
 CREATE TABLE workout_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- Session metadata
   title TEXT NOT NULL DEFAULT 'Workout Session',
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'cancelled')),
   workout_type TEXT, -- 'powerlifting', 'general', etc.
-  
+
   -- Timing
   started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   completed_at TIMESTAMPTZ,
   duration_seconds INTEGER, -- calculated on completion
-  
+
   -- Session notes and metadata
   notes TEXT,
   gym_location TEXT,
   equipment_used TEXT[],
   session_metadata JSONB DEFAULT '{}',
-  
+
   -- Tracking
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -350,27 +347,27 @@ CREATE TABLE workout_sessions (
 CREATE TABLE exercises (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id UUID REFERENCES workout_sessions(id) ON DELETE CASCADE,
-  
+
   -- Exercise definition
   exercise_type TEXT NOT NULL, -- 'squat', 'bench', 'deadlift'
   exercise_name TEXT NOT NULL, -- 'Back Squat', 'Competition Bench', etc.
   order_in_session INTEGER NOT NULL DEFAULT 1,
-  
+
   -- Exercise metadata
   target_weight DECIMAL(5,2),
   target_reps INTEGER,
   target_sets INTEGER,
   rest_period_seconds INTEGER,
-  
+
   -- Exercise notes
   notes TEXT,
   equipment_notes TEXT,
   exercise_metadata JSONB DEFAULT '{}',
-  
+
   -- Status tracking
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'skipped')),
   completed_at TIMESTAMPTZ,
-  
+
   -- Tracking
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -380,26 +377,26 @@ CREATE TABLE exercises (
 CREATE TABLE exercise_sets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   exercise_id UUID REFERENCES exercises(id) ON DELETE CASCADE,
-  
+
   -- Set details
   set_number INTEGER NOT NULL,
   weight DECIMAL(5,2) NOT NULL,
   target_reps INTEGER,
   actual_reps INTEGER,
-  
+
   -- Performance metrics
   rpe DECIMAL(2,1), -- Rate of Perceived Exertion (6.0-10.0)
   rest_duration_seconds INTEGER,
   tempo TEXT, -- '3-1-2-1' format
-  
+
   -- Set metadata
   notes TEXT,
   set_metadata JSONB DEFAULT '{}',
-  
+
   -- Status
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'failed')),
   completed_at TIMESTAMPTZ,
-  
+
   -- Tracking
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -409,28 +406,28 @@ CREATE TABLE recordings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   set_id UUID REFERENCES exercise_sets(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Denormalized for RLS
-  
+
   -- Recording metadata
   filename TEXT NOT NULL,
   video_url TEXT NOT NULL, -- Cloudinary URL
   thumbnail_url TEXT, -- Auto-generated thumbnail
   duration_seconds DECIMAL(5,2),
   file_size_bytes BIGINT,
-  
+
   -- Recording settings
   camera_position TEXT DEFAULT 'rear', -- 'rear', 'side', 'front'
   resolution TEXT, -- '1280x720', '1920x1080'
   frame_rate INTEGER DEFAULT 30,
-  
+
   -- Processing status
   status TEXT NOT NULL DEFAULT 'processing' CHECK (
     status IN ('uploading', 'processing', 'completed', 'failed', 'deleted')
   ),
   processed_at TIMESTAMPTZ,
-  
+
   -- Recording metadata
   recording_metadata JSONB DEFAULT '{}',
-  
+
   -- Tracking
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -440,22 +437,22 @@ CREATE TABLE recordings (
 CREATE TABLE form_analyses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   recording_id UUID REFERENCES recordings(id) ON DELETE CASCADE,
-  
+
   -- Analysis metadata
   analysis_version TEXT NOT NULL DEFAULT 'v1.0', -- Track analysis algorithm version
   model_version TEXT, -- MediaPipe model version
-  
+
   -- Overall scores (0.0 - 1.0)
   overall_score DECIMAL(3,2),
   depth_score DECIMAL(3,2),
   balance_score DECIMAL(3,2),
   bar_path_score DECIMAL(3,2),
   tempo_score DECIMAL(3,2),
-  
+
   -- Detailed analysis data
   pose_landmarks JSONB, -- Raw MediaPipe landmarks
   frame_analysis JSONB, -- Per-frame analysis data
-  
+
   -- Key metrics
   max_depth_percentage DECIMAL(5,2), -- Percentage of full squat depth
   balance_deviation_max DECIMAL(5,2), -- Maximum lateral deviation
@@ -463,20 +460,20 @@ CREATE TABLE form_analyses (
   tempo_eccentric_seconds DECIMAL(4,2), -- Downward phase timing
   tempo_pause_seconds DECIMAL(4,2), -- Bottom pause timing
   tempo_concentric_seconds DECIMAL(4,2), -- Upward phase timing
-  
+
   -- Analysis insights
   primary_issues TEXT[], -- Array of detected form issues
   recommendations TEXT[], -- Array of improvement suggestions
   improvement_focus TEXT, -- Primary area for improvement
-  
+
   -- Technical data
   frames_analyzed INTEGER,
   processing_duration_ms INTEGER,
   confidence_score DECIMAL(3,2), -- Analysis confidence (0.0-1.0)
-  
+
   -- Analysis metadata
   analysis_metadata JSONB DEFAULT '{}',
-  
+
   -- Tracking
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -485,16 +482,16 @@ CREATE TABLE form_analyses (
 CREATE TABLE feedback_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   recording_id UUID REFERENCES recordings(id) ON DELETE CASCADE,
-  
+
   -- Event details
   event_type TEXT NOT NULL, -- 'depth_warning', 'balance_alert', 'tempo_cue'
   event_timestamp_ms INTEGER NOT NULL, -- Milliseconds into recording
   severity TEXT NOT NULL CHECK (severity IN ('info', 'warning', 'error')),
-  
+
   -- Event data
   message TEXT NOT NULL,
   event_data JSONB DEFAULT '{}',
-  
+
   -- Tracking
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -503,28 +500,28 @@ CREATE TABLE feedback_events (
 CREATE TABLE user_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
-  
+
   -- Feedback preferences
   audio_feedback_enabled BOOLEAN DEFAULT true,
   visual_feedback_enabled BOOLEAN DEFAULT true,
   haptic_feedback_enabled BOOLEAN DEFAULT false,
-  
+
   -- Analysis preferences
   preferred_analysis_sensitivity DECIMAL(2,1) DEFAULT 7.0, -- 1.0-10.0
   preferred_camera_position TEXT DEFAULT 'rear',
   auto_record_enabled BOOLEAN DEFAULT false,
-  
+
   -- App preferences
   theme TEXT DEFAULT 'dark' CHECK (theme IN ('light', 'dark', 'system')),
   measurement_units TEXT DEFAULT 'metric' CHECK (measurement_units IN ('metric', 'imperial')),
-  
+
   -- Notification preferences
   workout_reminders BOOLEAN DEFAULT true,
   progress_notifications BOOLEAN DEFAULT true,
-  
+
   -- Settings metadata
   settings_metadata JSONB DEFAULT '{}',
-  
+
   -- Tracking
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -578,9 +575,9 @@ CREATE POLICY "Users can manage exercises in their sessions" ON exercises
 CREATE POLICY "Users can manage sets in their exercises" ON exercise_sets
   FOR ALL USING (
     auth.uid() = (
-      SELECT ws.user_id 
-      FROM workout_sessions ws 
-      JOIN exercises e ON e.session_id = ws.id 
+      SELECT ws.user_id
+      FROM workout_sessions ws
+      JOIN exercises e ON e.session_id = ws.id
       WHERE e.id = exercise_id
     )
   );
@@ -618,7 +615,7 @@ export class DatabaseService {
       .insert({
         title: data.title || 'Workout Session',
         workout_type: data.workoutType,
-        started_at: new Date().toISOString()
+        started_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -629,15 +626,15 @@ export class DatabaseService {
 
   async completeWorkoutSession(sessionId: string): Promise<void> {
     const completedAt = new Date().toISOString();
-    
+
     const { error } = await this.supabase
       .from('workout_sessions')
       .update({
         status: 'completed',
         completed_at: completedAt,
         duration_seconds: this.supabase.rpc('calculate_session_duration', {
-          session_id: sessionId
-        })
+          session_id: sessionId,
+        }),
       })
       .eq('id', sessionId);
 
@@ -655,7 +652,7 @@ export class DatabaseService {
         target_weight: exerciseData.targetWeight,
         target_reps: exerciseData.targetReps,
         target_sets: exerciseData.targetSets,
-        order_in_session: await this.getNextExerciseOrder(sessionId)
+        order_in_session: await this.getNextExerciseOrder(sessionId),
       })
       .select()
       .single();
@@ -667,7 +664,7 @@ export class DatabaseService {
   // Set Management with Optimistic Updates
   async addSet(exerciseId: string, setData: CreateSetData): Promise<ExerciseSet> {
     const setNumber = await this.getNextSetNumber(exerciseId);
-    
+
     const { data: set, error } = await this.supabase
       .from('exercise_sets')
       .insert({
@@ -676,7 +673,7 @@ export class DatabaseService {
         weight: setData.weight,
         target_reps: setData.targetReps,
         actual_reps: setData.actualReps,
-        rpe: setData.rpe
+        rpe: setData.rpe,
       })
       .select()
       .single();
@@ -700,7 +697,7 @@ export class DatabaseService {
         camera_position: recordingData.cameraPosition,
         resolution: recordingData.resolution,
         frame_rate: recordingData.frameRate,
-        status: 'completed'
+        status: 'completed',
       })
       .select()
       .single();
@@ -711,32 +708,30 @@ export class DatabaseService {
 
   // Analysis Results
   async saveFormAnalysis(recordingId: string, analysis: FormAnalysisData): Promise<void> {
-    const { error } = await this.supabase
-      .from('form_analyses')
-      .insert({
-        recording_id: recordingId,
-        analysis_version: 'v1.0',
-        model_version: analysis.modelVersion,
-        overall_score: analysis.overallScore,
-        depth_score: analysis.depthScore,
-        balance_score: analysis.balanceScore,
-        bar_path_score: analysis.barPathScore,
-        tempo_score: analysis.tempoScore,
-        pose_landmarks: analysis.poseLandmarks,
-        frame_analysis: analysis.frameAnalysis,
-        max_depth_percentage: analysis.maxDepthPercentage,
-        balance_deviation_max: analysis.balanceDeviationMax,
-        bar_path_deviation: analysis.barPathDeviation,
-        tempo_eccentric_seconds: analysis.tempoEccentric,
-        tempo_pause_seconds: analysis.tempoPause,
-        tempo_concentric_seconds: analysis.tempoConcentric,
-        primary_issues: analysis.primaryIssues,
-        recommendations: analysis.recommendations,
-        improvement_focus: analysis.improvementFocus,
-        frames_analyzed: analysis.framesAnalyzed,
-        processing_duration_ms: analysis.processingDuration,
-        confidence_score: analysis.confidenceScore
-      });
+    const { error } = await this.supabase.from('form_analyses').insert({
+      recording_id: recordingId,
+      analysis_version: 'v1.0',
+      model_version: analysis.modelVersion,
+      overall_score: analysis.overallScore,
+      depth_score: analysis.depthScore,
+      balance_score: analysis.balanceScore,
+      bar_path_score: analysis.barPathScore,
+      tempo_score: analysis.tempoScore,
+      pose_landmarks: analysis.poseLandmarks,
+      frame_analysis: analysis.frameAnalysis,
+      max_depth_percentage: analysis.maxDepthPercentage,
+      balance_deviation_max: analysis.balanceDeviationMax,
+      bar_path_deviation: analysis.barPathDeviation,
+      tempo_eccentric_seconds: analysis.tempoEccentric,
+      tempo_pause_seconds: analysis.tempoPause,
+      tempo_concentric_seconds: analysis.tempoConcentric,
+      primary_issues: analysis.primaryIssues,
+      recommendations: analysis.recommendations,
+      improvement_focus: analysis.improvementFocus,
+      frames_analyzed: analysis.framesAnalyzed,
+      processing_duration_ms: analysis.processingDuration,
+      confidence_score: analysis.confidenceScore,
+    });
 
     if (error) throw new DatabaseError('Failed to save analysis', error);
   }
@@ -745,7 +740,8 @@ export class DatabaseService {
   async getActiveSession(userId: string): Promise<WorkoutSession | null> {
     const { data, error } = await this.supabase
       .from('workout_sessions')
-      .select(`
+      .select(
+        `
         *,
         exercises (
           *,
@@ -754,7 +750,8 @@ export class DatabaseService {
             recordings (*)
           )
         )
-      `)
+      `,
+      )
       .eq('user_id', userId)
       .eq('status', 'active')
       .order('started_at', { ascending: false })
@@ -808,7 +805,7 @@ export class DatabaseService {
       equipmentUsed: data.equipment_used || [],
       metadata: data.session_metadata || {},
       createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      updatedAt: new Date(data.updated_at),
     };
   }
 
@@ -818,7 +815,10 @@ export class DatabaseService {
 
 // Error handling
 export class DatabaseError extends Error {
-  constructor(message: string, public originalError?: any) {
+  constructor(
+    message: string,
+    public originalError?: any,
+  ) {
     super(message);
     this.name = 'DatabaseError';
   }
@@ -907,15 +907,15 @@ export function useCamera() {
   const startCamera = useCallback(async (config: CameraConfig) => {
     try {
       setError(null);
-      
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: config.width },
           height: { ideal: config.height },
           frameRate: { ideal: config.frameRate },
-          facingMode: config.facingMode
+          facingMode: config.facingMode,
         },
-        audio: false // Video-only for pose detection
+        audio: false, // Video-only for pose detection
       });
 
       setStream(mediaStream);
@@ -936,10 +936,10 @@ export function useCamera() {
 
   const stopCamera = useCallback(() => {
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
       setStream(null);
       setIsActive(false);
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
@@ -957,7 +957,7 @@ export function useCamera() {
 
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
-    
+
     ctx.drawImage(videoRef.current, 0, 0);
     return ctx.getImageData(0, 0, canvas.width, canvas.height);
   }, [isActive]);
@@ -976,7 +976,7 @@ export function useCamera() {
     videoRef,
     startCamera,
     stopCamera,
-    captureFrame
+    captureFrame,
   };
 }
 
@@ -990,7 +990,7 @@ export function useRecording() {
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
-  
+
   const { stream, startCamera, stopCamera, ...cameraProps } = useCamera();
 
   const startRecording = useCallback(async () => {
@@ -1002,7 +1002,7 @@ export function useRecording() {
       // High-quality recording settings for analysis
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 2500000 // 2.5 Mbps for quality
+        videoBitsPerSecond: 2500000, // 2.5 Mbps for quality
       });
 
       recordedChunksRef.current = [];
@@ -1015,7 +1015,7 @@ export function useRecording() {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunksRef.current, {
-          type: 'video/webm'
+          type: 'video/webm',
         });
         setRecordedBlob(blob);
         setIsRecording(false);
@@ -1025,7 +1025,7 @@ export function useRecording() {
       mediaRecorder.start(100); // Collect data every 100ms
       mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
-      
+
       EventBus.emit('RECORDING_STARTED');
     } catch (error) {
       EventBus.emit('RECORDING_ERROR', { error });
@@ -1049,13 +1049,13 @@ export function useRecording() {
     startCamera,
     stopCamera,
     ...cameraProps,
-    
+
     // Recording props
     isRecording,
     recordedBlob,
     startRecording,
     stopRecording,
-    resetRecording
+    resetRecording,
   };
 }
 ```
@@ -1103,13 +1103,13 @@ export class SquatAnalysisEngine {
       depth: this.calculateDepth(),
       balance: this.calculateBalance(),
       barPath: this.calculateBarPath(),
-      tempo: this.calculateTempo()
+      tempo: this.calculateTempo(),
     };
   }
 
   private updateFrameHistory(landmarks: any[], timestamp: number) {
     this.frameHistory.push({ landmarks, timestamp });
-    
+
     if (this.frameHistory.length > this.MAX_HISTORY) {
       this.frameHistory.shift();
     }
@@ -1133,18 +1133,18 @@ export class SquatAnalysisEngine {
     // Calculate hip height relative to knee height
     const avgHipY = (leftHip.y + rightHip.y) / 2;
     const avgKneeY = (leftKnee.y + rightKnee.y) / 2;
-    
+
     // Depth calculation (higher Y = lower in frame)
     const depthRatio = Math.max(0, (avgHipY - avgKneeY) / (avgKneeY * 0.2));
     const depthPercentage = Math.min(100, depthRatio * 100);
-    
+
     // Parallel achieved when hips are at or below knee level
     const achievedParallel = avgHipY >= avgKneeY;
 
     return {
       percentage: depthPercentage,
       achieved: achievedParallel,
-      maxDepth: depthPercentage
+      maxDepth: depthPercentage,
     };
   }
 
@@ -1163,7 +1163,7 @@ export class SquatAnalysisEngine {
 
     // Calculate center of hips
     const hipCenterX = (leftHip.x + rightHip.x) / 2;
-    
+
     // Calculate lateral shift from center (nose as reference)
     const lateralShift = hipCenterX - nose.x;
     const shiftMagnitude = Math.abs(lateralShift);
@@ -1176,7 +1176,7 @@ export class SquatAnalysisEngine {
     return {
       lateralShift: lateralShift * 100, // Convert to percentage
       direction: lateralShift > 0.02 ? 'right' : lateralShift < -0.02 ? 'left' : 'center',
-      severity
+      severity,
     };
   }
 
@@ -1186,18 +1186,20 @@ export class SquatAnalysisEngine {
     }
 
     // Use shoulder midpoint as bar position proxy
-    const barPositions = this.frameHistory.map(frame => {
-      const leftShoulder = frame.landmarks[11];
-      const rightShoulder = frame.landmarks[12];
-      
-      if (!leftShoulder || !rightShoulder) return null;
-      
-      return {
-        x: (leftShoulder.x + rightShoulder.x) / 2,
-        y: (leftShoulder.y + rightShoulder.y) / 2,
-        timestamp: frame.timestamp
-      };
-    }).filter(Boolean);
+    const barPositions = this.frameHistory
+      .map((frame) => {
+        const leftShoulder = frame.landmarks[11];
+        const rightShoulder = frame.landmarks[12];
+
+        if (!leftShoulder || !rightShoulder) return null;
+
+        return {
+          x: (leftShoulder.x + rightShoulder.x) / 2,
+          y: (leftShoulder.y + rightShoulder.y) / 2,
+          timestamp: frame.timestamp,
+        };
+      })
+      .filter(Boolean);
 
     if (barPositions.length < 5) {
       return { deviation: 0, consistency: 1, efficiency: 1 };
@@ -1205,68 +1207,71 @@ export class SquatAnalysisEngine {
 
     // Calculate horizontal deviation from mean
     const meanX = barPositions.reduce((sum, pos) => sum + pos!.x, 0) / barPositions.length;
-    const deviations = barPositions.map(pos => Math.abs(pos!.x - meanX));
+    const deviations = barPositions.map((pos) => Math.abs(pos!.x - meanX));
     const maxDeviation = Math.max(...deviations);
     const avgDeviation = deviations.reduce((sum, dev) => sum + dev, 0) / deviations.length;
 
     // Calculate consistency (lower deviation = higher consistency)
-    const consistency = Math.max(0, 1 - (avgDeviation * 10)); // Scale to 0-1
+    const consistency = Math.max(0, 1 - avgDeviation * 10); // Scale to 0-1
 
     // Calculate efficiency (minimal horizontal movement)
-    const efficiency = Math.max(0, 1 - (maxDeviation * 5)); // Scale to 0-1
+    const efficiency = Math.max(0, 1 - maxDeviation * 5); // Scale to 0-1
 
     return {
       deviation: maxDeviation * 100, // Convert to percentage
       consistency,
-      efficiency
+      efficiency,
     };
   }
 
   private calculateTempo(): SquatMetrics['tempo'] {
-    if (this.frameHistory.length < 30) { // Need at least 1 second of data
+    if (this.frameHistory.length < 30) {
+      // Need at least 1 second of data
       return { eccentric: 0, pause: 0, concentric: 0, total: 0 };
     }
 
     // Analyze hip height over time to detect phases
-    const hipHeights = this.frameHistory.map((frame, index) => {
-      const leftHip = frame.landmarks[23];
-      const rightHip = frame.landmarks[24];
-      
-      if (!leftHip || !rightHip) return null;
-      
-      return {
-        height: (leftHip.y + rightHip.y) / 2,
-        timestamp: frame.timestamp,
-        index
-      };
-    }).filter(Boolean);
+    const hipHeights = this.frameHistory
+      .map((frame, index) => {
+        const leftHip = frame.landmarks[23];
+        const rightHip = frame.landmarks[24];
+
+        if (!leftHip || !rightHip) return null;
+
+        return {
+          height: (leftHip.y + rightHip.y) / 2,
+          timestamp: frame.timestamp,
+          index,
+        };
+      })
+      .filter(Boolean);
 
     if (hipHeights.length < 30) {
       return { eccentric: 0, pause: 0, concentric: 0, total: 0 };
     }
 
     // Find the lowest point (bottom of squat)
-    const lowestPoint = hipHeights.reduce((min, current) => 
-      current!.height > min!.height ? current : min
-    );
+    const lowestPoint = hipHeights.reduce((min, current) => (current!.height > min!.height ? current : min));
 
     // Find eccentric phase (descent to lowest point)
-    const eccentricFrames = hipHeights.filter(h => h!.index <= lowestPoint!.index);
-    const eccentricDuration = eccentricFrames.length > 0 ? 
-      (eccentricFrames[eccentricFrames.length - 1]!.timestamp - eccentricFrames[0]!.timestamp) / 1000 : 0;
+    const eccentricFrames = hipHeights.filter((h) => h!.index <= lowestPoint!.index);
+    const eccentricDuration =
+      eccentricFrames.length > 0
+        ? (eccentricFrames[eccentricFrames.length - 1]!.timestamp - eccentricFrames[0]!.timestamp) / 1000
+        : 0;
 
     // Find concentric phase (ascent from lowest point)
-    const concentricFrames = hipHeights.filter(h => h!.index > lowestPoint!.index);
-    const concentricDuration = concentricFrames.length > 0 ?
-      (concentricFrames[concentricFrames.length - 1]!.timestamp - concentricFrames[0]!.timestamp) / 1000 : 0;
+    const concentricFrames = hipHeights.filter((h) => h!.index > lowestPoint!.index);
+    const concentricDuration =
+      concentricFrames.length > 0
+        ? (concentricFrames[concentricFrames.length - 1]!.timestamp - concentricFrames[0]!.timestamp) / 1000
+        : 0;
 
     // Pause calculation (time spent within 5% of lowest position)
     const pauseThreshold = 0.05; // 5% of frame height
-    const pauseFrames = hipHeights.filter(h => 
-      Math.abs(h!.height - lowestPoint!.height) <= pauseThreshold
-    );
-    const pauseDuration = pauseFrames.length > 0 ?
-      (pauseFrames[pauseFrames.length - 1]!.timestamp - pauseFrames[0]!.timestamp) / 1000 : 0;
+    const pauseFrames = hipHeights.filter((h) => Math.abs(h!.height - lowestPoint!.height) <= pauseThreshold);
+    const pauseDuration =
+      pauseFrames.length > 0 ? (pauseFrames[pauseFrames.length - 1]!.timestamp - pauseFrames[0]!.timestamp) / 1000 : 0;
 
     const totalDuration = eccentricDuration + concentricDuration;
 
@@ -1274,7 +1279,7 @@ export class SquatAnalysisEngine {
       eccentric: eccentricDuration,
       pause: pauseDuration,
       concentric: concentricDuration,
-      total: totalDuration
+      total: totalDuration,
     };
   }
 }
@@ -1290,7 +1295,7 @@ export function useRealTimeAnalysis() {
   const [performanceStats, setPerformanceStats] = useState({
     fps: 0,
     avgProcessingTime: 0,
-    lastFrameTime: 0
+    lastFrameTime: 0,
   });
 
   const analysisEngineRef = useRef(new SquatAnalysisEngine());
@@ -1301,12 +1306,12 @@ export function useRealTimeAnalysis() {
   useEffect(() => {
     // Initialize analysis worker
     workerRef.current = new Worker('/workers/analysis-calculation.worker.ts');
-    
+
     workerRef.current.onmessage = ({ data }) => {
       if (data.type === 'ANALYSIS_RESULT') {
         setCurrentMetrics(data.metrics);
         updatePerformanceStats(data.processingTime);
-        
+
         // Emit analysis result for feedback
         EventBus.emit('REAL_TIME_ANALYSIS', data.metrics);
       }
@@ -1324,19 +1329,19 @@ export function useRealTimeAnalysis() {
       if (!isAnalyzing || !workerRef.current) return;
 
       const timestamp = performance.now();
-      
+
       // Send pose data to analysis worker
       workerRef.current.postMessage({
         type: 'ANALYZE_POSE',
         landmarks: data.landmarks,
-        timestamp
+        timestamp,
       });
 
       frameCounterRef.current++;
     };
 
     EventBus.on('POSE_DETECTED', handlePoseDetection);
-    
+
     return () => {
       EventBus.off('POSE_DETECTED', handlePoseDetection);
     };
@@ -1357,19 +1362,20 @@ export function useRealTimeAnalysis() {
   const updatePerformanceStats = (processingTime: number) => {
     const now = performance.now();
     const fpsCounter = fpsCounterRef.current;
-    
+
     fpsCounter.frames++;
     const elapsed = now - fpsCounter.lastTime;
-    
-    if (elapsed >= 1000) { // Update FPS every second
+
+    if (elapsed >= 1000) {
+      // Update FPS every second
       const fps = (fpsCounter.frames * 1000) / elapsed;
-      
-      setPerformanceStats(prev => ({
+
+      setPerformanceStats((prev) => ({
         fps: Math.round(fps),
         avgProcessingTime: Math.round(processingTime),
-        lastFrameTime: now
+        lastFrameTime: now,
       }));
-      
+
       fpsCounter.frames = 0;
       fpsCounter.lastTime = now;
     }
@@ -1380,7 +1386,7 @@ export function useRealTimeAnalysis() {
     currentMetrics,
     performanceStats,
     startAnalysis,
-    stopAnalysis
+    stopAnalysis,
   };
 }
 ```
@@ -1403,9 +1409,9 @@ class SimpleEventBus {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
-    
+
     this.listeners.get(event)!.add(callback);
-    
+
     // Return unsubscribe function
     return () => {
       this.listeners.get(event)?.delete(callback);
@@ -1416,7 +1422,7 @@ class SimpleEventBus {
   emit<T = any>(event: string, data?: T): void {
     const callbacks = this.listeners.get(event);
     if (callbacks) {
-      callbacks.forEach(callback => {
+      callbacks.forEach((callback) => {
         try {
           callback(data);
         } catch (error) {
@@ -1485,14 +1491,14 @@ export function createTypedEventBus<T extends Record<string, any>>() {
     on<K extends keyof T>(event: K, callback: (data: T[K]) => void) {
       return EventBus.on(event as string, callback);
     },
-    
+
     emit<K extends keyof T>(event: K, data: T[K]) {
       EventBus.emit(event as string, data);
     },
-    
+
     off<K extends keyof T>(event: K, callback: (data: T[K]) => void) {
       EventBus.off(event as string, callback);
-    }
+    },
   };
 }
 
@@ -1508,11 +1514,7 @@ import { EventBus } from '@/shared/events';
 
 export function useFeatureCommunication() {
   // Cross-feature communication helper
-  const subscribeToFeature = useCallback(<T>(
-    event: string,
-    handler: (data: T) => void,
-    dependencies: any[] = []
-  ) => {
+  const subscribeToFeature = useCallback(<T>(event: string, handler: (data: T) => void, dependencies: any[] = []) => {
     useEffect(() => {
       const unsubscribe = EventBus.on(event, handler);
       return unsubscribe;
@@ -1525,7 +1527,7 @@ export function useFeatureCommunication() {
 
   return {
     subscribeToFeature,
-    notifyFeature
+    notifyFeature,
   };
 }
 
@@ -1538,7 +1540,7 @@ interface RecordingState {
   isRecording: boolean;
   currentSessionId: string | null;
   recordingDuration: number;
-  
+
   startRecording: (sessionId: string) => void;
   stopRecording: () => void;
 }
@@ -1550,7 +1552,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
 
   startRecording: (sessionId) => {
     set({ isRecording: true, currentSessionId: sessionId });
-    
+
     // Notify other features
     EventBus.emit('RECORDING_STARTED', { sessionId });
   },
@@ -1558,10 +1560,10 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   stopRecording: () => {
     const { currentSessionId } = get();
     set({ isRecording: false, recordingDuration: 0 });
-    
+
     // Notify other features
     EventBus.emit('RECORDING_STOPPED', { sessionId: currentSessionId });
-  }
+  },
 }));
 
 // Auto-subscribe to cross-feature events
@@ -1603,41 +1605,43 @@ export class CloudinaryMediaService {
   private readonly UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   async uploadVideo(
-    file: Blob, 
+    file: Blob,
     metadata: {
       filename: string;
       setId: string;
       exerciseType: string;
     },
-    onProgress?: (progress: UploadProgress) => void
+    onProgress?: (progress: UploadProgress) => void,
   ): Promise<UploadResult> {
-    
     const formData = new FormData();
     formData.append('file', file, metadata.filename);
     formData.append('upload_preset', this.UPLOAD_PRESET);
     formData.append('resource_type', 'video');
     formData.append('folder', `digdeep/workouts/${metadata.exerciseType}`);
     formData.append('public_id', `${metadata.setId}_${Date.now()}`);
-    
+
     // Add metadata tags
     formData.append('tags', `workout,${metadata.exerciseType},set-${metadata.setId}`);
-    
+
     // Video processing parameters
-    formData.append('eager', [
-      'c_fill,h_300,w_400,q_auto:good,f_auto', // Thumbnail
-      'q_auto:good,f_auto', // Optimized video
-    ].join('|'));
+    formData.append(
+      'eager',
+      [
+        'c_fill,h_300,w_400,q_auto:good,f_auto', // Thumbnail
+        'q_auto:good,f_auto', // Optimized video
+      ].join('|'),
+    );
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      
+
       // Progress tracking
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable && onProgress) {
           onProgress({
             loaded: event.loaded,
             total: event.total,
-            percentage: Math.round((event.loaded / event.total) * 100)
+            percentage: Math.round((event.loaded / event.total) * 100),
           });
         }
       };
@@ -1651,7 +1655,7 @@ export class CloudinaryMediaService {
               publicId: result.public_id,
               thumbnailUrl: result.eager?.[0]?.secure_url,
               duration: result.duration,
-              fileSize: result.bytes
+              fileSize: result.bytes,
             });
           } catch (error) {
             reject(new Error('Failed to parse upload response'));
@@ -1676,7 +1680,7 @@ export class CloudinaryMediaService {
     const response = await fetch('/api/cloudinary/delete', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ publicId })
+      body: JSON.stringify({ publicId }),
     });
 
     if (!response.ok) {
@@ -1707,11 +1711,7 @@ export function useVideoUpload() {
   const mediaService = new CloudinaryMediaService();
   const databaseService = new DatabaseService();
 
-  const uploadRecording = async (
-    blob: Blob,
-    setId: string,
-    exerciseType: string
-  ) => {
+  const uploadRecording = async (blob: Blob, setId: string, exerciseType: string) => {
     setIsUploading(true);
     setError(null);
     setUploadProgress(0);
@@ -1723,11 +1723,11 @@ export function useVideoUpload() {
         {
           filename: `${setId}_${Date.now()}.webm`,
           setId,
-          exerciseType
+          exerciseType,
         },
         (progress) => {
           setUploadProgress(progress.percentage);
-        }
+        },
       );
 
       // Save recording metadata to database
@@ -1739,12 +1739,12 @@ export function useVideoUpload() {
         fileSize: uploadResult.fileSize,
         cameraPosition: 'rear',
         resolution: '1280x720',
-        frameRate: 30
+        frameRate: 30,
       });
 
       setIsUploading(false);
       setUploadProgress(100);
-      
+
       return recording;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Upload failed';
@@ -1758,7 +1758,7 @@ export function useVideoUpload() {
     isUploading,
     uploadProgress,
     error,
-    uploadRecording
+    uploadRecording,
   };
 }
 ```
@@ -1787,18 +1787,10 @@ export class SecurityService {
     let query;
     switch (resourceType) {
       case 'session':
-        query = this.supabase
-          .from('workout_sessions')
-          .select('user_id')
-          .eq('id', resourceId)
-          .single();
+        query = this.supabase.from('workout_sessions').select('user_id').eq('id', resourceId).single();
         break;
       case 'recording':
-        query = this.supabase
-          .from('recordings')
-          .select('user_id')
-          .eq('id', resourceId)
-          .single();
+        query = this.supabase.from('recordings').select('user_id').eq('id', resourceId).single();
         break;
       default:
         return false;
@@ -1836,7 +1828,7 @@ export class SecurityService {
   async generateSecureToken(): Promise<string> {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
 }
 ```
@@ -1850,6 +1842,7 @@ The detailed implementation roadmap has been moved to a separate document for be
 See: [Implementation Plan & TODO List](./04_implementation_plan.md)
 
 The implementation plan provides:
+
 - Step-by-step checklist with checkboxes for tracking progress
 - Clear dependencies between phases and steps
 - Logical ordering of UI components and features
@@ -1879,7 +1872,7 @@ export class PerformanceMonitor {
     averageProcessingTime: 0,
     memoryUsage: 0,
     cpuUsage: 0,
-    networkLatency: 0
+    networkLatency: 0,
   };
 
   private frameTimestamps: number[] = [];
@@ -1916,12 +1909,11 @@ export class PerformanceMonitor {
   private updateFPS() {
     if (this.frameTimestamps.length < 2) return;
 
-    const timeSpan = this.frameTimestamps[this.frameTimestamps.length - 1] - 
-                    this.frameTimestamps[0];
+    const timeSpan = this.frameTimestamps[this.frameTimestamps.length - 1] - this.frameTimestamps[0];
     const fps = (this.frameTimestamps.length - 1) / (timeSpan / 1000);
-    
+
     this.metrics.fps = Math.round(fps);
-    
+
     // Detect frame drops (FPS below 25)
     if (fps < 25) {
       this.metrics.frameDrops++;
@@ -1931,8 +1923,7 @@ export class PerformanceMonitor {
   private updateAverageProcessingTime() {
     if (this.processingTimes.length === 0) return;
 
-    const avgTime = this.processingTimes.reduce((sum, time) => sum + time, 0) / 
-                   this.processingTimes.length;
+    const avgTime = this.processingTimes.reduce((sum, time) => sum + time, 0) / this.processingTimes.length;
     this.metrics.averageProcessingTime = Math.round(avgTime);
   }
 
@@ -1980,17 +1971,13 @@ export class ErrorMonitor {
     severity: 'low' | 'medium' | 'high' | 'critical';
   }> = [];
 
-  reportError(
-    error: Error,
-    feature: string,
-    severity: 'low' | 'medium' | 'high' | 'critical' = 'medium'
-  ) {
+  reportError(error: Error, feature: string, severity: 'low' | 'medium' | 'high' | 'critical' = 'medium') {
     const errorReport = {
       message: error.message,
       stack: error.stack,
       timestamp: Date.now(),
       feature,
-      severity
+      severity,
     };
 
     this.errors.push(errorReport);
@@ -2008,7 +1995,7 @@ export class ErrorMonitor {
       await fetch('/api/errors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(errorReport)
+        body: JSON.stringify(errorReport),
       });
     } catch (err) {
       console.error('Failed to report error:', err);
@@ -2016,14 +2003,13 @@ export class ErrorMonitor {
   }
 
   getRecentErrors(limit = 10) {
-    return this.errors
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, limit);
+    return this.errors.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
   }
 
-  getErrorCount(timeWindowMs = 300000): number { // 5 minutes default
+  getErrorCount(timeWindowMs = 300000): number {
+    // 5 minutes default
     const cutoff = Date.now() - timeWindowMs;
-    return this.errors.filter(error => error.timestamp >= cutoff).length;
+    return this.errors.filter((error) => error.timestamp >= cutoff).length;
   }
 }
 
@@ -2065,6 +2051,7 @@ This unified technical architecture provides a comprehensive, implementation-fir
 ✅ **Simple Feature Communication**: Event bus without domain complexity
 
 **Key Success Factors**:
+
 1. **Performance-First Design**: Every component optimized for 30+ FPS real-time processing
 2. **Scalable Feature Architecture**: Room for growth without architectural debt
 3. **Implementation Ready**: Concrete code examples for immediate development

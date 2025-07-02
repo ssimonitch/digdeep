@@ -16,18 +16,19 @@ export function StatsCard({ icon, value, label, className, iconLabel }: StatsCar
   return (
     <Card
       className={cn(
-        'flex flex-col items-center justify-center p-4 min-h-[100px] border-border/50',
-        'bg-gradient-to-br from-card to-card/80 shadow-sm hover:shadow-md transition-shadow',
+        'border-border/50 flex min-h-[100px] flex-col items-center justify-center p-4',
+        'from-card to-card/80 bg-gradient-to-br shadow-sm transition-shadow hover:shadow-md',
         className,
-      )}>
+      )}
+    >
       <dl className="flex flex-col items-center justify-center text-center">
-        <dd className="text-2xl font-semibold text-primary flex items-center gap-1 order-1">
+        <dd className="text-primary order-1 flex items-center gap-1 text-2xl font-semibold">
           <span className="text-lg opacity-80" aria-label={iconLabel} role="img">
             {icon}
           </span>
           <data value={numericValue}>{value}</data>
         </dd>
-        <dt className="text-sm text-muted-foreground font-medium order-2">{label}</dt>
+        <dt className="text-muted-foreground order-2 text-sm font-medium">{label}</dt>
       </dl>
     </Card>
   );

@@ -6,7 +6,6 @@
   "semi": true,
   "printWidth": 120,
   "bracketSpacing": true,
-  "jsxBracketSameLine": true,
   "endOfLine": "auto",
-  "tailwindStylesheet": "./src/index.css"
+  "plugins": ["prettier-plugin-tailwindcss"]
 }

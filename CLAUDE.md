@@ -9,12 +9,14 @@ This is DigDeep, a web-based powerlifting form analysis application that uses ma
 ## Development Commands
 
 ### Package Management
+
 - **Package Manager**: pnpm v10.12.2
 - **Install dependencies**: `pnpm install`
 - **Add a package**: `pnpm add <package-name>`
 - **Add a dev dependency**: `pnpm add -D <package-name>`
 
 ### Core Development Commands
+
 ```bash
 # Start development server
 pnpm dev
@@ -41,6 +43,7 @@ pnpm tsc --noEmit
 ## Architecture Overview
 
 ### Tech Stack
+
 - **Frontend Framework**: React 19.1.0 with TypeScript 5.8.3
 - **Build Tool**: Vite 7.0.0 with SWC for fast compilation
 - **Styling**: Tailwind CSS 4.1.10
@@ -50,6 +53,7 @@ pnpm tsc --noEmit
 - **Video Storage**: Cloudinary (to be integrated)
 
 ### Project Structure
+
 ```
 src/
 ├── components/       # React components
@@ -61,11 +65,13 @@ src/
 ```
 
 ### Module Aliases
+
 - `@/*` maps to `src/*` - Use this for all imports within the src directory
 
 ## Key Project Requirements
 
 ### Primary Features
+
 1. **Real-time Squat Form Analysis**:
    - Bar path tracking
    - Depth achievement detection
@@ -86,7 +92,9 @@ src/
    - Real-time processing with MediaPipe
 
 ### Component Library
+
 The project has detailed component specifications in `docs/02_component_library_spec.md`. Key components include:
+
 - Button (Primary, Secondary, Ghost variants)
 - Card components
 - Form controls optimized for gym use
@@ -94,6 +102,7 @@ The project has detailed component specifications in `docs/02_component_library_
 - Video components (VideoRecorder, VideoPlayer)
 
 ### Development Phases
+
 - **Phase 1 (MVP)**: Basic recording, pose detection, real-time feedback
 - **Phase 2**: Workout logging, volume progression, bench & deadlift analysis
 - **Phase 3**: Multi-angle recording, custom ML models, fatigue detection
@@ -101,23 +110,27 @@ The project has detailed component specifications in `docs/02_component_library_
 ## Code Standards
 
 ### TypeScript
+
 - Strict mode enabled
 - Use type imports: `import type { ... }`
 - Define explicit return types for functions
 - Use Zod for runtime validation of external data
 
 ### React Patterns
+
 - Functional components only
 - Use custom hooks for business logic
 - Keep components focused and single-purpose
 - Implement proper error boundaries
 
 ### State Management
+
 - Use Zustand for global state
 - Keep stores small and focused
 - Use immer for complex state updates if needed
 
 ### Testing
+
 - Use Vitest for unit and integration tests
 - Test files should be colocated with components (`.test.tsx`)
 - Focus on user behavior over implementation details

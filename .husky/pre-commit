@@ -1,0 +1,40 @@
+echo "🔍 Running pre-commit checks..."
+
+# Run TypeScript type checking
+echo "📝 Checking TypeScript types..."
+pnpm tsc --noEmit
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript type check failed. Please fix the errors before committing."
+  exit 1
+fi
+
+# Run ESLint
+echo "🔍 Running ESLint..."
+pnpm lint
+if [ $? -ne 0 ]; then
+  echo "❌ ESLint check failed. Please fix the linting errors before committing."
+  exit 1
+fi
+
+# Run Prettier check
+echo "✨ Checking code formatting with Prettier..."
+pnpm exec prettier --check .
+if [ $? -ne 0 ]; then
+  echo "❌ Code formatting check failed. Run 'pnpm exec prettier --write .' to fix formatting."
+  exit 1
+fi
+
+# Run tests (skip if no tests exist)
+echo "🧪 Checking for tests..."
+if find src -name "*.test.*" -o -name "*.spec.*" 2>/dev/null | grep -q .; then
+  echo "🧪 Running tests..."
+  pnpm test
+  if [ $? -ne 0 ]; then
+    echo "❌ Tests failed. Please fix the failing tests before committing."
+    exit 1
+  fi
+else
+  echo "ℹ️ No tests found, skipping test step."
+fi
+
+echo "✅ All pre-commit checks passed!"

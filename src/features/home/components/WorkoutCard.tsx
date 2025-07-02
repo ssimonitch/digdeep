@@ -28,10 +28,11 @@ function MetricPill({ icon, text, variant }: MetricPillProps) {
   return (
     <li
       className={cn(
-        'inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border',
+        'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium',
         variantStyles[variant],
       )}
-      aria-label={`${text}: ${variant}`}>
+      aria-label={`${text}: ${variant}`}
+    >
       <span aria-hidden="true">{icon}</span>
       {text}
     </li>
@@ -80,15 +81,16 @@ export function WorkoutCard({
   return (
     <Card
       className={cn(
-        'hover:bg-card/50 transition-all duration-200 border-border/50',
-        'shadow-sm hover:shadow-md hover:border-border/80',
+        'hover:bg-card/50 border-border/50 transition-all duration-200',
+        'hover:border-border/80 shadow-sm hover:shadow-md',
         className,
-      )}>
+      )}
+    >
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-lg">{title}</CardTitle>
-            <div className="text-sm text-muted-foreground">{subtitle}</div>
+            <div className="text-muted-foreground text-sm">{subtitle}</div>
           </div>
           <div className="flex items-center gap-2">
             {renderStars(rating)}
@@ -131,7 +133,7 @@ export function WorkoutCard({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <ul className="flex flex-wrap gap-2 list-none" role="list">
+        <ul className="flex list-none flex-wrap gap-2" role="list">
           {metrics.map((metric) => (
             <MetricPill key={metric.text} icon={metric.icon} text={metric.text} variant={metric.variant} />
           ))}
