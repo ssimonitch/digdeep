@@ -1,5 +1,5 @@
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { Card } from '@/shared/components/ui/card';
+import { cn } from '@/shared/utils/cn';
 
 interface StatsCardProps {
   icon: string;

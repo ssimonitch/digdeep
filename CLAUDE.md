@@ -42,7 +42,7 @@ pnpm tsc --noEmit
 
 ### Tech Stack
 - **Frontend Framework**: React 19.1.0 with TypeScript 5.8.3
-- **Build Tool**: Vite 6.3.5 with SWC for fast compilation
+- **Build Tool**: Vite 7.0.0 with SWC for fast compilation
 - **Styling**: Tailwind CSS 4.1.10
 - **State Management**: Zustand 5.0.5
 - **ML/Pose Detection**: MediaPipe Pose (to be integrated)

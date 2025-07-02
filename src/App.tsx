@@ -1,5 +1,5 @@
-import { HomePage } from '@/components/pages/home-page';
-import { ThemeProvider } from '@/components/ui/custom/theme-provider';
+import { HomePage } from '@/features/home/components/HomePage';
+import { ThemeProvider } from '@/shared/components/layout/ThemeProvider';
 
 function App() {
   return (

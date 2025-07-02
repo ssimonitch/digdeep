@@ -1,14 +1,14 @@
 import { BarChart3, Edit, MoreVertical, Share, Trash2 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+} from '@/shared/components/ui/dropdown-menu';
+import { cn } from '@/shared/utils/cn';
 
 interface MetricPillProps {
   icon: string;

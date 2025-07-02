@@ -1,9 +1,10 @@
 import { Menu } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { ModeToggle } from '@/components/ui/custom/mode-toggle';
-import { StatsCard } from '@/components/ui/custom/stats-card';
-import { WorkoutCard } from '@/components/ui/custom/workout-card';
+import { ModeToggle } from '@/shared/components/layout/ModeToggle';
+import { Button } from '@/shared/components/ui/button';
+
+import { StatsCard } from './StatsCard';
+import { WorkoutCard } from './WorkoutCard';
 
 export function HomePage() {
   const handleStartSquatSession = () => {
