@@ -8,50 +8,68 @@ const storage = getDexieStorage();
 
 // Live query hooks for reactive data
 export function useWorkoutSessions(userId: string, limit?: number) {
-  return useLiveQuery(async () => {
-    if (!userId) return [];
-    return storage.getWorkoutSessions(userId, limit);
-  }, [userId, limit]);
+  return (
+    useLiveQuery(async () => {
+      if (!userId) return [];
+      return storage.getWorkoutSessions(userId, limit);
+    }, [userId, limit]) ?? []
+  );
 }
 
 export function useWorkoutSession(id: string) {
-  return useLiveQuery(async () => {
-    if (!id) return null;
-    return storage.getWorkoutSession(id);
-  }, [id]);
+  return (
+    useLiveQuery(async () => {
+      if (!id) return null;
+      return storage.getWorkoutSession(id);
+    }, [id]) ?? null
+  );
 }
 
 export function useExercisesBySession(sessionId: string) {
-  return useLiveQuery(async () => {
-    if (!sessionId) return [];
-    return storage.getExercisesBySession(sessionId);
-  }, [sessionId]);
+  return (
+    useLiveQuery(async () => {
+      if (!sessionId) return [];
+      return storage.getExercisesBySession(sessionId);
+    }, [sessionId]) ?? []
+  );
 }
 
 export function useSetsByExercise(exerciseId: string) {
-  return useLiveQuery(async () => {
-    if (!exerciseId) return [];
-    return storage.getSetsByExercise(exerciseId);
-  }, [exerciseId]);
+  return (
+    useLiveQuery(async () => {
+      if (!exerciseId) return [];
+      return storage.getSetsByExercise(exerciseId);
+    }, [exerciseId]) ?? []
+  );
 }
 
 export function useAnalysisBySetId(setId: string) {
-  return useLiveQuery(async () => {
-    if (!setId) return null;
-    return storage.getAnalysisBySetId(setId);
-  }, [setId]);
+  return (
+    useLiveQuery(async () => {
+      if (!setId) return null;
+      return storage.getAnalysisBySetId(setId);
+    }, [setId]) ?? null
+  );
 }
 
 export function useUserProfile(userId: string) {
-  return useLiveQuery(async () => {
-    if (!userId) return null;
-    return storage.getUserProfile(userId);
-  }, [userId]);
+  return (
+    useLiveQuery(async () => {
+      if (!userId) return null;
+      return storage.getUserProfile(userId);
+    }, [userId]) ?? null
+  );
 }
 
 // Storage statistics
 export function useStorageInfo() {
-  return useLiveQuery(() => storage.getStorageInfo());
+  return (
+    useLiveQuery(() => storage.getStorageInfo()) ?? {
+      usage: 0,
+      quota: 0,
+      percentage: 0,
+    }
+  );
 }
 
 // CRUD operation hooks (non-reactive, for actions)
