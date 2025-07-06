@@ -1,7 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { db } from '@/services/dexie-storage.service';
+import { DexieStorageService, DigDeepDatabase } from '@/services/dexie-storage.service';
+import { createTestDatabaseFactory } from '@/test/test-database-factory';
 import {
   createMockAnalysis,
   createMockExercise,
@@ -23,21 +24,41 @@ import {
   useWorkoutSessions,
 } from './useDexieStorage';
 
+// Mock the entire service module to control the storage instance
+vi.mock(import('@/services/dexie-storage.service'), async (importOriginal) => {
+  const mod = await importOriginal();
+  let testService: DexieStorageService;
+
+  return {
+    ...mod,
+    getDexieStorage: () => testService,
+    setTestService: (service: DexieStorageService) => {
+      testService = service;
+    },
+  };
+});
+
 describe('useDexieStorage hooks', () => {
+  let db: DigDeepDatabase;
+  let service: DexieStorageService;
+  const testDbFactory = createTestDatabaseFactory('hooks');
+
   beforeEach(async () => {
-    // Ensure clean database for each test
+    // Create fresh instances for each test with unique database name
+    db = testDbFactory.createDatabase();
+    service = new DexieStorageService(db);
     await db.open();
-    await Promise.all([
-      db.sessions.clear(),
-      db.exercises.clear(),
-      db.sets.clear(),
-      db.analyses.clear(),
-      db.profiles.clear(),
-    ]);
+
+    // Set the test service for the mock
+    const mockedService = await import('@/services/dexie-storage.service');
+    // Access the mocked function we added in vi.mock
+    (mockedService as typeof mockedService & { setTestService: (service: DexieStorageService) => void }).setTestService(
+      service,
+    );
   });
 
   afterEach(async () => {
-    await db.delete();
+    await testDbFactory.cleanup(db);
   });
 
   describe('useWorkoutSessions', () => {
@@ -52,9 +73,9 @@ describe('useDexieStorage hooks', () => {
 
       expect(result.current).toEqual([]);
 
-      // Add a session
+      // Add a session through the service to ensure consistency
       await act(async () => {
-        await db.sessions.add(createMockWorkoutSession({ userId: 'user-1' }));
+        await service.createWorkoutSession(createMockWorkoutSession({ userId: 'user-1' }));
       });
 
       await waitFor(() => {
@@ -407,11 +428,18 @@ describe('useDexieStorage hooks', () => {
       const { result } = renderHook(() => useDexieActions());
 
       // Try to update non-existent session
-      await expect(
-        act(async () => {
+      let thrownError: Error | null = null;
+
+      try {
+        await act(async () => {
           await result.current.updateSession('non-existent', { duration: 100 });
-        }),
-      ).rejects.toThrow('Session not found');
+        });
+      } catch (error) {
+        thrownError = error as Error;
+      }
+
+      expect(thrownError).toBeInstanceOf(Error);
+      expect(thrownError?.message).toContain('Session not found');
     });
 
     it('should handle invalid data in live queries', () => {

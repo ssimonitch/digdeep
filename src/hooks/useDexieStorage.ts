@@ -4,14 +4,12 @@ import { useCallback } from 'react';
 import { getDexieStorage } from '@/services/dexie-storage.service';
 import type { Exercise, Set, SquatAnalysis, UserProfile, WorkoutSession } from '@/types/workout.types';
 
-const storage = getDexieStorage();
-
 // Live query hooks for reactive data
 export function useWorkoutSessions(userId: string, limit?: number) {
   return (
     useLiveQuery(async () => {
       if (!userId) return [];
-      return storage.getWorkoutSessions(userId, limit);
+      return getDexieStorage().getWorkoutSessions(userId, limit);
     }, [userId, limit]) ?? []
   );
 }
@@ -20,7 +18,7 @@ export function useWorkoutSession(id: string) {
   return (
     useLiveQuery(async () => {
       if (!id) return null;
-      return storage.getWorkoutSession(id);
+      return getDexieStorage().getWorkoutSession(id);
     }, [id]) ?? null
   );
 }
@@ -29,7 +27,7 @@ export function useExercisesBySession(sessionId: string) {
   return (
     useLiveQuery(async () => {
       if (!sessionId) return [];
-      return storage.getExercisesBySession(sessionId);
+      return getDexieStorage().getExercisesBySession(sessionId);
     }, [sessionId]) ?? []
   );
 }
@@ -38,7 +36,7 @@ export function useSetsByExercise(exerciseId: string) {
   return (
     useLiveQuery(async () => {
       if (!exerciseId) return [];
-      return storage.getSetsByExercise(exerciseId);
+      return getDexieStorage().getSetsByExercise(exerciseId);
     }, [exerciseId]) ?? []
   );
 }
@@ -47,7 +45,7 @@ export function useAnalysisBySetId(setId: string) {
   return (
     useLiveQuery(async () => {
       if (!setId) return null;
-      return storage.getAnalysisBySetId(setId);
+      return getDexieStorage().getAnalysisBySetId(setId);
     }, [setId]) ?? null
   );
 }
@@ -56,7 +54,7 @@ export function useUserProfile(userId: string) {
   return (
     useLiveQuery(async () => {
       if (!userId) return null;
-      return storage.getUserProfile(userId);
+      return getDexieStorage().getUserProfile(userId);
     }, [userId]) ?? null
   );
 }
@@ -64,7 +62,7 @@ export function useUserProfile(userId: string) {
 // Storage statistics
 export function useStorageInfo() {
   return (
-    useLiveQuery(() => storage.getStorageInfo()) ?? {
+    useLiveQuery(() => getDexieStorage().getStorageInfo()) ?? {
       usage: 0,
       quota: 0,
       percentage: 0,
@@ -76,56 +74,56 @@ export function useStorageInfo() {
 export function useDexieActions() {
   const createSession = useCallback(
     async (session: Omit<WorkoutSession, 'id' | 'createdAt' | 'updatedAt'>): Promise<WorkoutSession> => {
-      return storage.createWorkoutSession(session);
+      return getDexieStorage().createWorkoutSession(session);
     },
     [],
   );
 
   const updateSession = useCallback(async (id: string, updates: Partial<WorkoutSession>): Promise<WorkoutSession> => {
-    return storage.updateWorkoutSession(id, updates);
+    return getDexieStorage().updateWorkoutSession(id, updates);
   }, []);
 
   const deleteSession = useCallback(async (id: string): Promise<void> => {
-    return storage.deleteWorkoutSession(id);
+    return getDexieStorage().deleteWorkoutSession(id);
   }, []);
 
   const createExercise = useCallback(async (exercise: Omit<Exercise, 'id'>): Promise<Exercise> => {
-    return storage.createExercise(exercise);
+    return getDexieStorage().createExercise(exercise);
   }, []);
 
   const deleteExercise = useCallback(async (id: string): Promise<void> => {
-    return storage.deleteExercise(id);
+    return getDexieStorage().deleteExercise(id);
   }, []);
 
   const createSet = useCallback(async (set: Omit<Set, 'id' | 'createdAt'>): Promise<Set> => {
-    return storage.createSet(set);
+    return getDexieStorage().createSet(set);
   }, []);
 
   const updateSet = useCallback(async (id: string, updates: Partial<Set>): Promise<Set> => {
-    return storage.updateSet(id, updates);
+    return getDexieStorage().updateSet(id, updates);
   }, []);
 
   const deleteSet = useCallback(async (id: string): Promise<void> => {
-    return storage.deleteSet(id);
+    return getDexieStorage().deleteSet(id);
   }, []);
 
   const createAnalysis = useCallback(
     async (analysis: Omit<SquatAnalysis, 'id' | 'createdAt'>): Promise<SquatAnalysis> => {
-      return storage.createAnalysis(analysis);
+      return getDexieStorage().createAnalysis(analysis);
     },
     [],
   );
 
   const saveUserProfile = useCallback(async (profile: UserProfile): Promise<UserProfile> => {
-    return storage.saveUserProfile(profile);
+    return getDexieStorage().saveUserProfile(profile);
   }, []);
 
   const exportData = useCallback(async (): Promise<string> => {
-    return storage.exportData();
+    return getDexieStorage().exportData();
   }, []);
 
   const importData = useCallback(async (jsonData: string): Promise<void> => {
-    return storage.importData(jsonData);
+    return getDexieStorage().importData(jsonData);
   }, []);
 
   return {

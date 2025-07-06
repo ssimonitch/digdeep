@@ -25,6 +25,12 @@ export class DigDeepDatabase extends Dexie {
 export const db = new DigDeepDatabase();
 
 export class DexieStorageService {
+  private database: DigDeepDatabase;
+
+  constructor(database?: DigDeepDatabase) {
+    this.database = database ?? db;
+  }
+
   // Session operations
   async createWorkoutSession(session: Omit<WorkoutSession, 'id' | 'createdAt' | 'updatedAt'>): Promise<WorkoutSession> {
     const newSession: WorkoutSession = {
@@ -34,16 +40,16 @@ export class DexieStorageService {
       updatedAt: new Date(),
     };
 
-    await db.sessions.add(newSession);
+    await this.database.sessions.add(newSession);
     return newSession;
   }
 
   async getWorkoutSession(id: string): Promise<WorkoutSession | null> {
-    return (await db.sessions.get(id)) ?? null;
+    return (await this.database.sessions.get(id)) ?? null;
   }
 
   async getWorkoutSessions(userId: string, limit?: number): Promise<WorkoutSession[]> {
-    let sessions = await db.sessions.where('userId').equals(userId).toArray();
+    let sessions = await this.database.sessions.where('userId').equals(userId).toArray();
 
     // Sort by date descending
     sessions = sessions.sort((a, b) => {
@@ -65,27 +71,31 @@ export class DexieStorageService {
       updatedAt: new Date(),
     };
 
-    await db.sessions.update(id, updated);
+    await this.database.sessions.update(id, updated);
 
-    const session = await db.sessions.get(id);
+    const session = await this.database.sessions.get(id);
     if (!session) throw new Error('Session not found');
 
     return session;
   }
 
   async deleteWorkoutSession(id: string): Promise<void> {
-    await db.transaction('rw', [db.sessions, db.exercises, db.sets, db.analyses], async () => {
-      // Get all exercises for this session
-      const exercises = await db.exercises.where('sessionId').equals(id).toArray();
+    await this.database.transaction(
+      'rw',
+      [this.database.sessions, this.database.exercises, this.database.sets, this.database.analyses],
+      async () => {
+        // Get all exercises for this session
+        const exercises = await this.database.exercises.where('sessionId').equals(id).toArray();
 
-      // Delete all sets and analyses for each exercise
-      for (const exercise of exercises) {
-        await this.deleteExercise(exercise.id);
-      }
+        // Delete all sets and analyses for each exercise
+        for (const exercise of exercises) {
+          await this.deleteExercise(exercise.id);
+        }
 
-      // Delete the session
-      await db.sessions.delete(id);
-    });
+        // Delete the session
+        await this.database.sessions.delete(id);
+      },
+    );
   }
 
   // Exercise operations
@@ -95,31 +105,35 @@ export class DexieStorageService {
       id: crypto.randomUUID(),
     };
 
-    await db.exercises.add(newExercise);
+    await this.database.exercises.add(newExercise);
     return newExercise;
   }
 
   async getExercisesBySession(sessionId: string): Promise<Exercise[]> {
-    const exercises = await db.exercises.where('sessionId').equals(sessionId).toArray();
+    const exercises = await this.database.exercises.where('sessionId').equals(sessionId).toArray();
     return exercises.sort((a, b) => a.order - b.order);
   }
 
   async deleteExercise(id: string): Promise<void> {
-    await db.transaction('rw', [db.exercises, db.sets, db.analyses], async () => {
-      // Get all sets for this exercise
-      const sets = await db.sets.where('exerciseId').equals(id).toArray();
+    await this.database.transaction(
+      'rw',
+      [this.database.exercises, this.database.sets, this.database.analyses],
+      async () => {
+        // Get all sets for this exercise
+        const sets = await this.database.sets.where('exerciseId').equals(id).toArray();
 
-      // Delete all analyses for each set
-      for (const set of sets) {
-        await db.analyses.where('setId').equals(set.id).delete();
-      }
+        // Delete all analyses for each set
+        for (const set of sets) {
+          await this.database.analyses.where('setId').equals(set.id).delete();
+        }
 
-      // Delete all sets for this exercise
-      await db.sets.where('exerciseId').equals(id).delete();
+        // Delete all sets for this exercise
+        await this.database.sets.where('exerciseId').equals(id).delete();
 
-      // Delete the exercise
-      await db.exercises.delete(id);
-    });
+        // Delete the exercise
+        await this.database.exercises.delete(id);
+      },
+    );
   }
 
   // Set operations
@@ -130,30 +144,30 @@ export class DexieStorageService {
       createdAt: new Date(),
     };
 
-    await db.sets.add(newSet);
+    await this.database.sets.add(newSet);
     return newSet;
   }
 
   async getSetsByExercise(exerciseId: string): Promise<Set[]> {
-    return db.sets.where('exerciseId').equals(exerciseId).toArray();
+    return this.database.sets.where('exerciseId').equals(exerciseId).toArray();
   }
 
   async updateSet(id: string, updates: Partial<Set>): Promise<Set> {
-    await db.sets.update(id, updates);
+    await this.database.sets.update(id, updates);
 
-    const set = await db.sets.get(id);
+    const set = await this.database.sets.get(id);
     if (!set) throw new Error('Set not found');
 
     return set;
   }
 
   async deleteSet(id: string): Promise<void> {
-    await db.transaction('rw', [db.sets, db.analyses], async () => {
+    await this.database.transaction('rw', [this.database.sets, this.database.analyses], async () => {
       // Delete analysis for this set
-      await db.analyses.where('setId').equals(id).delete();
+      await this.database.analyses.where('setId').equals(id).delete();
 
       // Delete the set
-      await db.sets.delete(id);
+      await this.database.sets.delete(id);
     });
   }
 
@@ -165,17 +179,17 @@ export class DexieStorageService {
       createdAt: new Date(),
     };
 
-    await db.analyses.add(newAnalysis);
+    await this.database.analyses.add(newAnalysis);
     return newAnalysis;
   }
 
   async getAnalysisBySetId(setId: string): Promise<SquatAnalysis | null> {
-    return (await db.analyses.where('setId').equals(setId).first()) ?? null;
+    return (await this.database.analyses.where('setId').equals(setId).first()) ?? null;
   }
 
   // Profile operations
   async getUserProfile(userId: string): Promise<UserProfile | null> {
-    return (await db.profiles.get(userId)) ?? null;
+    return (await this.database.profiles.get(userId)) ?? null;
   }
 
   async saveUserProfile(profile: UserProfile): Promise<UserProfile> {
@@ -184,7 +198,7 @@ export class DexieStorageService {
       updatedAt: new Date(),
     };
 
-    await db.profiles.put(updated);
+    await this.database.profiles.put(updated);
     return updated;
   }
 
@@ -204,11 +218,11 @@ export class DexieStorageService {
 
   async exportData(): Promise<string> {
     const [sessions, exercises, sets, analyses, profiles] = await Promise.all([
-      db.sessions.toArray(),
-      db.exercises.toArray(),
-      db.sets.toArray(),
-      db.analyses.toArray(),
-      db.profiles.toArray(),
+      this.database.sessions.toArray(),
+      this.database.exercises.toArray(),
+      this.database.sets.toArray(),
+      this.database.analyses.toArray(),
+      this.database.profiles.toArray(),
     ]);
 
     const data = {
@@ -238,23 +252,33 @@ export class DexieStorageService {
       throw new Error(`Incompatible database version. Expected 1, got ${data.version}`);
     }
 
-    await db.transaction('rw', [db.sessions, db.exercises, db.sets, db.analyses, db.profiles], async () => {
-      // Clear all data
-      await Promise.all([
-        db.sessions.clear(),
-        db.exercises.clear(),
-        db.sets.clear(),
-        db.analyses.clear(),
-        db.profiles.clear(),
-      ]);
+    await this.database.transaction(
+      'rw',
+      [
+        this.database.sessions,
+        this.database.exercises,
+        this.database.sets,
+        this.database.analyses,
+        this.database.profiles,
+      ],
+      async () => {
+        // Clear all data
+        await Promise.all([
+          this.database.sessions.clear(),
+          this.database.exercises.clear(),
+          this.database.sets.clear(),
+          this.database.analyses.clear(),
+          this.database.profiles.clear(),
+        ]);
 
-      // Import new data
-      if (data.sessions?.length) await db.sessions.bulkAdd(data.sessions);
-      if (data.exercises?.length) await db.exercises.bulkAdd(data.exercises);
-      if (data.sets?.length) await db.sets.bulkAdd(data.sets);
-      if (data.analyses?.length) await db.analyses.bulkAdd(data.analyses);
-      if (data.profiles?.length) await db.profiles.bulkAdd(data.profiles);
-    });
+        // Import new data
+        if (data.sessions?.length) await this.database.sessions.bulkAdd(data.sessions);
+        if (data.exercises?.length) await this.database.exercises.bulkAdd(data.exercises);
+        if (data.sets?.length) await this.database.sets.bulkAdd(data.sets);
+        if (data.analyses?.length) await this.database.analyses.bulkAdd(data.analyses);
+        if (data.profiles?.length) await this.database.profiles.bulkAdd(data.profiles);
+      },
+    );
   }
 }
 

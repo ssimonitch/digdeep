@@ -1929,7 +1929,7 @@ export class PerformanceMonitor {
 
   async updateMemoryUsage() {
     if ('memory' in performance) {
-      const memory = (performance as any).memory;
+      const memory = performance.memory;
       this.metrics.memoryUsage = Math.round(memory.usedJSHeapSize / 1024 / 1024); // MB
     }
   }

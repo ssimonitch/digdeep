@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { createTestDatabaseFactory } from '@/test/test-database-factory';
 import {
   createMockAnalysis,
   createMockExercise,
@@ -14,18 +15,19 @@ import { DexieStorageService, DigDeepDatabase } from './dexie-storage.service';
 describe('DexieStorageService', () => {
   let service: DexieStorageService;
   let db: DigDeepDatabase;
+  const testDbFactory = createTestDatabaseFactory('service');
 
   beforeEach(async () => {
-    // Create fresh instances for each test
-    db = new DigDeepDatabase();
-    service = new DexieStorageService();
+    // Create fresh instances for each test with unique database name
+    db = testDbFactory.createDatabase();
+    service = new DexieStorageService(db);
 
     // Ensure database is ready
     await db.open();
   });
 
   afterEach(async () => {
-    await db.delete();
+    await testDbFactory.cleanup(db);
   });
 
   describe('Database Initialization', () => {

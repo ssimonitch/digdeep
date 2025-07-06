@@ -120,9 +120,39 @@ src/
 
 ### Testing
 
+**Testing Framework**: Vitest with React Testing Library for component testing
+
+**Core Principles**:
 - Use Vitest for unit and integration tests
 - Test files should be colocated with components (`.test.tsx`)
 - Focus on user behavior over implementation details
+- Test what the user sees and does, not internal component state
+
+**React Testing Library Patterns**:
+- Use `renderHook()` for custom hook testing
+- Use `act()` for actions that trigger state updates
+- Use `waitFor()` for async operations and state changes
+- Use `screen.getByRole()`, `screen.getByText()` for component queries
+- Avoid testing implementation details (internal state, component methods)
+
+**Mock Patterns**:
+- Use `vi.mock()` for module mocking
+- Create test-specific service instances for isolation
+- Use `createMock*` utilities from `@/test/test-utils` for consistent test data
+
+**Error Testing**:
+- Use try/catch blocks instead of `expect().rejects.toThrow()` to avoid race conditions
+- Test error states through user interactions, not direct error throwing
+
+**Documentation References**:
+- Vitest API: https://vitest.dev/api/
+- React Testing Library: https://testing-library.com/docs/react-testing-library/intro/
+- Testing Library Queries: https://testing-library.com/docs/queries/about
+
+**Test Organization**:
+- Group related tests with `describe()` blocks
+- Use descriptive test names that explain user scenarios
+- Keep setup/teardown in `beforeEach()`/`afterEach()` hooks
 
 ## Feature Implementation System Guidelines
 
@@ -170,3 +200,22 @@ src/
 ## Code Quality
 
 - Always use semantic HTML to improve accessibility and maintainability
+
+## Code Quality and Linting Standards
+
+### ESLint and TypeScript Rule Management
+
+**CRITICAL**: Never disable eslint or TypeScript rules without explicit user approval.
+
+#### Process for Handling Linting/TypeScript Errors:
+
+1. **First Attempt**: Research appropriate documentation to understand why the error is occurring
+2. **Second Attempt**: Look for proper TypeScript patterns or alternative approaches that satisfy the linting rules
+3. **Third Attempt**: Investigate if there's a configuration issue or if the rule is incorrectly applied
+4. **Only if no solution exists**: 
+   - Explain the issue to the user
+   - Propose the specific rule disable with justification
+   - Request explicit permission before adding any `eslint-disable` comments
+   - Provide the reasoning why the disable is necessary
+
+**Remember**: The goal is to write type-safe, maintainable code that follows project standards, not to bypass them.
