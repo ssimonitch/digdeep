@@ -8,46 +8,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
+import { MetricPill, type MetricPillProps } from '@/shared/components/ui/metric-pill';
 import { cn } from '@/shared/utils/cn';
-
-interface MetricPillProps {
-  icon: string;
-  text: string;
-  variant: 'success' | 'warning' | 'error';
-}
-
-function MetricPill({ icon, text, variant }: MetricPillProps) {
-  const variantStyles = {
-    success:
-      'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-green-500/20 dark:text-green-400 dark:border-green-500/30',
-    warning:
-      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-yellow-500/20 dark:text-yellow-400 dark:border-yellow-500/30',
-    error: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30',
-  };
-
-  return (
-    <li
-      className={cn(
-        'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium',
-        variantStyles[variant],
-      )}
-      aria-label={`${text}: ${variant}`}
-    >
-      <span aria-hidden="true">{icon}</span>
-      {text}
-    </li>
-  );
-}
 
 interface WorkoutCardProps {
   title: string;
   subtitle: string;
   rating: number;
-  metrics: {
-    icon: string;
-    text: string;
-    variant: 'success' | 'warning' | 'error';
-  }[];
+  metrics: MetricPillProps[];
   onEdit?: () => void;
   onViewStats?: () => void;
   onShare?: () => void;

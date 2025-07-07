@@ -8,7 +8,7 @@ This is DigDeep, a web-based powerlifting form analysis application that uses ma
 
 ### Project Goals
 
-- Designeded for personal use as both a learning project and powerlifting training tool
+- Designed for personal use as both a learning project and powerlifting training tool
 - Solo-development using only free-tier services
 - Showcase developer's knowledge of fullstack web development, applied machine learning, and technical architecture
 
@@ -194,21 +194,18 @@ it('should call useWorkoutSessions hook with correct params', () => {
 
 ### Feature Implementation Priority Rules
 - IMMEDIATE EXECUTION: Launch parallel Tasks immediately upon feature requests
-- NO CLARIFICATION: Skip asking what type of implementation unless absolutely critical
 - PARALLEL BY DEFAULT: Always use 7-parallel-Task method for efficiency
 
 ### Parallel Feature Implementation Workflow
 1. **Component**: Create main component file
-2. **Styles**: Create component styles/CSS
-3. **Tests**: Create test files  
-4. **Types**: Create type definitions
-5. **Hooks**: Create custom hooks/utilities
-6. **Integration**: Update routing, imports, exports
-7. **Remaining**: Update package.json, documentation, configuration files
-8. **Review and Validation**: Coordinate integration, run tests, verify build, check for conflicts
+2. **Tests**: Create test files  
+3. **Types**: Create type definitions
+4. **Hooks**: Create custom hooks/utilities
+5. **Integration**: Update routing, imports, exports
+6. **Remaining**: Update package.json, documentation, configuration files
+7. **Review and Validation**: Coordinate integration, run tests, verify build, check for conflicts
 
 ### Context Optimization Rules
-- Strip out all comments when reading code files for analysis
 - Each task handles ONLY specified files or file types
 - Task 7 combines small config/doc updates to prevent over-splitting
 
@@ -233,25 +230,7 @@ it('should call useWorkoutSessions hook with correct params', () => {
 
 5. **Privacy**: This is a personal project, but implement proper data handling practices as it deals with video recordings of workouts.
 
-## Code Quality
-
-- Always use semantic HTML to improve accessibility and maintainability
-
 ## Code Quality and Linting Standards
 
-### ESLint and TypeScript Rule Management
-
-**CRITICAL**: Never disable eslint or TypeScript rules without explicit user approval.
-
-#### Process for Handling Linting/TypeScript Errors:
-
-1. **First Attempt**: Research appropriate documentation to understand why the error is occurring
-2. **Second Attempt**: Look for proper TypeScript patterns or alternative approaches that satisfy the linting rules
-3. **Third Attempt**: Investigate if there's a configuration issue or if the rule is incorrectly applied
-4. **Only if no solution exists**: 
-   - Explain the issue to the user
-   - Propose the specific rule disable with justification
-   - Request explicit permission before adding any `eslint-disable` comments
-   - Provide the reasoning why the disable is necessary
-
-**Remember**: The goal is to write type-safe, maintainable code that follows project standards, not to bypass them.
+- Always use semantic HTML to improve accessibility and maintainability
+- **CRITICAL**: Never disable eslint or TypeScript rules without explicit user approval.

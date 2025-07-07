@@ -235,7 +235,7 @@ interface ButtonProps {
 
 ```typescript
 interface CardProps {
-  variant: 'workout' | 'stats' | 'action';
+  variant: 'workout' | 'stats';
   title: string;
   subtitle?: string;
   rating?: number;
