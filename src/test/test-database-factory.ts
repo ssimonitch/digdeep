@@ -9,15 +9,27 @@ export function createTestDatabase(testSuiteName: string): DigDeepDatabase {
   const uniqueName = `DigDeepDB-${testSuiteName}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 
   // Create a new database class with the unique name
-  class TestDatabase extends DigDeepDatabase {
-    constructor() {
-      super();
-      this.version(1);
-      this.name = uniqueName;
+  class TestDatabase extends Dexie {
+    sessions!: DigDeepDatabase['sessions'];
+    exercises!: DigDeepDatabase['exercises'];
+    sets!: DigDeepDatabase['sets'];
+    analyses!: DigDeepDatabase['analyses'];
+    profiles!: DigDeepDatabase['profiles'];
+
+    constructor(name: string) {
+      super(name);
+
+      this.version(1).stores({
+        sessions: '++id, userId, date, createdAt, updatedAt',
+        exercises: '++id, sessionId, name, order',
+        sets: '++id, exerciseId, createdAt',
+        analyses: '++id, setId, createdAt',
+        profiles: '++id, createdAt, updatedAt',
+      });
     }
   }
 
-  return new TestDatabase();
+  return new TestDatabase(uniqueName) as DigDeepDatabase;
 }
 
 /**

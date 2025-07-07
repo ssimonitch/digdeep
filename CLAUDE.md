@@ -122,37 +122,73 @@ src/
 
 **Testing Framework**: Vitest with React Testing Library for component testing
 
-**Core Principles**:
-- Use Vitest for unit and integration tests
-- Test files should be colocated with components (`.test.tsx`)
-- Focus on user behavior over implementation details
-- Test what the user sees and does, not internal component state
+**Core Testing Philosophy**:
+Following React Testing Library's principle: "The more your tests resemble the way your software is used, the more confidence they can give you."
+
+**Primary Test Types**:
+1. **Component Tests**: Test user-facing behavior through component rendering and interaction
+2. **Integration Tests**: Test complete user workflows and business logic flows
+3. **Service Tests**: Test data layer and business logic directly (no UI)
+
+**Testing Priorities**:
+- ✅ **Test user interactions**: clicking buttons, form submissions, navigation
+- ✅ **Test rendered output**: what users see on screen
+- ✅ **Test integration workflows**: complete user journeys
+- ❌ **Avoid testing implementation details**: hooks in isolation, internal state, component methods
 
 **React Testing Library Patterns**:
-- Use `renderHook()` for custom hook testing
-- Use `act()` for actions that trigger state updates
+- Use `render()` for component testing with user interactions
+- Use `screen.getByRole()`, `screen.getByText()` for element queries
+- Use `user.click()`, `user.type()` for simulating user actions
+- Use `act()` only when testing causes React state updates
 - Use `waitFor()` for async operations and state changes
-- Use `screen.getByRole()`, `screen.getByText()` for component queries
-- Avoid testing implementation details (internal state, component methods)
+- Focus on accessibility with role-based queries
+
+**Service Layer Testing**:
+- Test services directly for business logic validation
+- Create test-specific database instances for isolation
+- Use `createMock*` utilities from `@/test/test-utils` for consistent test data
+- Test error handling through service methods, not UI
 
 **Mock Patterns**:
-- Use `vi.mock()` for module mocking
-- Create test-specific service instances for isolation
-- Use `createMock*` utilities from `@/test/test-utils` for consistent test data
+- Minimize mocking - prefer real implementations when possible
+- Use `vi.mock()` only for external dependencies (APIs, third-party libraries)
+- Mock at the service boundary, not internal application code
+- Create integration test databases instead of mocking data access
 
 **Error Testing**:
+- Test error states through user interactions that trigger errors
 - Use try/catch blocks instead of `expect().rejects.toThrow()` to avoid race conditions
-- Test error states through user interactions, not direct error throwing
+- Test error messages and recovery flows that users actually experience
+
+**Test Structure**:
+```typescript
+// ✅ Good - Test user behavior
+it('should display error when form submission fails', async () => {
+  render(<WorkoutForm />);
+  await user.click(screen.getByRole('button', { name: /save/i }));
+  expect(screen.getByText(/failed to save workout/i)).toBeInTheDocument();
+});
+
+// ❌ Avoid - Testing implementation details
+it('should call useWorkoutSessions hook with correct params', () => {
+  const { result } = renderHook(() => useWorkoutSessions('user-1'));
+  // This tests how the code works, not what the user experiences
+});
+```
 
 **Documentation References**:
 - Vitest API: https://vitest.dev/api/
 - React Testing Library: https://testing-library.com/docs/react-testing-library/intro/
 - Testing Library Queries: https://testing-library.com/docs/queries/about
+- RTL Philosophy: https://testing-library.com/docs/guiding-principles/
 
 **Test Organization**:
-- Group related tests with `describe()` blocks
-- Use descriptive test names that explain user scenarios
+- Group related tests with `describe()` blocks using user-centric descriptions
+- Use descriptive test names that explain user scenarios, not technical operations
 - Keep setup/teardown in `beforeEach()`/`afterEach()` hooks
+- Colocate tests with components (`.test.tsx`) for component tests
+- Place integration tests in `@/test/` directory for cross-feature workflows
 
 ## Feature Implementation System Guidelines
 
