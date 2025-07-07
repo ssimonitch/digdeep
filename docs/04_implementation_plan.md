@@ -64,11 +64,11 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 
 ### Step 1.3: Performance Monitoring System
 
-- [ ] Implement PerformanceMonitor class with FPS tracking
-- [ ] Create ErrorMonitor for comprehensive error reporting
-- [ ] Set up real-time performance metrics dashboard
-- [ ] Add memory usage monitoring and leak detection
-- [ ] Create performance grade system (excellent/good/fair/poor)
+- [x] Implement PerformanceMonitor class with FPS tracking
+- [x] Create ErrorMonitor for comprehensive error reporting
+- [x] Set up real-time performance metrics dashboard
+- [x] Add memory usage monitoring and leak detection
+- [x] Create performance grade system (excellent/good/fair/poor)
 
 ## Phase 2: Core UI Component Library
 
@@ -103,6 +103,16 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [x] Add responsive behavior for different screen sizes
 - [ ] Implement navigation state management
 - [x] Add header action buttons with proper touch targets
+
+### Step 2.5: Debug Tools Integration
+
+- [ ] Create hamburger menu component with slide-out drawer
+- [ ] Add "Debug Tools" menu item that opens debug panel
+- [ ] Integrate PerformanceDashboard into debug panel
+- [ ] Add toggle for showing/hiding performance overlay
+- [ ] Include error monitor display in debug panel
+- [ ] Add environment info display (browser, device capabilities)
+- [ ] Implement debug settings persistence in localStorage
 
 ## Phase 3: Real-Time Feedback UI Components
 
