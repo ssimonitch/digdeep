@@ -58,6 +58,13 @@ export default tseslint.config(
       'react-refresh/only-export-components': 'off',
     },
   },
+  // Allow console statements in error monitor service for debugging observer errors
+  {
+    files: ['src/shared/services/error-monitor.service.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
   {},
   eslintPluginPrettierRecommended,
 );

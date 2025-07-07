@@ -1,5 +1,7 @@
 import { Menu } from 'lucide-react';
+import { useState } from 'react';
 
+import { MediaPipePOCPage } from '@/features/analysis/components/MediaPipePOCPage';
 import { ModeToggle } from '@/shared/components/layout/ModeToggle';
 import { Button } from '@/shared/components/ui/button';
 
@@ -7,6 +9,8 @@ import { StatsCard } from './StatsCard';
 import { WorkoutCard } from './WorkoutCard';
 
 export function HomePage() {
+  const [showMediaPipePOC, setShowMediaPipePOC] = useState(false);
+
   const handleStartSquatSession = () => {
     // TODO: Implement squat session start
   };
@@ -51,6 +55,23 @@ export function HomePage() {
       ],
     },
   ];
+
+  if (showMediaPipePOC) {
+    return (
+      <div className="bg-background min-h-screen">
+        <header className="border-border/40 bg-background/80 border-b backdrop-blur-sm">
+          <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
+            <Button variant="ghost" onClick={() => setShowMediaPipePOC(false)}>
+              ← Back to Home
+            </Button>
+            <h1 className="text-2xl font-bold">MediaPipe Testing</h1>
+            <ModeToggle />
+          </div>
+        </header>
+        <MediaPipePOCPage />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen">
@@ -105,6 +126,18 @@ export function HomePage() {
               ⚡ Quick Check
             </Button>
           </nav>
+        </section>
+
+        {/* Developer Section - Temporary for Testing */}
+        <section className="space-y-4 border-t pt-4" aria-label="Developer Tools">
+          <h2 className="text-muted-foreground text-lg font-semibold">Developer Tools</h2>
+          <Button
+            variant="outline"
+            onClick={() => setShowMediaPipePOC(true)}
+            className="w-full justify-start text-left"
+          >
+            🧪 MediaPipe Performance Test
+          </Button>
         </section>
 
         {/* Recent Workouts */}

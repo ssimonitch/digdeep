@@ -62,15 +62,6 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [x] Implement data export/import functionality for user data portability
 - [x] Test storage service with production build and ensure compatibility
 
-### Step 1.2.1: Backend Integration (Deferred to Phase 8)
-
-- [ ] Deploy enhanced Supabase schema with comprehensive session tracking
-- [ ] Implement DatabaseService with type safety and error handling  
-- [ ] Set up Row Level Security (RLS) policies for data protection
-- [ ] Create database migration scripts and index optimization
-- [ ] Migrate data from Dexie to Supabase with seamless user experience
-- [ ] Add optional Dexie Cloud sync for multi-device support
-
 ### Step 1.3: Performance Monitoring System
 
 - [ ] Implement PerformanceMonitor class with FPS tracking
@@ -78,16 +69,6 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Set up real-time performance metrics dashboard
 - [ ] Add memory usage monitoring and leak detection
 - [ ] Create performance grade system (excellent/good/fair/poor)
-
-### Step 1.4: Web Worker Architecture (Deferred to Phase 9 - Optimization)
-
-- [ ] Implement pose-detection.worker.ts with GPU acceleration
-- [ ] Create analysis-calculation.worker.ts for real-time metrics
-- [ ] Set up feedback-generation.worker.ts for user cues
-- [ ] Test 30+ FPS processing pipeline with performance validation
-- [ ] Implement worker communication and error handling
-
-**Note**: Deferred to optimize after core functionality is working. Main thread implementation first, then optimize with workers.
 
 ## Phase 2: Core UI Component Library
 
@@ -255,7 +236,16 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 
 ## Phase 8: Media Upload & Storage
 
-### Step 8.1: Cloudinary Integration
+### Step 8.1: Backend Integration
+
+- [ ] Deploy enhanced Supabase schema with comprehensive session tracking
+- [ ] Implement DatabaseService with type safety and error handling  
+- [ ] Set up Row Level Security (RLS) policies for data protection
+- [ ] Create database migration scripts and index optimization
+- [ ] Migrate data from Dexie to Supabase with seamless user experience
+- [ ] Add optional Dexie Cloud sync for multi-device support
+
+### Step 8.2: Cloudinary Integration
 
 - [ ] Implement CloudinaryMediaService with progress tracking
 - [ ] Set up automatic thumbnail generation
@@ -263,7 +253,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Add upload retry logic and error handling
 - [ ] Implement video deletion and cleanup
 
-### Step 8.2: Upload Management
+### Step 8.3: Upload Management
 
 - [ ] Create useVideoUpload hook with progress tracking
 - [ ] Implement upload queue management
@@ -272,6 +262,16 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Implement upload progress visualization
 
 ## Phase 9: Advanced Feedback & Intelligence
+
+### Step 1.4: Web Worker Architecture (Deferred to Phase 9 - Optimization)
+
+- [ ] Implement pose-detection.worker.ts with GPU acceleration
+- [ ] Create analysis-calculation.worker.ts for real-time metrics
+- [ ] Set up feedback-generation.worker.ts for user cues
+- [ ] Test 30+ FPS processing pipeline with performance validation
+- [ ] Implement worker communication and error handling
+
+**Note**: Deferred to optimize after core functionality is working. Main thread implementation first, then optimize with workers.
 
 ### Step 9.1: Intelligent Feedback System
 
