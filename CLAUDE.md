@@ -232,5 +232,57 @@ it('should call useWorkoutSessions hook with correct params', () => {
 
 ## Code Quality and Linting Standards
 
+### Core Principles
 - Always use semantic HTML to improve accessibility and maintainability
 - **CRITICAL**: Never disable eslint or TypeScript rules without explicit user approval.
+- Maintain strict TypeScript typing - avoid `any` types in production code
+- Use proper error handling patterns with the existing ErrorMonitor service
+
+### TypeScript Best Practices
+- **Explicit Typing**: Always use explicit types, avoid `any` and implicit types
+- **Error Handling**: Use try/catch blocks with proper error typing (`error instanceof Error`)
+- **Nullish Coalescing**: Prefer `??` over `||` for safer null/undefined handling
+- **Unused Variables**: Prefix with `_` if unavoidable (e.g., `_error` in catch blocks)
+- **Async Functions**: Only use `async` when actually using `await` inside the function
+
+### Imports and Exports
+- **Import Sorting**: Use simple-import-sort ESLint rule - exports before imports, alphabetical
+- **Module Boundaries**: Properly type imports and exports, use barrel exports (`index.ts`)
+- **Type-only Imports**: Use `import type` for type-only imports
+
+### Error Handling and Logging
+- **Never use console.log**: Use the ErrorMonitor service instead
+  ```typescript
+  // ❌ Don't do this
+  console.error('Something failed:', error);
+  
+  // ✅ Do this
+  errorMonitor.reportError(
+    'Description of what failed',
+    'custom',
+    'high', // severity: low, medium, high, critical
+    { context: 'additional context data' }
+  );
+  ```
+- **Error Classifications**: 
+  - `critical`: System-breaking errors
+  - `high`: Feature-breaking errors (camera fails, API errors)
+  - `medium`: Recoverable errors (permission issues, network)
+  - `low`: Informational/debugging (successful operations, warnings)
+
+### Test File Patterns
+- **Mock Types**: Create proper TypeScript interfaces for mocks instead of using `any`
+- **Test Utilities**: Use typed test utility functions from `@/test/test-utils`
+- **Method Binding**: Use arrow functions or `.bind()` for method references in tests
+- **Empty Functions**: Replace empty arrow functions with meaningful implementations
+
+### Common Error Prevention
+1. **Unbound Methods**: Wrap method references in arrow functions or use `.bind()`
+2. **Floating Promises**: Always handle promises with `await`, `.catch()`, or `void` keyword
+3. **Unsafe Type Operations**: Use type guards and proper typing instead of `as any`
+4. **Template Literals**: Ensure all template literal expressions are strings or convertible
+
+### Code Organization
+- **Feature-based Structure**: Keep related code co-located in feature directories
+- **Separation of Concerns**: Services for business logic, hooks for React state, components for UI
+- **Index Files**: Use barrel exports to create clean module boundaries
