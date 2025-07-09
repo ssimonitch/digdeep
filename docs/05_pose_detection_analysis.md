@@ -236,6 +236,121 @@ interface ExerciseMetrics {
 - Performance benchmarks for real-time requirements
 - User acceptance testing for form feedback accuracy
 
+## Test-Driven Development (TDD) Workflow
+
+### Why TDD is Ideal for This Project
+
+**TDD provides significant benefits** for this pose detection refactoring:
+
+1. **Complex Mathematical Logic**: Joint angle calculations, distance measurements, and form analysis algorithms are perfect for TDD
+2. **Performance-Critical Code**: Real-time requirements (30 FPS) demand reliable, fast code with regression protection
+3. **Refactoring Safety**: Moving from two services to plugin architecture requires confidence that existing functionality works
+4. **Multi-Exercise Expansion**: Adding new exercises risks breaking existing analysis - tests prevent this
+
+### TDD Implementation Strategy
+
+#### Test Pyramid Structure
+- **Unit Tests (70%)**: Mathematical calculations, utility functions
+- **Integration Tests (20%)**: Exercise analyzers with mock data
+- **E2E Tests (10%)**: Full camera-to-analysis pipeline
+
+#### Testing Tools
+- **Vitest**: Fast unit testing (already in stack)
+- **React Testing Library**: UI component testing
+- **Playwright**: E2E testing with real camera input
+- **Benchmark.js**: Performance regression testing
+
+#### Test Data Management
+```typescript
+// Create fixture data for consistent testing
+const MOCK_SQUAT_LANDMARKS = {
+  good_depth: { /* landmarks for proper depth */ },
+  shallow: { /* landmarks for shallow squat */ },
+  lateral_shift: { /* landmarks showing imbalance */ }
+};
+```
+
+### TDD Workflow by Phase
+
+#### Phase 1: Extract Common Logic (Perfect for TDD)
+**Red-Green-Refactor Cycle:**
+```typescript
+// 1. RED: Write failing test
+describe('LandmarkCalculator', () => {
+  it('should calculate knee angle correctly', () => {
+    const hip = { x: 0.5, y: 0.3, z: 0 };
+    const knee = { x: 0.5, y: 0.5, z: 0 };
+    const ankle = { x: 0.5, y: 0.7, z: 0 };
+    
+    expect(LandmarkCalculator.calculateAngle(hip, knee, ankle))
+      .toBeCloseTo(180, 1);
+  });
+});
+```
+
+#### Phase 2: Strategy Pattern (Interface-Driven Development)
+```typescript
+// Define interfaces first through tests
+describe('ExerciseAnalyzer', () => {
+  it('should implement required interface methods', () => {
+    const analyzer = new SquatAnalyzer();
+    expect(analyzer.analyzeFrame).toBeDefined();
+    expect(analyzer.getConfiguration).toBeDefined();
+    expect(analyzer.validatePose).toBeDefined();
+  });
+});
+```
+
+#### Phase 3: Plugin Architecture (Test-Driven)
+```typescript
+describe('ExercisePluginManager', () => {
+  it('should register and load plugins correctly', () => {
+    const manager = new ExercisePluginManager();
+    const plugin = new SquatAnalyzerPlugin();
+    
+    manager.register('squat', plugin);
+    expect(manager.getAnalyzer('squat')).toBe(plugin);
+  });
+});
+```
+
+### Handling TDD Challenges
+
+#### Challenge 1: MediaPipe Integration
+**Solution**: Dependency injection and mocking
+```typescript
+class MockPoseLandmarker {
+  detectForVideo(video: HTMLVideoElement) {
+    return this.mockResult;
+  }
+}
+```
+
+#### Challenge 2: Performance Testing
+**Solution**: Separate performance tests
+```typescript
+describe('Performance', () => {
+  it('should process frame within 33ms', () => {
+    const start = performance.now();
+    analyzer.analyzeFrame(mockLandmarks);
+    const duration = performance.now() - start;
+    
+    expect(duration).toBeLessThan(33); // 30 FPS requirement
+  });
+});
+```
+
+#### Challenge 3: Visual Component Testing
+**Solution**: Test data generation, not rendering
+```typescript
+describe('OverlayGenerator', () => {
+  it('should generate correct bar path overlay points', () => {
+    const overlayData = generateBarPathOverlay(shoulderHistory);
+    expect(overlayData.points).toHaveLength(shoulderHistory.length);
+  });
+});
+```
+
 ## Conclusion
 
 **Recommendation**: Both services are necessary but should be restructured.
