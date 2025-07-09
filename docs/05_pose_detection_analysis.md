@@ -195,12 +195,14 @@ interface ExerciseMetrics {
 **Objective**: Eliminate code duplication while maintaining performance using TDD approach
 
 #### 1.1 Create Test Infrastructure
+
 - [ ] Set up test fixtures for mock landmark data
 - [ ] Create test utilities for angle/distance validation
 - [ ] Set up performance benchmarking tests (33ms requirement)
 - [ ] Create mock MediaPipe classes for isolated testing
 
 #### 1.2 Extract LandmarkCalculator Utility
+
 - [ ] Write tests for angle calculations (knee, hip, ankle angles)
 - [ ] Write tests for distance measurements (landmark distances)
 - [ ] Write tests for midpoint calculations (shoulder midpoint)
@@ -208,6 +210,7 @@ interface ExerciseMetrics {
 - [ ] Benchmark calculation performance (< 1ms per calculation)
 
 #### 1.3 Extract PerformanceMonitor Utility
+
 - [ ] Write tests for metrics tracking (FPS, processing time)
 - [ ] Write tests for performance history management
 - [ ] Write tests for performance threshold detection
@@ -215,6 +218,7 @@ interface ExerciseMetrics {
 - [ ] Integrate with existing error monitoring system
 
 #### 1.4 Extract LandmarkValidator Utility
+
 - [ ] Write tests for landmark visibility validation
 - [ ] Write tests for pose completeness validation
 - [ ] Write tests for landmark quality assessment
@@ -222,6 +226,7 @@ interface ExerciseMetrics {
 - [ ] Test integration with confidence calculations
 
 #### 1.5 Create BasePoseDetector Class
+
 - [ ] Write tests for MediaPipe initialization
 - [ ] Write tests for frame processing pipeline
 - [ ] Write tests for GPU/CPU fallback behavior
@@ -229,6 +234,7 @@ interface ExerciseMetrics {
 - [ ] Test resource management and cleanup
 
 #### 1.6 Refactor SquatPoseAnalyzer
+
 - [ ] Write tests to verify existing squat analysis behavior
 - [ ] Update SquatPoseAnalyzer to extend BasePoseDetector
 - [ ] Remove duplicated detection logic
@@ -240,6 +246,7 @@ interface ExerciseMetrics {
 **Objective**: Create extensible exercise analysis system with interfaces
 
 #### 2.1 Define Core Interfaces
+
 - [ ] Write tests for ExerciseAnalyzer interface contract
 - [ ] Write tests for ExerciseMetrics interface structure
 - [ ] Write tests for ExerciseConfig interface validation
@@ -247,6 +254,7 @@ interface ExerciseMetrics {
 - [ ] Create discriminated union types for exercise-specific metrics
 
 #### 2.2 Create ExerciseAnalysisEngine
+
 - [ ] Write tests for exercise analyzer registration
 - [ ] Write tests for frame processing coordination
 - [ ] Write tests for analyzer switching (exercise type changes)
@@ -255,6 +263,7 @@ interface ExerciseMetrics {
 - [ ] Test integration with existing camera services
 
 #### 2.3 Refactor SquatPoseAnalyzer to Strategy Pattern
+
 - [ ] Write tests for SquatAnalyzer interface implementation
 - [ ] Write tests for squat-specific configuration
 - [ ] Write tests for squat metrics validation
@@ -263,6 +272,7 @@ interface ExerciseMetrics {
 - [ ] Benchmark performance with new architecture
 
 #### 2.4 Add Configuration Management
+
 - [ ] Write tests for exercise configuration validation
 - [ ] Write tests for configuration inheritance (global → exercise)
 - [ ] Write tests for runtime configuration updates
@@ -274,6 +284,7 @@ interface ExerciseMetrics {
 **Objective**: Support dynamic exercise addition and configuration
 
 #### 3.1 Create Plugin System Foundation
+
 - [ ] Write tests for plugin registration/deregistration
 - [ ] Write tests for plugin lifecycle management
 - [ ] Write tests for plugin dependency resolution
@@ -281,6 +292,7 @@ interface ExerciseMetrics {
 - [ ] Test plugin isolation and error handling
 
 #### 3.2 Convert SquatAnalyzer to Plugin
+
 - [ ] Write tests for SquatAnalyzerPlugin wrapper
 - [ ] Write tests for plugin configuration schema
 - [ ] Write tests for plugin metadata and versioning
@@ -288,6 +300,7 @@ interface ExerciseMetrics {
 - [ ] Test plugin loading and execution
 
 #### 3.3 Add Plugin Configuration System
+
 - [ ] Write tests for plugin-specific configuration
 - [ ] Write tests for configuration validation schemas
 - [ ] Write tests for configuration migration/updates
@@ -295,6 +308,7 @@ interface ExerciseMetrics {
 - [ ] Test hierarchical configuration (global → plugin → user)
 
 #### 3.4 Update UI for Plugin System
+
 - [ ] Write tests for dynamic exercise type detection
 - [ ] Write tests for plugin-specific UI components
 - [ ] Write tests for configuration UI updates
@@ -306,6 +320,7 @@ interface ExerciseMetrics {
 **Objective**: Add bench press and deadlift analysis capabilities
 
 #### 4.1 Create BenchPressAnalyzer
+
 - [ ] Write tests for bench press landmark validation
 - [ ] Write tests for chest-bar distance calculations
 - [ ] Write tests for press path tracking
@@ -314,6 +329,7 @@ interface ExerciseMetrics {
 - [ ] Test integration with plugin system
 
 #### 4.2 Create DeadliftAnalyzer
+
 - [ ] Write tests for deadlift landmark validation
 - [ ] Write tests for hip hinge angle calculations
 - [ ] Write tests for bar path tracking (vertical)
@@ -322,6 +338,7 @@ interface ExerciseMetrics {
 - [ ] Test integration with plugin system
 
 #### 4.3 Add Multi-Exercise UI Support
+
 - [ ] Write tests for exercise switching functionality
 - [ ] Write tests for exercise-specific metric displays
 - [ ] Write tests for exercise-specific overlays
@@ -329,6 +346,7 @@ interface ExerciseMetrics {
 - [ ] Test user experience across exercise types
 
 #### 4.4 Integration Testing
+
 - [ ] Write tests for complete exercise analysis workflows
 - [ ] Write tests for exercise switching during sessions
 - [ ] Write tests for performance across all exercises
@@ -340,6 +358,7 @@ interface ExerciseMetrics {
 **Objective**: Add tempo tracking and movement pattern analysis
 
 #### 5.1 Implement Tempo Tracking
+
 - [ ] Write tests for eccentric phase detection
 - [ ] Write tests for concentric phase detection
 - [ ] Write tests for tempo timing calculations
@@ -348,6 +367,7 @@ interface ExerciseMetrics {
 - [ ] Test tempo feedback and visualization
 
 #### 5.2 Add Movement Pattern Analysis
+
 - [ ] Write tests for movement pattern recognition
 - [ ] Write tests for form correction suggestions
 - [ ] Write tests for pattern matching algorithms
@@ -355,6 +375,7 @@ interface ExerciseMetrics {
 - [ ] Test pattern-based feedback system
 
 #### 5.3 Performance Optimization
+
 - [ ] Run comprehensive performance benchmarks
 - [ ] Optimize critical path operations
 - [ ] Implement caching for expensive calculations
@@ -362,6 +383,7 @@ interface ExerciseMetrics {
 - [ ] Validate 30 FPS requirement across all features
 
 #### 5.4 Final Integration and Testing
+
 - [ ] Run full test suite (unit, integration, E2E)
 - [ ] Test all exercise types with real camera input
 - [ ] Validate error handling and recovery

@@ -278,6 +278,11 @@ describe('ErrorMonitor', () => {
     });
 
     it('should handle observer errors gracefully', () => {
+      // Suppress console.error output during the test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {
+        // Do nothing
+      });
+
       const faultyObserver = vi.fn(() => {
         throw new Error('Observer error');
       });
@@ -286,6 +291,8 @@ describe('ErrorMonitor', () => {
 
       // Should not throw
       expect(() => monitor.reportError('Test error')).not.toThrow();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should allow unsubscribing observers', () => {
