@@ -81,9 +81,65 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Add environment info display (browser, device capabilities)
 - [ ] Implement debug settings persistence in localStorage
 
-## Phase 3: Real-Time Feedback UI Components
+## Phase 3: MediaPipe Integration & Basic Analysis (MVP Priority)
 
-### Step 3.1: Balance Meter Component
+### Step 3.1: Pose Detection System
+
+- [ ] Install MediaPipe Pose dependencies and type definitions
+- [ ] Implement OptimizedPoseDetector service class
+- [ ] Set up pose landmarker model loading and initialization
+- [ ] Create landmark validation and confidence scoring
+- [ ] Implement pose detection throttling for consistent 30 FPS
+- [ ] Add pose detection error handling and fallbacks
+
+### Step 3.2: Basic Squat Analysis Engine
+
+- [ ] Build SquatAnalysisEngine with depth calculation (hip-knee angle)
+- [ ] Implement balance analysis with lateral shift detection
+- [ ] Create simple shoulder midpoint tracking for bar path
+- [ ] Add basic rep counting and state detection
+- [ ] Implement analysis confidence scoring and validation
+- [ ] ~~Add tempo analysis for eccentric/concentric phases~~ **[DEFERRED - Post-MVP]**
+- [ ] ~~Create advanced bar path analysis with deviation tracking~~ **[DEFERRED - Post-MVP]**
+
+### Step 3.3: Real-Time Analysis Pipeline
+
+- [ ] Implement useRealTimeAnalysis hook
+- [ ] Create frame processing pipeline from camera to analysis
+- [ ] Set up analysis event system for real-time feedback
+- [ ] Add analysis performance monitoring (FPS, latency)
+- [ ] Implement analysis error handling and recovery
+
+## Phase 4: MVP Active Analysis Screen (No Recording)
+
+### Step 4.1: Active Analysis Screen
+
+- [ ] Build Active Analysis screen component with camera feed display
+- [ ] Integrate existing useCamera hook for live video stream
+- [ ] Implement start/stop analysis toggle controls
+- [ ] Add pose landmark visualization overlay
+- [ ] Create navigation flow from Home screen to Active Analysis
+- [ ] Implement proper cleanup on screen unmount
+
+### Step 4.2: Real-Time Feedback Integration
+
+- [ ] Integrate real-time feedback overlays (balance meter, depth indicator)
+- [ ] Create metric display panel for current values
+- [ ] Add visual indicators for good/warning/critical states
+- [ ] Implement smooth transitions for metric updates
+- [ ] ~~Add focus cue overlay system integration~~ **[DEFERRED - Post-MVP]**
+
+### Step 4.3: Analysis Controls & Status
+
+- [ ] Create analysis state management (idle, analyzing, paused)
+- [ ] Implement rep counter display
+- [ ] Add current set tracking (without recording)
+- [ ] Create analysis quality indicator (pose confidence)
+- [ ] Add basic error handling and user feedback
+
+## Phase 5: Real-Time Feedback UI Components
+
+### Step 5.1: Balance Meter Component
 
 - [ ] Implement BalanceMeter with gradient background and zones
 - [ ] Create animated indicator with smooth position transitions
@@ -91,7 +147,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Implement critical state pulsing animation
 - [ ] Add accessibility with screen reader support
 
-### Step 3.2: Depth Indicator Component
+### Step 5.2: Depth Indicator Component
 
 - [ ] Implement DepthIndicator with circular arc progress
 - [ ] Create animated depth achievement feedback
@@ -99,25 +155,17 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Implement achievement pulse animation when parallel reached
 - [ ] Add size variants (small/large) for different contexts
 
-### Step 3.3: Focus Cue Overlay System
+### Step 5.3: Focus Cue Overlay System **[DEFERRED - Post-MVP]**
 
-- [ ] Implement FocusCueDisplay with position variants (top/center/bottom)
-- [ ] Create auto-cycling cue system with fade transitions
-- [ ] Add backdrop blur and high contrast design
-- [ ] Implement cue priority system and timing controls
-- [ ] Add customizable cue content and styling
+- [ ] ~~Implement FocusCueDisplay with position variants~~ **[DEFERRED]**
+- [ ] ~~Create auto-cycling cue system with fade transitions~~ **[DEFERRED]**
+- [ ] ~~Add backdrop blur and high contrast design~~ **[DEFERRED]**
+- [ ] ~~Implement cue priority system and timing controls~~ **[DEFERRED]**
+- [ ] ~~Add customizable cue content and styling~~ **[DEFERRED]**
 
-## Phase 4: Camera & Recording System
+## Phase 6: Recording Enhancement **[DEFERRED - Post-MVP]**
 
-### Step 4.1: Camera Management
-
-- [x] Implement useCamera hook with 30 FPS targeting
-- [ ] Create camera configuration system (resolution, frame rate, facing mode)
-- [ ] Add camera permission handling and error states
-- [ ] Implement camera stream optimization for pose detection
-- [ ] Create video frame capture system with memory management
-
-### Step 4.2: Recording Infrastructure
+### Step 6.1: Recording Infrastructure (from old Phase 4.2)
 
 - [ ] Implement useRecording hook with MediaRecorder integration
 - [ ] Set up high-quality recording settings (2.5 Mbps, VP9 codec)
@@ -125,7 +173,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Implement recording duration tracking and auto-stop
 - [ ] Add recording cleanup and memory management
 
-### Step 4.3: Video Frame Processing
+### Step 6.2: Video Frame Processing (from old Phase 4.3)
 
 - [ ] Create VideoFramePool for memory efficiency
 - [ ] Implement frame throttling to maintain 30 FPS target
@@ -133,35 +181,27 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Add frame quality validation and error handling
 - [ ] Create frame processing performance monitoring
 
-## Phase 5: MediaPipe Integration & Analysis
+### Step 6.3: Recording UI Integration
 
-### Step 5.1: Pose Detection System
+- [ ] Add recording controls to Active Analysis screen
+- [ ] Implement recording status indicators
+- [ ] Create video preview and playback functionality
+- [ ] Add save/discard workflow for recordings
+- [ ] Integrate with storage system for video persistence
 
-- [ ] Implement OptimizedPoseDetector with GPU acceleration
-- [ ] Set up pose landmarker model loading and initialization
-- [ ] Create landmark validation and confidence scoring
-- [ ] Implement pose detection throttling for consistent 30 FPS
-- [ ] Add pose detection error handling and fallbacks
+## Phase 7: Camera Management **[COMPLETED]**
 
-### Step 5.2: Squat Analysis Engine
+### Step 7.1: Camera Management (formerly Phase 4.1)
 
-- [ ] Build SquatAnalysisEngine with depth calculation
-- [ ] Implement balance analysis with lateral shift detection
-- [ ] Create bar path analysis with deviation tracking
-- [ ] Add tempo analysis for eccentric/concentric phases
-- [ ] Implement analysis confidence scoring and validation
+- [x] Implement useCamera hook with 30 FPS targeting
+- [x] Create camera configuration system (resolution, frame rate, facing mode)
+- [x] Add camera permission handling and error states
+- [x] Implement camera stream optimization for pose detection
+- [x] Create video frame capture system with memory management
 
-### Step 5.3: Real-Time Analysis Pipeline
+## Phase 8: Screen Implementation & User Flows
 
-- [ ] Implement useRealTimeAnalysis hook
-- [ ] Create analysis result caching and optimization
-- [ ] Set up analysis event system for real-time feedback
-- [ ] Add analysis performance monitoring (FPS, latency)
-- [ ] Implement analysis error handling and recovery
-
-## Phase 6: Screen Implementation & User Flows
-
-### Step 6.1: Home Screen Layout
+### Step 8.1: Home Screen Layout (formerly Phase 6.1)
 
 - [x] Implement Home screen with hero button and quick actions
 - [x] Create recent workouts list with interactive cards
@@ -169,25 +209,17 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [x] Implement quick action pills (Last Workout, Quick Check)
 - [ ] Add proper loading and empty states
 
-### Step 6.2: Active Recording Screen
+### Step 8.2: Pre-Recording Setup Screen **[DEFERRED - Post-MVP]**
 
-- [ ] Build Active Recording screen with camera feed
-- [ ] Integrate real-time feedback overlays (balance meter, depth indicator)
-- [ ] Implement status bar with minimal controls
-- [ ] Add focus cue overlay system integration
-- [ ] Create large touch zone for keeping session active
+- [ ] ~~Implement setup screen with focus cues selection~~ **[DEFERRED]**
+- [ ] ~~Create recording mode selection (auto-start, timer)~~ **[DEFERRED]**
+- [ ] ~~Add camera positioning guidance~~ **[DEFERRED]**
+- [ ] ~~Implement setup validation and error handling~~ **[DEFERRED]**
+- [ ] ~~Create smooth transition to recording state~~ **[DEFERRED]**
 
-### Step 6.3: Pre-Recording Setup Screen
+## Phase 9: Workout Management System
 
-- [ ] Implement setup screen with focus cues selection
-- [ ] Create recording mode selection (auto-start, timer)
-- [ ] Add camera positioning guidance
-- [ ] Implement setup validation and error handling
-- [ ] Create smooth transition to recording state
-
-## Phase 7: Workout Management System
-
-### Step 7.1: Session Management
+### Step 9.1: Session Management
 
 - [ ] Implement workout session creation and tracking
 - [ ] Create session state management with optimistic updates
@@ -195,7 +227,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Implement session history and navigation
 - [ ] Create session sharing and export functionality
 
-### Step 7.2: Exercise & Set Tracking
+### Step 9.2: Exercise & Set Tracking
 
 - [ ] Build exercise addition and configuration system
 - [ ] Implement set tracking with recording linkage
@@ -203,7 +235,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Add RPE (Rate of Perceived Exertion) tracking
 - [ ] Implement exercise customization and templates
 
-### Step 7.3: Data Persistence & Sync
+### Step 9.3: Data Persistence & Sync
 
 - [ ] Implement optimistic updates for responsive UI
 - [ ] Create offline data handling with sync queues
@@ -211,9 +243,9 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Add data validation and integrity checks
 - [ ] Implement backup and recovery systems
 
-## Phase 8: Media Upload & Storage
+## Phase 10: Media Upload & Storage
 
-### Step 8.1: Backend Integration
+### Step 10.1: Backend Integration
 
 - [ ] Deploy enhanced Supabase schema with comprehensive session tracking
 - [ ] Implement DatabaseService with type safety and error handling  
@@ -222,7 +254,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Migrate data from Dexie to Supabase with seamless user experience
 - [ ] Add optional Dexie Cloud sync for multi-device support
 
-### Step 8.2: Cloudinary Integration
+### Step 10.2: Cloudinary Integration
 
 - [ ] Implement CloudinaryMediaService with progress tracking
 - [ ] Set up automatic thumbnail generation
@@ -230,7 +262,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Add upload retry logic and error handling
 - [ ] Implement video deletion and cleanup
 
-### Step 8.3: Upload Management
+### Step 10.3: Upload Management
 
 - [ ] Create useVideoUpload hook with progress tracking
 - [ ] Implement upload queue management
@@ -238,9 +270,9 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Create upload failure handling and retry
 - [ ] Implement upload progress visualization
 
-## Phase 9: Advanced Feedback & Intelligence
+## Phase 11: Advanced Feedback & Intelligence
 
-### Step 1.4: Web Worker Architecture (Deferred to Phase 9 - Optimization)
+### Step 11.1: Web Worker Architecture (Optimization)
 
 - [ ] Implement pose-detection.worker.ts with GPU acceleration
 - [ ] Create analysis-calculation.worker.ts for real-time metrics
@@ -250,7 +282,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 
 **Note**: Deferred to optimize after core functionality is working. Main thread implementation first, then optimize with workers.
 
-### Step 9.1: Intelligent Feedback System
+### Step 11.2: Intelligent Feedback System
 
 - [ ] Implement adaptive feedback sensitivity
 - [ ] Create personalized feedback profiles
@@ -258,7 +290,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Add context-aware feedback timing
 - [ ] Implement feedback effectiveness tracking
 
-### Step 9.2: Multi-Modal Feedback
+### Step 11.3: Multi-Modal Feedback
 
 - [ ] Create audio cue system with spatial audio
 - [ ] Implement haptic feedback for mobile devices
@@ -266,9 +298,9 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Create feedback batching and prioritization
 - [ ] Implement feedback analytics and optimization
 
-## Phase 10: Analysis Enhancement & Insights
+## Phase 12: Analysis Enhancement & Insights
 
-### Step 10.1: Advanced Metrics
+### Step 12.1: Advanced Metrics
 
 - [ ] Implement bar velocity tracking
 - [ ] Add joint angle measurements
@@ -276,7 +308,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Build fatigue detection system
 - [ ] Add rep-to-rep comparison tools
 
-### Step 10.2: Analysis Intelligence & Reporting
+### Step 12.2: Analysis Intelligence & Reporting
 
 - [ ] Create comprehensive analysis reports
 - [ ] Implement improvement recommendations
@@ -284,9 +316,9 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Add form trend analysis and predictions
 - [ ] Create analysis data export and sharing
 
-## Phase 11: Integration & Polish
+## Phase 13: Integration & Polish
 
-### Step 11.1: Cross-Feature Integration
+### Step 13.1: Cross-Feature Integration
 
 - [ ] Implement unified state management across features
 - [ ] Create seamless recording → analysis → feedback flow
@@ -294,7 +326,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Add feature communication optimization
 - [ ] Implement proper cleanup and resource management
 
-### Step 11.2: User Experience Optimization
+### Step 13.2: User Experience Optimization
 
 - [ ] Implement gesture controls for gym use
 - [ ] Add one-handed operation support
@@ -302,9 +334,9 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Optimize for various screen sizes and orientations
 - [ ] Add accessibility enhancements for gym conditions
 
-## Phase 12: Production Readiness
+## Phase 14: Production Readiness
 
-### Step 12.1: Quality Assurance
+### Step 14.1: Quality Assurance
 
 - [ ] End-to-end testing of all user flows
 - [ ] Performance testing under various conditions
@@ -312,7 +344,7 @@ This document serves as a step-by-step implementation checklist for the DigDeep 
 - [ ] Accessibility testing and WCAG compliance
 - [ ] Mobile device compatibility testing
 
-### Step 12.2: Deployment & Monitoring
+### Step 14.2: Deployment & Monitoring
 
 - [ ] Set up production deployment pipeline
 - [ ] Configure monitoring and alerting systems
