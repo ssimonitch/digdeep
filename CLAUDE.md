@@ -144,51 +144,11 @@ Following React Testing Library's principle: "The more your tests resemble the w
 - Use `waitFor()` for async operations and state changes
 - Focus on accessibility with role-based queries
 
-**Service Layer Testing**:
-- Test services directly for business logic validation
-- Create test-specific database instances for isolation
-- Use `createMock*` utilities from `@/test/test-utils` for consistent test data
-- Test error handling through service methods, not UI
-
-**Mock Patterns**:
-- Minimize mocking - prefer real implementations when possible
-- Use `vi.mock()` only for external dependencies (APIs, third-party libraries)
-- Mock at the service boundary, not internal application code
-- Create integration test databases instead of mocking data access
-
-**Error Testing**:
-- Test error states through user interactions that trigger errors
-- Use try/catch blocks instead of `expect().rejects.toThrow()` to avoid race conditions
-- Test error messages and recovery flows that users actually experience
-
-**Test Structure**:
-```typescript
-// ✅ Good - Test user behavior
-it('should display error when form submission fails', async () => {
-  render(<WorkoutForm />);
-  await user.click(screen.getByRole('button', { name: /save/i }));
-  expect(screen.getByText(/failed to save workout/i)).toBeInTheDocument();
-});
-
-// ❌ Avoid - Testing implementation details
-it('should call useWorkoutSessions hook with correct params', () => {
-  const { result } = renderHook(() => useWorkoutSessions('user-1'));
-  // This tests how the code works, not what the user experiences
-});
-```
-
 **Documentation References**:
 - Vitest API: https://vitest.dev/api/
 - React Testing Library: https://testing-library.com/docs/react-testing-library/intro/
 - Testing Library Queries: https://testing-library.com/docs/queries/about
 - RTL Philosophy: https://testing-library.com/docs/guiding-principles/
-
-**Test Organization**:
-- Group related tests with `describe()` blocks using user-centric descriptions
-- Use descriptive test names that explain user scenarios, not technical operations
-- Keep setup/teardown in `beforeEach()`/`afterEach()` hooks
-- Colocate tests with components (`.test.tsx`) for component tests
-- Place integration tests in `@/test/` directory for cross-feature workflows
 
 ## Feature Implementation System Guidelines
 
@@ -214,21 +174,6 @@ it('should call useWorkoutSessions hook with correct params', () => {
 - **CRITICAL**: Preserve existing naming conventions and file organization
 - Follow project's established architecture and component patterns
 - Use existing utility functions and avoid duplicating functionality
-
-## Important Notes
-
-1. **MediaPipe Integration**: When implementing pose detection, ensure proper cleanup of camera streams and MediaPipe resources to prevent memory leaks.
-
-2. **Performance**: The app must maintain 30+ FPS during recording with pose detection. Use React.memo, useMemo, and useCallback appropriately.
-
-3. **Mobile-First**: All UI decisions should prioritize mobile usability, especially in gym conditions (one-handed operation, glove-friendly).
-
-4. **Free Tier Limits**: Be mindful of:
-   - Cloudinary: 25GB storage
-   - Supabase: Database row limits
-   - Vercel/Netlify: Build minutes and bandwidth
-
-5. **Privacy**: This is a personal project, but implement proper data handling practices as it deals with video recordings of workouts.
 
 ## Code Quality and Linting Standards
 
