@@ -190,29 +190,183 @@ interface ExerciseMetrics {
 
 ## Implementation Plan
 
-### Immediate Actions (Week 1-2)
+### Phase 1: Extract Common Logic (Week 1-2)
 
-1. Refactor `OptimizedPoseDetector` into `BasePoseDetector`
-2. Create shared utility classes
-3. Update `SquatPoseAnalyzer` to extend base class
+**Objective**: Eliminate code duplication while maintaining performance using TDD approach
 
-### Short-term (Week 3-4)
+#### 1.1 Create Test Infrastructure
+- [ ] Set up test fixtures for mock landmark data
+- [ ] Create test utilities for angle/distance validation
+- [ ] Set up performance benchmarking tests (33ms requirement)
+- [ ] Create mock MediaPipe classes for isolated testing
 
-1. Implement `ExerciseAnalyzer` interface
-2. Create `ExerciseAnalysisEngine`
-3. Add plugin architecture foundation
+#### 1.2 Extract LandmarkCalculator Utility
+- [ ] Write tests for angle calculations (knee, hip, ankle angles)
+- [ ] Write tests for distance measurements (landmark distances)
+- [ ] Write tests for midpoint calculations (shoulder midpoint)
+- [ ] Implement LandmarkCalculator class to pass tests
+- [ ] Benchmark calculation performance (< 1ms per calculation)
 
-### Medium-term (Month 2)
+#### 1.3 Extract PerformanceMonitor Utility
+- [ ] Write tests for metrics tracking (FPS, processing time)
+- [ ] Write tests for performance history management
+- [ ] Write tests for performance threshold detection
+- [ ] Implement PerformanceMonitor class to pass tests
+- [ ] Integrate with existing error monitoring system
 
-1. Implement `BenchPressAnalyzer` and `DeadliftAnalyzer`
-2. Add configuration management system
-3. Update UI for multi-exercise support
+#### 1.4 Extract LandmarkValidator Utility
+- [ ] Write tests for landmark visibility validation
+- [ ] Write tests for pose completeness validation
+- [ ] Write tests for landmark quality assessment
+- [ ] Implement LandmarkValidator class to pass tests
+- [ ] Test integration with confidence calculations
 
-### Long-term (Month 3+)
+#### 1.5 Create BasePoseDetector Class
+- [ ] Write tests for MediaPipe initialization
+- [ ] Write tests for frame processing pipeline
+- [ ] Write tests for GPU/CPU fallback behavior
+- [ ] Implement BasePoseDetector with common logic
+- [ ] Test resource management and cleanup
 
-1. Add advanced features (tempo tracking, movement patterns)
-2. Implement exercise-specific calibration
-3. Add machine learning for form correction suggestions
+#### 1.6 Refactor SquatPoseAnalyzer
+- [ ] Write tests to verify existing squat analysis behavior
+- [ ] Update SquatPoseAnalyzer to extend BasePoseDetector
+- [ ] Remove duplicated detection logic
+- [ ] Test that all existing functionality is preserved
+- [ ] Benchmark performance (ensure no regression)
+
+### Phase 2: Implement Strategy Pattern (Week 3-4)
+
+**Objective**: Create extensible exercise analysis system with interfaces
+
+#### 2.1 Define Core Interfaces
+- [ ] Write tests for ExerciseAnalyzer interface contract
+- [ ] Write tests for ExerciseMetrics interface structure
+- [ ] Write tests for ExerciseConfig interface validation
+- [ ] Define TypeScript interfaces based on test requirements
+- [ ] Create discriminated union types for exercise-specific metrics
+
+#### 2.2 Create ExerciseAnalysisEngine
+- [ ] Write tests for exercise analyzer registration
+- [ ] Write tests for frame processing coordination
+- [ ] Write tests for analyzer switching (exercise type changes)
+- [ ] Write tests for error handling during analysis
+- [ ] Implement ExerciseAnalysisEngine class
+- [ ] Test integration with existing camera services
+
+#### 2.3 Refactor SquatPoseAnalyzer to Strategy Pattern
+- [ ] Write tests for SquatAnalyzer interface implementation
+- [ ] Write tests for squat-specific configuration
+- [ ] Write tests for squat metrics validation
+- [ ] Update SquatPoseAnalyzer to implement ExerciseAnalyzer
+- [ ] Test analyzer registration and execution
+- [ ] Benchmark performance with new architecture
+
+#### 2.4 Add Configuration Management
+- [ ] Write tests for exercise configuration validation
+- [ ] Write tests for configuration inheritance (global → exercise)
+- [ ] Write tests for runtime configuration updates
+- [ ] Implement configuration management system
+- [ ] Test configuration persistence and loading
+
+### Phase 3: Plugin Architecture (Week 5-6)
+
+**Objective**: Support dynamic exercise addition and configuration
+
+#### 3.1 Create Plugin System Foundation
+- [ ] Write tests for plugin registration/deregistration
+- [ ] Write tests for plugin lifecycle management
+- [ ] Write tests for plugin dependency resolution
+- [ ] Implement ExercisePluginManager class
+- [ ] Test plugin isolation and error handling
+
+#### 3.2 Convert SquatAnalyzer to Plugin
+- [ ] Write tests for SquatAnalyzerPlugin wrapper
+- [ ] Write tests for plugin configuration schema
+- [ ] Write tests for plugin metadata and versioning
+- [ ] Create SquatAnalyzerPlugin from existing analyzer
+- [ ] Test plugin loading and execution
+
+#### 3.3 Add Plugin Configuration System
+- [ ] Write tests for plugin-specific configuration
+- [ ] Write tests for configuration validation schemas
+- [ ] Write tests for configuration migration/updates
+- [ ] Implement ExerciseConfigManager class
+- [ ] Test hierarchical configuration (global → plugin → user)
+
+#### 3.4 Update UI for Plugin System
+- [ ] Write tests for dynamic exercise type detection
+- [ ] Write tests for plugin-specific UI components
+- [ ] Write tests for configuration UI updates
+- [ ] Update exercise selection components
+- [ ] Test plugin-aware navigation and routing
+
+### Phase 4: Multi-Exercise Support (Week 7-8)
+
+**Objective**: Add bench press and deadlift analysis capabilities
+
+#### 4.1 Create BenchPressAnalyzer
+- [ ] Write tests for bench press landmark validation
+- [ ] Write tests for chest-bar distance calculations
+- [ ] Write tests for press path tracking
+- [ ] Write tests for elbow angle analysis
+- [ ] Implement BenchPressAnalyzer class
+- [ ] Test integration with plugin system
+
+#### 4.2 Create DeadliftAnalyzer
+- [ ] Write tests for deadlift landmark validation
+- [ ] Write tests for hip hinge angle calculations
+- [ ] Write tests for bar path tracking (vertical)
+- [ ] Write tests for back angle analysis
+- [ ] Implement DeadliftAnalyzer class
+- [ ] Test integration with plugin system
+
+#### 4.3 Add Multi-Exercise UI Support
+- [ ] Write tests for exercise switching functionality
+- [ ] Write tests for exercise-specific metric displays
+- [ ] Write tests for exercise-specific overlays
+- [ ] Update UI components for multi-exercise support
+- [ ] Test user experience across exercise types
+
+#### 4.4 Integration Testing
+- [ ] Write tests for complete exercise analysis workflows
+- [ ] Write tests for exercise switching during sessions
+- [ ] Write tests for performance across all exercises
+- [ ] Test memory usage and resource management
+- [ ] Perform end-to-end testing with real camera input
+
+### Phase 5: Advanced Features (Week 9-10)
+
+**Objective**: Add tempo tracking and movement pattern analysis
+
+#### 5.1 Implement Tempo Tracking
+- [ ] Write tests for eccentric phase detection
+- [ ] Write tests for concentric phase detection
+- [ ] Write tests for tempo timing calculations
+- [ ] Write tests for velocity calculations
+- [ ] Implement tempo tracking across all exercises
+- [ ] Test tempo feedback and visualization
+
+#### 5.2 Add Movement Pattern Analysis
+- [ ] Write tests for movement pattern recognition
+- [ ] Write tests for form correction suggestions
+- [ ] Write tests for pattern matching algorithms
+- [ ] Implement movement pattern analysis
+- [ ] Test pattern-based feedback system
+
+#### 5.3 Performance Optimization
+- [ ] Run comprehensive performance benchmarks
+- [ ] Optimize critical path operations
+- [ ] Implement caching for expensive calculations
+- [ ] Test memory usage and cleanup
+- [ ] Validate 30 FPS requirement across all features
+
+#### 5.4 Final Integration and Testing
+- [ ] Run full test suite (unit, integration, E2E)
+- [ ] Test all exercise types with real camera input
+- [ ] Validate error handling and recovery
+- [ ] Test performance under stress conditions
+- [ ] Documentation and code review
 
 ## Technical Considerations
 
@@ -250,30 +404,41 @@ interface ExerciseMetrics {
 ### TDD Implementation Strategy
 
 #### Test Pyramid Structure
+
 - **Unit Tests (70%)**: Mathematical calculations, utility functions
 - **Integration Tests (20%)**: Exercise analyzers with mock data
 - **E2E Tests (10%)**: Full camera-to-analysis pipeline
 
 #### Testing Tools
+
 - **Vitest**: Fast unit testing (already in stack)
 - **React Testing Library**: UI component testing
 - **Playwright**: E2E testing with real camera input
 - **Benchmark.js**: Performance regression testing
 
 #### Test Data Management
+
 ```typescript
 // Create fixture data for consistent testing
 const MOCK_SQUAT_LANDMARKS = {
-  good_depth: { /* landmarks for proper depth */ },
-  shallow: { /* landmarks for shallow squat */ },
-  lateral_shift: { /* landmarks showing imbalance */ }
+  good_depth: {
+    /* landmarks for proper depth */
+  },
+  shallow: {
+    /* landmarks for shallow squat */
+  },
+  lateral_shift: {
+    /* landmarks showing imbalance */
+  },
 };
 ```
 
 ### TDD Workflow by Phase
 
 #### Phase 1: Extract Common Logic (Perfect for TDD)
+
 **Red-Green-Refactor Cycle:**
+
 ```typescript
 // 1. RED: Write failing test
 describe('LandmarkCalculator', () => {
@@ -281,14 +446,14 @@ describe('LandmarkCalculator', () => {
     const hip = { x: 0.5, y: 0.3, z: 0 };
     const knee = { x: 0.5, y: 0.5, z: 0 };
     const ankle = { x: 0.5, y: 0.7, z: 0 };
-    
-    expect(LandmarkCalculator.calculateAngle(hip, knee, ankle))
-      .toBeCloseTo(180, 1);
+
+    expect(LandmarkCalculator.calculateAngle(hip, knee, ankle)).toBeCloseTo(180, 1);
   });
 });
 ```
 
 #### Phase 2: Strategy Pattern (Interface-Driven Development)
+
 ```typescript
 // Define interfaces first through tests
 describe('ExerciseAnalyzer', () => {
@@ -302,12 +467,13 @@ describe('ExerciseAnalyzer', () => {
 ```
 
 #### Phase 3: Plugin Architecture (Test-Driven)
+
 ```typescript
 describe('ExercisePluginManager', () => {
   it('should register and load plugins correctly', () => {
     const manager = new ExercisePluginManager();
     const plugin = new SquatAnalyzerPlugin();
-    
+
     manager.register('squat', plugin);
     expect(manager.getAnalyzer('squat')).toBe(plugin);
   });
@@ -317,7 +483,9 @@ describe('ExercisePluginManager', () => {
 ### Handling TDD Challenges
 
 #### Challenge 1: MediaPipe Integration
+
 **Solution**: Dependency injection and mocking
+
 ```typescript
 class MockPoseLandmarker {
   detectForVideo(video: HTMLVideoElement) {
@@ -327,21 +495,25 @@ class MockPoseLandmarker {
 ```
 
 #### Challenge 2: Performance Testing
+
 **Solution**: Separate performance tests
+
 ```typescript
 describe('Performance', () => {
   it('should process frame within 33ms', () => {
     const start = performance.now();
     analyzer.analyzeFrame(mockLandmarks);
     const duration = performance.now() - start;
-    
+
     expect(duration).toBeLessThan(33); // 30 FPS requirement
   });
 });
 ```
 
 #### Challenge 3: Visual Component Testing
+
 **Solution**: Test data generation, not rendering
+
 ```typescript
 describe('OverlayGenerator', () => {
   it('should generate correct bar path overlay points', () => {
