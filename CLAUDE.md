@@ -150,37 +150,11 @@ Following React Testing Library's principle: "The more your tests resemble the w
 - Testing Library Queries: https://testing-library.com/docs/queries/about
 - RTL Philosophy: https://testing-library.com/docs/guiding-principles/
 
-## Feature Implementation System Guidelines
-
-### Feature Implementation Priority Rules
-- IMMEDIATE EXECUTION: Launch parallel Tasks immediately upon feature requests
-- PARALLEL BY DEFAULT: Always use 7-parallel-Task method for efficiency
-
-### Parallel Feature Implementation Workflow
-1. **Component**: Create main component file
-2. **Tests**: Create test files  
-3. **Types**: Create type definitions
-4. **Hooks**: Create custom hooks/utilities
-5. **Integration**: Update routing, imports, exports
-6. **Remaining**: Update package.json, documentation, configuration files
-7. **Review and Validation**: Coordinate integration, run tests, verify build, check for conflicts
-
-### Context Optimization Rules
-- Each task handles ONLY specified files or file types
-- Task 7 combines small config/doc updates to prevent over-splitting
-
-### Feature Implementation Guidelines
-- **CRITICAL**: Make MINIMAL CHANGES to existing patterns and structures
-- **CRITICAL**: Preserve existing naming conventions and file organization
-- Follow project's established architecture and component patterns
-- Use existing utility functions and avoid duplicating functionality
-
 ## Code Quality and Linting Standards
 
 ### Core Principles
 - Always use semantic HTML to improve accessibility and maintainability
 - **CRITICAL**: Never disable eslint or TypeScript rules without explicit user approval.
-- Maintain strict TypeScript typing - avoid `any` types in production code
 - Use proper error handling patterns with the existing ErrorMonitor service
 
 ### TypeScript Best Practices
@@ -191,7 +165,6 @@ Following React Testing Library's principle: "The more your tests resemble the w
 - **Async Functions**: Only use `async` when actually using `await` inside the function
 
 ### Imports and Exports
-- **Import Sorting**: Use simple-import-sort ESLint rule - exports before imports, alphabetical
 - **Module Boundaries**: Properly type imports and exports, use barrel exports (`index.ts`)
 - **Type-only Imports**: Use `import type` for type-only imports
 
@@ -214,20 +187,3 @@ Following React Testing Library's principle: "The more your tests resemble the w
   - `high`: Feature-breaking errors (camera fails, API errors)
   - `medium`: Recoverable errors (permission issues, network)
   - `low`: Informational/debugging (successful operations, warnings)
-
-### Test File Patterns
-- **Mock Types**: Create proper TypeScript interfaces for mocks instead of using `any`
-- **Test Utilities**: Use typed test utility functions from `@/test/test-utils`
-- **Method Binding**: Use arrow functions or `.bind()` for method references in tests
-- **Empty Functions**: Replace empty arrow functions with meaningful implementations
-
-### Common Error Prevention
-1. **Unbound Methods**: Wrap method references in arrow functions or use `.bind()`
-2. **Floating Promises**: Always handle promises with `await`, `.catch()`, or `void` keyword
-3. **Unsafe Type Operations**: Use type guards and proper typing instead of `as any`
-4. **Template Literals**: Ensure all template literal expressions are strings or convertible
-
-### Code Organization
-- **Feature-based Structure**: Keep related code co-located in feature directories
-- **Separation of Concerns**: Services for business logic, hooks for React state, components for UI
-- **Index Files**: Use barrel exports to create clean module boundaries
