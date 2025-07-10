@@ -58,9 +58,13 @@ export default tseslint.config(
       'react-refresh/only-export-components': 'off',
     },
   },
-  // Allow console statements in error monitor service for debugging observer errors
+  // Allow console statements in error and performance monitoring services
   {
-    files: ['src/shared/services/error-monitor.service.ts'],
+    files: [
+      'src/shared/services/error-monitor.service.ts',
+      'src/test/pose-detection/performance/performance-examples.ts',
+      'src/test/pose-detection/performance/benchmark.test.ts',
+    ],
     rules: {
       'no-console': 'off',
     },
