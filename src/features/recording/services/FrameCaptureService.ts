@@ -440,6 +440,13 @@ export class FrameCaptureService {
   }
 
   /**
+   * Get current frame capture configuration
+   */
+  getConfig(): FrameCaptureConfig {
+    return { ...this.config };
+  }
+
+  /**
    * Get current frame buffer
    */
   getFrameBuffer(): CapturedFrame[] {

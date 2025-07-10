@@ -149,7 +149,7 @@ describe('FrameCaptureService', () => {
     it('should stop capture', () => {
       service.startCapture(mockVideoElement);
       service.stopCapture();
-      // Should not throw or cause issues
+      expect(service.getStats().currentSize).toBe(0);
     });
 
     it('should capture frames at specified rate', () => {
@@ -310,7 +310,7 @@ describe('FrameCaptureService', () => {
       service.adjustFrameQuality(-0.5);
       service.adjustFrameQuality(1.5);
 
-      // Should not throw errors
+      expect(service.getConfig().quality).toBe(1);
     });
   });
 

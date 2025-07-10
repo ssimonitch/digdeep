@@ -116,7 +116,6 @@ describe('CameraPermissionPrompt', () => {
       const allowButton = screen.getByRole('button', { name: /allow camera access/i });
       await user.click(allowButton);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(mockPermissionService.requestPermission).toHaveBeenCalled();
     });
 

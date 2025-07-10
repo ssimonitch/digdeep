@@ -9,6 +9,7 @@ import tseslint from 'typescript-eslint';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import eslintPluginImport from 'eslint-plugin-import';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import eslintPluginVitest from '@vitest/eslint-plugin';
 
 export default tseslint.config(
   { ignores: ['dist', 'vitest.config.ts'] },
@@ -69,6 +70,15 @@ export default tseslint.config(
       'no-console': 'off',
     },
   },
-  {},
+  {
+    files: ['src/test/**', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
+    plugins: {
+      vitest: eslintPluginVitest,
+    },
+    rules: {
+      ...eslintPluginVitest.configs.recommended.rules,
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
   eslintPluginPrettierRecommended,
 );
