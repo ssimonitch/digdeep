@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DexieStorageService, DigDeepDatabase } from '@/services/dexie-storage.service';
+import { DexieStorageService, DigDeepDatabase } from '@/services/dexie/dexie-storage.service';
 
-import { createTestDatabaseFactory } from './test-database-factory';
+import { createTestDatabaseFactory } from '../test-database-factory';
 import {
   createMockAnalysis,
   createMockExercise,
   createMockSet,
   createMockUserProfile,
   createMockWorkoutSession,
-} from './test-utils';
+} from '../test-utils';
 
 describe('Workout Flow Integration Tests', () => {
   let service: DexieStorageService;
