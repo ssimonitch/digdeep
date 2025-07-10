@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { BENCH_FIXTURES, createDefaultLandmarks, DEADLIFT_FIXTURES, LANDMARK_INDICES, SQUAT_FIXTURES } from './landmark-fixtures';
+import {
+  BENCH_FIXTURES,
+  createDefaultLandmarks,
+  DEADLIFT_FIXTURES,
+  LANDMARK_INDICES,
+  SQUAT_FIXTURES,
+} from './landmark-fixtures';
 
 describe('Landmark Fixtures - Anatomical Validity', () => {
   describe('Default Landmarks', () => {
@@ -61,9 +67,7 @@ describe('Landmark Fixtures - Anatomical Validity', () => {
 
       // Top position: arms extended (wrists above shoulders)
       const topLandmarks = BENCH_FIXTURES.topPosition.landmarks[0];
-      expect(topLandmarks[LANDMARK_INDICES.LEFT_WRIST].y).toBeLessThan(
-        topLandmarks[LANDMARK_INDICES.LEFT_SHOULDER].y,
-      );
+      expect(topLandmarks[LANDMARK_INDICES.LEFT_WRIST].y).toBeLessThan(topLandmarks[LANDMARK_INDICES.LEFT_SHOULDER].y);
     });
   });
 
