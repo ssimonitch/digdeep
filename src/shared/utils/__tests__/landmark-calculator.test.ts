@@ -34,34 +34,25 @@ describe('LandmarkCalculator - Angle Calculations', () => {
     it('should calculate 180-degree angle (straight line) correctly', () => {
       const { pointA, vertex, pointC } = createAngleTestLandmarks(0.5, 0.5, 180);
 
-      // const angle = LandmarkCalculator.calculateAngleDegrees(pointA, vertex, pointC);
-      // expect(approximatelyEqual(angle, 180, 0.1)).toBe(true);
-
-      // Verify test fixture creates straight line
-      expect(Math.abs(pointA.y - vertex.y)).toBeLessThan(0.001);
-      expect(Math.abs(vertex.y - pointC.y)).toBeLessThan(0.001);
+      const angle = LandmarkCalculator.calculateAngleDegrees(pointA, vertex, pointC);
+      expect(angle).not.toBeNull();
+      expect(approximatelyEqual(angle!, 180, 0.1)).toBe(true);
     });
 
     it('should calculate 45-degree angle correctly', () => {
       const { pointA, vertex, pointC } = createAngleTestLandmarks(0.5, 0.5, 45);
 
-      // const angle = LandmarkCalculator.calculateAngleDegrees(pointA, vertex, pointC);
-      // expect(approximatelyEqual(angle, 45, 0.1)).toBe(true);
-
-      // Verify test fixture geometry
-      expect(pointA.x).toBeLessThan(vertex.x);
-      expect(pointC.y).toBeGreaterThan(vertex.y); // Point C should be below vertex for 45°
+      const angle = LandmarkCalculator.calculateAngleDegrees(pointA, vertex, pointC);
+      expect(angle).not.toBeNull();
+      expect(approximatelyEqual(angle!, 45, 0.1)).toBe(true);
     });
 
     it('should handle very small angles (near 0 degrees)', () => {
       const { pointA, vertex, pointC } = createAngleTestLandmarks(0.5, 0.5, 5);
 
-      // const angle = LandmarkCalculator.calculateAngleDegrees(pointA, vertex, pointC);
-      // expect(approximatelyEqual(angle, 5, 0.1)).toBe(true);
-
-      // Verify small angle creates nearly collinear points (but short arc)
-      const distanceAC = Math.sqrt((pointA.x - pointC.x) ** 2 + (pointA.y - pointC.y) ** 2);
-      expect(distanceAC).toBeGreaterThan(0.001); // Should have some distance
+      const angle = LandmarkCalculator.calculateAngleDegrees(pointA, vertex, pointC);
+      expect(angle).not.toBeNull();
+      expect(approximatelyEqual(angle!, 5, 0.1)).toBe(true);
     });
 
     it('should handle zero-length vectors gracefully', () => {
@@ -69,12 +60,8 @@ describe('LandmarkCalculator - Angle Calculations', () => {
       const pointA: NormalizedLandmark = { x: 0.5, y: 0.5, z: 0, visibility: 1.0 }; // Same as vertex
       const pointC: NormalizedLandmark = { x: 0.6, y: 0.5, z: 0, visibility: 1.0 };
 
-      // const angle = LandmarkCalculator.calculateAngleDegrees(pointA, vertex, pointC);
-      // expect(angle).toBe(0); // Should handle gracefully
-
-      // Verify zero-length vector scenario
-      expect(pointA.x).toBe(vertex.x);
-      expect(pointA.y).toBe(vertex.y);
+      const angle = LandmarkCalculator.calculateAngleDegrees(pointA, vertex, pointC);
+      expect(angle).toBe(0); // Should handle gracefully
     });
 
     it('should handle low visibility landmarks appropriately', () => {
@@ -83,11 +70,8 @@ describe('LandmarkCalculator - Angle Calculations', () => {
       // Set low visibility
       const lowVisVertex = { ...vertex, visibility: 0.3 };
 
-      // const angle = LandmarkCalculator.calculateAngleDegrees(pointA, lowVisVertex, pointC);
-      // This should either return NaN, 0, or throw - depending on implementation strategy
-
-      // Verify low visibility scenario
-      expect(lowVisVertex.visibility).toBeLessThan(0.5);
+      const angle = LandmarkCalculator.calculateAngleDegrees(pointA, lowVisVertex, pointC);
+      expect(angle).toBeNull(); // Should return null for low visibility
     });
   });
 
