@@ -1,3 +1,5 @@
+import { errorMonitor } from './error-monitor.service';
+
 export interface MemoryUsage {
   used: number;
   total: number;
@@ -9,6 +11,33 @@ export interface PerformanceMetrics {
   avgFps: number;
   memoryUsage: MemoryUsage;
   frameDrops: number;
+  timestamp: number;
+}
+
+export interface OperationMetrics {
+  name: string;
+  processingTime: number;
+  timestamp: number;
+  success: boolean;
+}
+
+export interface OperationStats {
+  count: number;
+  averageTime: number;
+  minTime: number;
+  maxTime: number;
+  successRate: number;
+  p50: number;
+  p95: number;
+  p99: number;
+}
+
+export interface ThresholdViolation {
+  type: 'operation' | 'fps';
+  operation?: string;
+  processingTime?: number;
+  currentFPS?: number;
+  threshold: number;
   timestamp: number;
 }
 
@@ -70,6 +99,23 @@ export class PerformanceMonitor {
     good: { minFps: 24, maxMemoryPercentage: 75 },
     fair: { minFps: 20, maxMemoryPercentage: 85 },
   };
+
+  // Operation tracking
+  private operationHistory: Map<string, OperationMetrics[]> = new Map();
+  private operationThresholds: Map<string, number> = new Map();
+  private readonly maxOperationHistorySize = 100;
+
+  // Threshold violation tracking
+  private operationViolationCallbacks: ((violation: ThresholdViolation) => void)[] = [];
+  private fpsViolationCallbacks: { callback: (violation: ThresholdViolation) => void; threshold: number }[] = [];
+  private lastViolationTime: Map<string, number> = new Map();
+  private readonly violationCooldownMs = 1000; // 1 second cooldown
+
+  // Error monitor integration
+  private errorMonitorEnabled = false;
+  private fpsCriticalThreshold = 15;
+  private lastErrorReportTime = 0;
+  private readonly errorReportCooldownMs = 5000; // 5 seconds
 
   start(): void {
     if (this.isRunning) return;
@@ -199,6 +245,9 @@ export class PerformanceMonitor {
 
         const metrics = this.getCurrentMetrics();
         this.notifyObservers(metrics);
+        
+        // Check FPS thresholds
+        this.checkFPSThresholds();
       }
     }
 
@@ -307,6 +356,201 @@ export class PerformanceMonitor {
 
   private notifyObservers(metrics: PerformanceMetrics): void {
     this.observers.forEach((observer) => observer(metrics));
+  }
+
+  // Operation tracking methods
+  recordOperation(operation: OperationMetrics): void {
+    const { name } = operation;
+
+    if (!this.operationHistory.has(name)) {
+      this.operationHistory.set(name, []);
+    }
+
+    const history = this.operationHistory.get(name)!;
+    history.push(operation);
+
+    // Maintain history size limit
+    if (history.length > this.maxOperationHistorySize) {
+      history.shift();
+    }
+
+    // Check for threshold violations
+    this.checkOperationThreshold(operation);
+  }
+
+  getOperationMetrics(operationName: string): OperationStats {
+    const history = this.operationHistory.get(operationName) || [];
+
+    if (history.length === 0) {
+      return {
+        count: 0,
+        averageTime: 0,
+        minTime: 0,
+        maxTime: 0,
+        successRate: 0,
+        p50: 0,
+        p95: 0,
+        p99: 0,
+      };
+    }
+
+    const times = history.map((op) => op.processingTime).sort((a, b) => a - b);
+    const successCount = history.filter((op) => op.success).length;
+
+    return {
+      count: history.length,
+      averageTime: times.reduce((a, b) => a + b, 0) / times.length,
+      minTime: Math.min(...times),
+      maxTime: Math.max(...times),
+      successRate: successCount / history.length,
+      p50: this.calculatePercentile(times, 0.5),
+      p95: this.calculatePercentile(times, 0.95),
+      p99: this.calculatePercentile(times, 0.99),
+    };
+  }
+
+  setOperationThreshold(operationName: string, maxMs: number): void {
+    this.operationThresholds.set(operationName, maxMs);
+  }
+
+  onOperationThresholdViolation(callback: (violation: ThresholdViolation) => void): () => void {
+    this.operationViolationCallbacks.push(callback);
+    return () => {
+      const index = this.operationViolationCallbacks.indexOf(callback);
+      if (index > -1) {
+        this.operationViolationCallbacks.splice(index, 1);
+      }
+    };
+  }
+
+  onFPSThresholdViolation(callback: (violation: ThresholdViolation) => void, threshold: number): () => void {
+    const entry = { callback, threshold };
+    this.fpsViolationCallbacks.push(entry);
+    return () => {
+      const index = this.fpsViolationCallbacks.indexOf(entry);
+      if (index > -1) {
+        this.fpsViolationCallbacks.splice(index, 1);
+      }
+    };
+  }
+
+  enableErrorMonitorIntegration(enabled: boolean): void {
+    this.errorMonitorEnabled = enabled;
+  }
+
+  setFPSCriticalThreshold(threshold: number): void {
+    this.fpsCriticalThreshold = threshold;
+  }
+
+  checkMemoryPressure(): void {
+    const { percentage } = this.cachedMemoryUsage;
+
+    if (percentage >= 85 && this.errorMonitorEnabled) {
+      this.reportToErrorMonitor('High memory usage detected', 'high', {
+        memoryUsage: this.cachedMemoryUsage,
+      });
+    }
+  }
+
+  // Helper methods
+  private calculatePercentile(sortedArray: number[], percentile: number): number {
+    const index = (sortedArray.length - 1) * percentile;
+    const lower = Math.floor(index);
+    const upper = Math.ceil(index);
+    const weight = index % 1;
+
+    if (lower === upper) {
+      return sortedArray[lower];
+    }
+
+    return sortedArray[lower] * (1 - weight) + sortedArray[upper] * weight;
+  }
+
+  private checkOperationThreshold(operation: OperationMetrics): void {
+    const threshold = this.operationThresholds.get(operation.name);
+    if (!threshold || operation.processingTime <= threshold) {
+      return;
+    }
+
+    // Check cooldown
+    const lastViolation = this.lastViolationTime.get(operation.name) || 0;
+    if (operation.timestamp - lastViolation < this.violationCooldownMs) {
+      return;
+    }
+
+    this.lastViolationTime.set(operation.name, operation.timestamp);
+
+    const violation: ThresholdViolation = {
+      type: 'operation',
+      operation: operation.name,
+      processingTime: operation.processingTime,
+      threshold,
+      timestamp: operation.timestamp,
+    };
+
+    // Notify callbacks
+    this.operationViolationCallbacks.forEach((cb) => cb(violation));
+
+    // Report to error monitor if enabled
+    if (this.errorMonitorEnabled) {
+      const stats = this.getOperationMetrics(operation.name);
+      const recentViolations = this.operationHistory
+        .get(operation.name)!
+        .slice(-10)
+        .filter((op) => op.processingTime > threshold).length;
+
+      if (recentViolations >= 3) {
+        // Report if 3+ violations in last 10 operations
+        this.reportToErrorMonitor('Operation performance degraded', 'medium', {
+          operation: operation.name,
+          averageTime: stats.averageTime,
+          threshold,
+          violationCount: recentViolations,
+          successRate: stats.successRate,
+          p95: stats.p95,
+          recentViolations,
+        });
+      }
+    }
+  }
+
+  private checkFPSThresholds(): void {
+    const currentFPS = this.getCurrentFps();
+
+    // Check custom FPS thresholds
+    this.fpsViolationCallbacks.forEach(({ callback, threshold }) => {
+      if (currentFPS < threshold && this.fpsHistory.length >= 10) {
+        const violation: ThresholdViolation = {
+          type: 'fps',
+          currentFPS,
+          threshold,
+          timestamp: performance.now(),
+        };
+        callback(violation);
+      }
+    });
+
+    // Check critical threshold for error monitoring
+    if (this.errorMonitorEnabled && currentFPS < this.fpsCriticalThreshold && this.fpsHistory.length >= 10) {
+      this.reportToErrorMonitor('Critical FPS drop detected', 'high', {
+        currentFPS,
+        threshold: this.fpsCriticalThreshold,
+      });
+    }
+  }
+
+  private reportToErrorMonitor(
+    message: string,
+    severity: 'low' | 'medium' | 'high',
+    context: Record<string, unknown>,
+  ): void {
+    const now = performance.now();
+    if (now - this.lastErrorReportTime < this.errorReportCooldownMs) {
+      return; // Rate limiting
+    }
+
+    this.lastErrorReportTime = now;
+    errorMonitor.reportError(message, 'performance', severity, context);
   }
 }
 
