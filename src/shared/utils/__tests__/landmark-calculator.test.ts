@@ -244,16 +244,16 @@ describe('LandmarkCalculator - Angle Calculations', () => {
       const startTime = performance.now();
 
       for (let i = 0; i < iterations; i++) {
-        // LandmarkCalculator.calculateAngleDegrees(
-        //   testLandmarks.pointA, testLandmarks.vertex, testLandmarks.pointC
-        // );
+        LandmarkCalculator.calculateAngleDegrees(
+          testLandmarks.pointA, testLandmarks.vertex, testLandmarks.pointC
+        );
       }
 
       const endTime = performance.now();
       const averageTime = (endTime - startTime) / iterations;
 
       // Each angle calculation should be < 0.5ms for real-time performance
-      // expect(averageTime).toBeLessThan(0.5);
+      expect(averageTime).toBeLessThan(0.5);
 
       // Verify test ran
       expect(iterations).toBe(1000);
