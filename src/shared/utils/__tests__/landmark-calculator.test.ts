@@ -10,8 +10,8 @@ import {
   createDistanceTestLandmarks,
 } from '@/test/pose-detection/utils/test-utilities';
 
-// Import the functions we'll be testing (these don't exist yet - TDD approach)
-// import { LandmarkCalculator } from '../landmark-calculator.util';
+// Import the functions we'll be testing
+import { LandmarkCalculator } from '../landmark-calculator.util';
 
 /**
  * Test suite for angle calculations
