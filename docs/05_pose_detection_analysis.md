@@ -112,7 +112,7 @@ Based on biomechanical research and MediaPipe documentation:
 
 - Use Web Workers for processing
 - Frame-selective processing (maintain 30 FPS)
-- Implement landmark smoothing for noise reduction
+- Implement landmark smoothing for noise reduction (Note: Postponed as post-MVP feature)
 - Cache angle calculations between frames
 
 ## Architecture Recommendations
@@ -203,9 +203,9 @@ interface ExerciseMetrics {
 
 #### 1.2 Extract LandmarkCalculator Utility
 
-- [ ] Write tests for angle calculations (knee, hip, ankle angles)
-- [ ] Write tests for distance measurements (landmark distances)
-- [ ] Write tests for midpoint calculations (shoulder midpoint)
+- [x] Write tests for angle calculations (knee, hip, ankle angles)
+- [x] Write tests for distance measurements (landmark distances)
+- [x] Write tests for midpoint calculations (shoulder midpoint)
 - [ ] Implement LandmarkCalculator class to pass tests
 - [ ] Benchmark calculation performance (< 1ms per calculation)
 
