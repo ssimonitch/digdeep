@@ -2,7 +2,7 @@ import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 
 /**
  * Utility class for calculating angles, distances, and midpoints from MediaPipe landmarks.
- * 
+ *
  * Visibility handling:
  * - Calculations return null if any required landmark has visibility < 0.5
  * - Midpoint calculations always succeed but include minimum visibility
@@ -15,13 +15,13 @@ export class LandmarkCalculator {
   /**
    * Calculate angle in degrees between three points (p1 -> vertex -> p3)
    * Uses dot product formula: cos(θ) = (v1 · v2) / (|v1| × |v2|)
-   * 
+   *
    * @returns Angle in degrees [0, 180] or null if visibility too low
    */
   static calculateAngleDegrees(
     pointA: NormalizedLandmark | undefined,
     vertex: NormalizedLandmark | undefined,
-    pointC: NormalizedLandmark | undefined
+    pointC: NormalizedLandmark | undefined,
   ): number | null {
     // Check existence and visibility
     if (!pointA || !vertex || !pointC) return null;
@@ -37,13 +37,13 @@ export class LandmarkCalculator {
     const v1 = {
       x: pointA.x - vertex.x,
       y: pointA.y - vertex.y,
-      z: (pointA.z ?? 0) - (vertex.z ?? 0)
+      z: (pointA.z ?? 0) - (vertex.z ?? 0),
     };
 
     const v2 = {
       x: pointC.x - vertex.x,
       y: pointC.y - vertex.y,
-      z: (pointC.z ?? 0) - (vertex.z ?? 0)
+      z: (pointC.z ?? 0) - (vertex.z ?? 0),
     };
 
     // Calculate magnitudes
@@ -68,19 +68,16 @@ export class LandmarkCalculator {
 
   /**
    * Calculate 2D Euclidean distance between two landmarks (ignoring Z)
-   * 
+   *
    * @returns Distance or null if visibility too low
    */
   static calculateDistance2D(
     point1: NormalizedLandmark | undefined,
-    point2: NormalizedLandmark | undefined
+    point2: NormalizedLandmark | undefined,
   ): number | null {
     // Check existence and visibility
     if (!point1 || !point2) return null;
-    if (
-      (point1.visibility ?? 0) < this.MIN_VISIBILITY ||
-      (point2.visibility ?? 0) < this.MIN_VISIBILITY
-    ) {
+    if ((point1.visibility ?? 0) < this.MIN_VISIBILITY || (point2.visibility ?? 0) < this.MIN_VISIBILITY) {
       return null;
     }
 
@@ -91,19 +88,16 @@ export class LandmarkCalculator {
 
   /**
    * Calculate 3D Euclidean distance between two landmarks
-   * 
+   *
    * @returns Distance or null if visibility too low
    */
   static calculateDistance3D(
     point1: NormalizedLandmark | undefined,
-    point2: NormalizedLandmark | undefined
+    point2: NormalizedLandmark | undefined,
   ): number | null {
     // Check existence and visibility
     if (!point1 || !point2) return null;
-    if (
-      (point1.visibility ?? 0) < this.MIN_VISIBILITY ||
-      (point2.visibility ?? 0) < this.MIN_VISIBILITY
-    ) {
+    if ((point1.visibility ?? 0) < this.MIN_VISIBILITY || (point2.visibility ?? 0) < this.MIN_VISIBILITY) {
       return null;
     }
 
@@ -116,12 +110,12 @@ export class LandmarkCalculator {
   /**
    * Calculate midpoint between two landmarks
    * Always succeeds but includes minimum visibility of the two points
-   * 
+   *
    * @returns Midpoint with averaged coordinates and minimum visibility
    */
   static calculateMidpoint(
     point1: NormalizedLandmark | undefined,
-    point2: NormalizedLandmark | undefined
+    point2: NormalizedLandmark | undefined,
   ): NormalizedLandmark | null {
     if (!point1 || !point2) return null;
 
@@ -129,13 +123,13 @@ export class LandmarkCalculator {
       x: (point1.x + point2.x) / 2,
       y: (point1.y + point2.y) / 2,
       z: ((point1.z ?? 0) + (point2.z ?? 0)) / 2,
-      visibility: Math.min(point1.visibility ?? 0, point2.visibility ?? 0)
+      visibility: Math.min(point1.visibility ?? 0, point2.visibility ?? 0),
     };
   }
 
   /**
    * Calculate knee angle (hip -> knee -> ankle)
-   * 
+   *
    * @param landmarks Array of pose landmarks
    * @param landmarkIndices Object mapping body parts to landmark indices
    * @param side 'LEFT' or 'RIGHT'
@@ -144,7 +138,7 @@ export class LandmarkCalculator {
   static calculateKneeAngle(
     landmarks: NormalizedLandmark[],
     landmarkIndices: Record<string, number>,
-    side: 'LEFT' | 'RIGHT'
+    side: 'LEFT' | 'RIGHT',
   ): number | null {
     const hip = landmarks[landmarkIndices[`${side}_HIP`]];
     const knee = landmarks[landmarkIndices[`${side}_KNEE`]];
@@ -155,7 +149,7 @@ export class LandmarkCalculator {
 
   /**
    * Calculate hip angle (shoulder -> hip -> knee)
-   * 
+   *
    * @param landmarks Array of pose landmarks
    * @param landmarkIndices Object mapping body parts to landmark indices
    * @param side 'LEFT' or 'RIGHT'
@@ -164,7 +158,7 @@ export class LandmarkCalculator {
   static calculateHipAngle(
     landmarks: NormalizedLandmark[],
     landmarkIndices: Record<string, number>,
-    side: 'LEFT' | 'RIGHT'
+    side: 'LEFT' | 'RIGHT',
   ): number | null {
     const shoulder = landmarks[landmarkIndices[`${side}_SHOULDER`]];
     const hip = landmarks[landmarkIndices[`${side}_HIP`]];
@@ -175,7 +169,7 @@ export class LandmarkCalculator {
 
   /**
    * Calculate ankle angle (knee -> ankle -> foot_index)
-   * 
+   *
    * @param landmarks Array of pose landmarks
    * @param landmarkIndices Object mapping body parts to landmark indices
    * @param side 'LEFT' or 'RIGHT'
@@ -184,7 +178,7 @@ export class LandmarkCalculator {
   static calculateAnkleAngle(
     landmarks: NormalizedLandmark[],
     landmarkIndices: Record<string, number>,
-    side: 'LEFT' | 'RIGHT'
+    side: 'LEFT' | 'RIGHT',
   ): number | null {
     const knee = landmarks[landmarkIndices[`${side}_KNEE`]];
     const ankle = landmarks[landmarkIndices[`${side}_ANKLE`]];
@@ -195,14 +189,14 @@ export class LandmarkCalculator {
 
   /**
    * Calculate shoulder midpoint for bar position tracking
-   * 
+   *
    * @param landmarks Array of pose landmarks
    * @param landmarkIndices Object mapping body parts to landmark indices
    * @returns Shoulder midpoint or null
    */
   static calculateShoulderMidpoint(
     landmarks: NormalizedLandmark[],
-    landmarkIndices: Record<string, number>
+    landmarkIndices: Record<string, number>,
   ): NormalizedLandmark | null {
     const leftShoulder = landmarks[landmarkIndices.LEFT_SHOULDER];
     const rightShoulder = landmarks[landmarkIndices.RIGHT_SHOULDER];
@@ -212,14 +206,14 @@ export class LandmarkCalculator {
 
   /**
    * Calculate hip midpoint
-   * 
+   *
    * @param landmarks Array of pose landmarks
    * @param landmarkIndices Object mapping body parts to landmark indices
    * @returns Hip midpoint or null
    */
   static calculateHipMidpoint(
     landmarks: NormalizedLandmark[],
-    landmarkIndices: Record<string, number>
+    landmarkIndices: Record<string, number>,
   ): NormalizedLandmark | null {
     const leftHip = landmarks[landmarkIndices.LEFT_HIP];
     const rightHip = landmarks[landmarkIndices.RIGHT_HIP];
@@ -230,22 +224,19 @@ export class LandmarkCalculator {
   /**
    * Calculate horizontal deviation from a vertical line
    * Useful for bar path tracking
-   * 
+   *
    * @param point Current position
    * @param referenceX X-coordinate of the vertical reference line
    * @returns Horizontal deviation (positive = right, negative = left)
    */
-  static calculateHorizontalDeviation(
-    point: NormalizedLandmark | undefined,
-    referenceX: number
-  ): number | null {
+  static calculateHorizontalDeviation(point: NormalizedLandmark | undefined, referenceX: number): number | null {
     if (!point || (point.visibility ?? 0) < this.MIN_VISIBILITY) return null;
     return point.x - referenceX;
   }
 
   /**
    * Calculate lateral imbalance between left and right sides
-   * 
+   *
    * @param leftPoint Left side landmark
    * @param rightPoint Right side landmark
    * @returns Lateral difference (positive = right side lower/further)
@@ -253,13 +244,10 @@ export class LandmarkCalculator {
   static calculateLateralImbalance(
     leftPoint: NormalizedLandmark | undefined,
     rightPoint: NormalizedLandmark | undefined,
-    axis: 'x' | 'y' = 'y'
+    axis: 'x' | 'y' = 'y',
   ): number | null {
     if (!leftPoint || !rightPoint) return null;
-    if (
-      (leftPoint.visibility ?? 0) < this.MIN_VISIBILITY ||
-      (rightPoint.visibility ?? 0) < this.MIN_VISIBILITY
-    ) {
+    if ((leftPoint.visibility ?? 0) < this.MIN_VISIBILITY || (rightPoint.visibility ?? 0) < this.MIN_VISIBILITY) {
       return null;
     }
 

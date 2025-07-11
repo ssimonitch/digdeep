@@ -206,7 +206,7 @@ interface ExerciseMetrics {
 - [x] Write tests for angle calculations (knee, hip, ankle angles)
 - [x] Write tests for distance measurements (landmark distances)
 - [x] Write tests for midpoint calculations (shoulder midpoint)
-- [ ] Implement LandmarkCalculator class to pass tests
+- [x] Implement LandmarkCalculator class to pass tests
 - [ ] Benchmark calculation performance (< 1ms per calculation)
 
 #### 1.3 Extract PerformanceMonitor Utility

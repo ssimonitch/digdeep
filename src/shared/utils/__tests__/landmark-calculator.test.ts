@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { LANDMARK_INDICES, SQUAT_FIXTURES } from '@/test/pose-detection/fixtures/landmark-fixtures';
 import {
@@ -244,9 +243,7 @@ describe('LandmarkCalculator - Angle Calculations', () => {
       const startTime = performance.now();
 
       for (let i = 0; i < iterations; i++) {
-        LandmarkCalculator.calculateAngleDegrees(
-          testLandmarks.pointA, testLandmarks.vertex, testLandmarks.pointC
-        );
+        LandmarkCalculator.calculateAngleDegrees(testLandmarks.pointA, testLandmarks.vertex, testLandmarks.pointC);
       }
 
       const endTime = performance.now();

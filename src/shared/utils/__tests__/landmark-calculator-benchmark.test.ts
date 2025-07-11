@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { LANDMARK_INDICES, SQUAT_FIXTURES } from '@/test/pose-detection/fixtures/landmark-fixtures';
+
 import { LandmarkCalculator } from '../landmark-calculator.util';
 
 describe('LandmarkCalculator Performance Benchmarks', () => {
