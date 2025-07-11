@@ -26,13 +26,9 @@ describe('LandmarkCalculator - Angle Calculations', () => {
     it('should calculate 90-degree angle correctly', () => {
       const { pointA, vertex, pointC } = createAngleTestLandmarks(0.5, 0.5, 90);
 
-      // This will fail until we implement LandmarkCalculator
-      // const angle = LandmarkCalculator.calculateAngleDegrees(pointA, vertex, pointC);
-      // expect(approximatelyEqual(angle, 90, 0.1)).toBe(true);
-
-      // Temporary test to ensure test infrastructure works
-      expect(pointA.x).toBeLessThan(vertex.x);
-      expect(vertex.visibility).toBe(1.0);
+      const angle = LandmarkCalculator.calculateAngleDegrees(pointA, vertex, pointC);
+      expect(angle).not.toBeNull();
+      expect(approximatelyEqual(angle!, 90, 0.1)).toBe(true);
     });
 
     it('should calculate 180-degree angle (straight line) correctly', () => {
