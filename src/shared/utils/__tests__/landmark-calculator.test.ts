@@ -1,4 +1,3 @@
-/* eslint-disable vitest/expect-expect */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 import { beforeEach, describe, expect, it } from 'vitest';
