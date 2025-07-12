@@ -164,7 +164,7 @@ export class LandmarkValidator {
   validateCompleteness(landmarks: NormalizedLandmark[], requiredIndices?: number[]): CompletenessResult {
     // Default to all 33 MediaPipe pose landmarks if no indices specified
     const defaultIndices = Array.from({ length: 33 }, (_, i) => i);
-    const indices = requiredIndices !== undefined ? requiredIndices : defaultIndices;
+    const indices = requiredIndices ?? defaultIndices;
 
     // Handle empty required indices (no requirements = complete)
     if (indices.length === 0) {
@@ -406,22 +406,22 @@ export class LandmarkValidator {
    */
   validatePose(landmarks: NormalizedLandmark[], exerciseType: ExerciseType = 'generic'): PoseValidationResult {
     const messages: string[] = [];
-    
+
     // Get exercise-specific configuration
     const config = this.getExerciseConfig(exerciseType);
-    
+
     // Perform visibility validation
     const visibility = this.validateVisibility(landmarks, config.minVisibility);
     if (!visibility.isValid) {
       messages.push(`${visibility.totalCount - visibility.visibleCount} landmarks below visibility threshold`);
     }
-    
+
     // Perform completeness validation
     const completeness = this.validateCompleteness(landmarks, config.requiredLandmarks);
     if (!completeness.isComplete) {
       messages.push(`Missing ${completeness.missingIndices.length} required landmarks`);
     }
-    
+
     // Perform quality assessment
     const quality = this.assessQuality(landmarks, {
       minConfidence: config.minConfidence,
@@ -431,19 +431,17 @@ export class LandmarkValidator {
     if (!quality.meetsQualityThreshold) {
       messages.push('Pose quality below threshold');
     }
-    
+
     // Exercise-specific validation
     const exerciseSpecificValid = this.validateExerciseSpecific(landmarks, exerciseType);
     if (!exerciseSpecificValid) {
       messages.push(`Does not meet ${exerciseType} exercise requirements`);
     }
-    
+
     // Overall validation
-    const isValid = visibility.isValid && 
-                   completeness.isComplete && 
-                   quality.meetsQualityThreshold && 
-                   exerciseSpecificValid;
-    
+    const isValid =
+      visibility.isValid && completeness.isComplete && quality.meetsQualityThreshold && exerciseSpecificValid;
+
     return {
       isValid,
       visibility,
@@ -471,39 +469,50 @@ export class LandmarkValidator {
           minVisibility: 0.7,
           minConfidence: 0.7,
           requiredLandmarks: [
-            11, 12, // Shoulders (bar position)
-            23, 24, // Hips
-            25, 26, // Knees
-            27, 28, // Ankles
+            11,
+            12, // Shoulders (bar position)
+            23,
+            24, // Hips
+            25,
+            26, // Knees
+            27,
+            28, // Ankles
           ],
           checkSymmetry: true,
         };
-      
+
       case 'bench':
         return {
           minVisibility: 0.7,
           minConfidence: 0.7,
           requiredLandmarks: [
-            11, 12, // Shoulders
-            13, 14, // Elbows
-            15, 16, // Wrists
+            11,
+            12, // Shoulders
+            13,
+            14, // Elbows
+            15,
+            16, // Wrists
           ],
           checkSymmetry: true,
         };
-      
+
       case 'deadlift':
         return {
           minVisibility: 0.7,
           minConfidence: 0.7,
           requiredLandmarks: [
-            11, 12, // Shoulders
-            23, 24, // Hips
-            25, 26, // Knees
-            27, 28, // Ankles
+            11,
+            12, // Shoulders
+            23,
+            24, // Hips
+            25,
+            26, // Knees
+            27,
+            28, // Ankles
           ],
           checkSymmetry: true,
         };
-      
+
       case 'generic':
       default:
         return {
@@ -524,28 +533,28 @@ export class LandmarkValidator {
   private validateExerciseSpecific(landmarks: NormalizedLandmark[], exerciseType: ExerciseType): boolean {
     // For now, we'll just check that key landmarks have good visibility
     // In the future, this could check joint angles, positions, etc.
+    const squatLandmarks = [23, 24, 25, 26];
+    const benchLandmarks = [11, 12, 13, 14, 15, 16];
+    const deadliftLandmarks = [11, 12, 23, 24, 25, 26];
     switch (exerciseType) {
       case 'squat':
         // Check that hip and knee landmarks are well visible
-        const squatLandmarks = [23, 24, 25, 26];
-        return squatLandmarks.every(idx => 
-          landmarks[idx]?.visibility !== undefined && landmarks[idx].visibility > 0.7
+        return squatLandmarks.every(
+          (idx) => landmarks[idx]?.visibility !== undefined && landmarks[idx].visibility > 0.7,
         );
-      
+
       case 'bench':
         // Check that upper body landmarks are well visible
-        const benchLandmarks = [11, 12, 13, 14, 15, 16];
-        return benchLandmarks.every(idx => 
-          landmarks[idx]?.visibility !== undefined && landmarks[idx].visibility > 0.7
+        return benchLandmarks.every(
+          (idx) => landmarks[idx]?.visibility !== undefined && landmarks[idx].visibility > 0.7,
         );
-      
+
       case 'deadlift':
         // Check that full body landmarks are well visible
-        const deadliftLandmarks = [11, 12, 23, 24, 25, 26];
-        return deadliftLandmarks.every(idx => 
-          landmarks[idx]?.visibility !== undefined && landmarks[idx].visibility > 0.7
+        return deadliftLandmarks.every(
+          (idx) => landmarks[idx]?.visibility !== undefined && landmarks[idx].visibility > 0.7,
         );
-      
+
       case 'generic':
       default:
         return true; // No specific requirements for generic

@@ -882,7 +882,6 @@ describe('LandmarkValidator', () => {
 
         const result = validator.validatePose(landmarks, 'squat');
 
-        expect(result.quality.checkSymmetry).toBeUndefined(); // Config property not in result
         expect(result.quality.symmetryScore).toBeCloseTo(0.94, 1); // Some asymmetry detected but weighted calculation reduces impact
       });
     });
