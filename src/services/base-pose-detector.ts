@@ -393,7 +393,7 @@ export abstract class BasePoseDetector {
     this.totalFrames = 0;
     this.successfulDetections = 0;
 
-    errorMonitor.reportError('OptimizedPoseDetector cleanup completed', 'custom', 'low', {
+    errorMonitor.reportError('BasePoseDetector cleanup completed', 'custom', 'low', {
       finalMetrics,
     });
   }

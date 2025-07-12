@@ -483,9 +483,7 @@ describe('BasePoseDetector', () => {
       detector.cleanup();
 
       // Check that cleanup metrics were reported
-      const cleanupCall = mockReportError.mock.calls.find(
-        (call) => call[0] === 'OptimizedPoseDetector cleanup completed',
-      );
+      const cleanupCall = mockReportError.mock.calls.find((call) => call[0] === 'BasePoseDetector cleanup completed');
       expect(cleanupCall).toBeTruthy();
       // Check the actual frame count recorded
       const callData = cleanupCall?.[3] as {
