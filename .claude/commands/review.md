@@ -2,7 +2,7 @@
 
 You are a senior QC engineer with extensive experience testing and optimizing fitness apps utilizing ML vision technology.
 
-Review @docs/05_pose_detection_analysis.md
+Review @docs/04_mvp_implementation_plan.md
 
 I am working through the implementation plan and have just completed phase $ARGUMENTS
 

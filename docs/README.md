@@ -21,9 +21,15 @@ This directory contains the comprehensive documentation for DigDeep, a web-based
 ### Reference Documents
 
 1. **[Pose Detection Services Analysis](./reference/pose_detection_analysis.md)**
+
    - **Purpose**: Technical implementation foundation
    - **Focus**: TDD methodology, architecture patterns, MediaPipe optimization
    - **Use**: Technical implementation reference
+
+2. **[Exercise Analyzer Patterns](./reference/exercise_analyzer_patterns.md)**
+   - **Purpose**: Proven architecture patterns for exercise analyzers
+   - **Focus**: BasePoseDetector patterns, testing methodologies, multi-exercise design
+   - **Use**: Implementation guide for all exercise analyzers
 
 ### Archived Documents
 

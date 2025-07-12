@@ -75,6 +75,8 @@ interface SquatResult {
 
 #### Implementation Steps:
 
+> **Architecture Foundation**: Use [Exercise Analyzer Patterns](./reference/exercise_analyzer_patterns.md) as the proven foundation for multi-exercise architecture.
+
 - [ ] Define `ExerciseAnalyzer` interface
 - [ ] Create `ExerciseAnalysisEngine` coordinator
 - [ ] Refactor `SquatAnalyzer` to implement interface
@@ -198,6 +200,8 @@ interface ExercisePlugin {
 
 ### 3.1 Bench Press Analysis
 
+> **Implementation Reference**: See [Exercise Analyzer Patterns - Bench Press Example](./reference/exercise_analyzer_patterns.md#future-bench-press-analyzer) for confidence calculation and metrics implementation.
+
 #### Unique Metrics:
 
 - [ ] Bar path (should touch chest)
@@ -212,6 +216,8 @@ interface ExercisePlugin {
 - Spotter interference handling
 
 ### 3.2 Deadlift Analysis
+
+> **Implementation Reference**: See [Exercise Analyzer Patterns - Deadlift Example](./reference/exercise_analyzer_patterns.md#future-deadlift-analyzer) for confidence calculation and metrics implementation.
 
 #### Unique Metrics:
 

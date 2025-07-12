@@ -108,10 +108,12 @@ Essential landmarks for squat analysis:
 #### Day 1-2: Complete Pose Detection Refactoring
 
 > **Implementation Guide**: See [Pose Detection Analysis Phase 1.6](./reference/pose_detection_analysis.md#16-refactor-squatposeanalyzer) for detailed TDD approach and testing requirements.
+>
+> **Architecture Patterns**: Follow [Exercise Analyzer Patterns](./reference/exercise_analyzer_patterns.md) for proven constructor patterns, confidence calculation overrides, and testing methodologies.
 
-- [ ] Finish refactoring SquatPoseAnalyzer to use BasePoseDetector
-- [ ] Verify all tests pass and no performance regression
-- [ ] Remove duplicated detection logic
+- [x] Finish refactoring SquatPoseAnalyzer to use BasePoseDetector
+- [x] Verify all tests pass and no performance regression
+- [x] Remove duplicated detection logic
 
 #### Day 3-4: Implement Squat Metrics
 
