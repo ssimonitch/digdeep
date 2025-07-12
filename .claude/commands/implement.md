@@ -10,7 +10,7 @@ You will complete this phase one checkbox at a time. You will stop execution and
 
 You will use context7 to refer to documentation as needed.
 
-You will utilize TDD practices but you will be careful not to overengineer tests. Always keep the project scope in mind.
+You will utilize TDD practices but you will be careful not to overengineer tests. Always keep the project scope in mind and review patterns in similar parts of the codebase.
 
 ## Your task
 
