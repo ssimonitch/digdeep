@@ -4,7 +4,6 @@ import { FilesetResolver } from '@mediapipe/tasks-vision';
 import { errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
-import { PoseDetectorMetricsAdapter } from './adapters/pose-detector-metrics-adapter';
 
 /**
  * Configuration options for the OptimizedPoseDetector service
@@ -31,16 +30,6 @@ interface PoseDetectionResult {
   isValid: boolean;
 }
 
-/**
- * Performance metrics for pose detection monitoring
- */
-interface PoseDetectionMetrics {
-  totalFrames: number;
-  successfulDetections: number;
-  averageProcessingTime: number;
-  successRate: number;
-  currentFPS: number;
-}
 
 /**
  * OptimizedPoseDetector - Production-ready MediaPipe Pose detection service
@@ -59,7 +48,8 @@ export class OptimizedPoseDetector {
   private isInitialized = false;
   private isInitializing = false;
   private config: Required<PoseDetectorConfig>;
-  private metricsAdapter: PoseDetectorMetricsAdapter;
+  private totalFrames = 0;
+  private successfulDetections = 0;
   private lastFrameTime = 0;
   private readonly targetFPS = 30;
   private readonly minFrameInterval = 1000 / this.targetFPS; // ~33.33ms
@@ -77,9 +67,6 @@ export class OptimizedPoseDetector {
       minTrackingConfidence: config.minTrackingConfidence ?? 0.5,
       outputSegmentationMasks: config.outputSegmentationMasks ?? false,
     };
-
-    // Initialize metrics adapter with shared performance monitor
-    this.metricsAdapter = new PoseDetectorMetricsAdapter(performanceMonitor);
 
     // Start the performance monitor (it has internal guards against multiple starts)
     performanceMonitor.start();
@@ -196,15 +183,24 @@ export class OptimizedPoseDetector {
       const result = this.poseLandmarker.detectForVideo(videoElement, now);
       const processingTime = performance.now() - startProcessingTime;
 
-      // Record frame metrics using the adapter
+      // Record frame metrics
       const isSuccess = result.landmarks.length > 0;
+      this.totalFrames++;
+      if (isSuccess) {
+        this.successfulDetections++;
+      }
 
       // Calculate confidence based on landmark presence and quality
       const confidence = this.calculateConfidence(result);
       const isValid = confidence > 0.5 && result.landmarks.length > 0;
 
-      // Record metrics
-      this.metricsAdapter.recordFrame(processingTime, isSuccess);
+      // Record in PerformanceMonitor
+      performanceMonitor.recordOperation({
+        name: 'poseDetection',
+        processingTime,
+        timestamp: now,
+        success: isSuccess,
+      });
 
       return {
         landmarks: result,
@@ -217,7 +213,13 @@ export class OptimizedPoseDetector {
       const processingTime = performance.now() - startProcessingTime;
 
       // Record failed frame
-      this.metricsAdapter.recordFrame(processingTime, false);
+      this.totalFrames++;
+      performanceMonitor.recordOperation({
+        name: 'poseDetection',
+        processingTime,
+        timestamp: now,
+        success: false,
+      });
 
       errorMonitor.reportError('Pose detection failed', 'custom', 'high', {
         error: error instanceof Error ? error.message : String(error),
@@ -268,12 +270,6 @@ export class OptimizedPoseDetector {
 
   // Note: updateMetrics method removed - now handled by PoseDetectorMetricsAdapter
 
-  /**
-   * Get current performance metrics
-   */
-  public getMetrics(): PoseDetectionMetrics {
-    return this.metricsAdapter.getMetrics();
-  }
 
   /**
    * Check if the detector is initialized and ready
@@ -300,11 +296,17 @@ export class OptimizedPoseDetector {
     this.isInitialized = false;
     this.isInitializing = false;
 
-    // Reset metrics adapter
-    this.metricsAdapter.reset();
+    // Reset metrics
+    const finalMetrics = {
+      totalFrames: this.totalFrames,
+      successfulDetections: this.successfulDetections,
+      successRate: this.totalFrames > 0 ? this.successfulDetections / this.totalFrames : 0,
+    };
+    this.totalFrames = 0;
+    this.successfulDetections = 0;
 
     errorMonitor.reportError('OptimizedPoseDetector cleanup completed', 'custom', 'low', {
-      finalMetrics: this.metricsAdapter.getMetrics(),
+      finalMetrics,
     });
   }
 
