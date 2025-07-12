@@ -4,7 +4,6 @@ import { FilesetResolver } from '@mediapipe/tasks-vision';
 import { errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
-
 /**
  * Configuration options for the OptimizedPoseDetector service
  */
@@ -29,7 +28,6 @@ interface PoseDetectionResult {
   processingTime: number;
   isValid: boolean;
 }
-
 
 /**
  * OptimizedPoseDetector - Production-ready MediaPipe Pose detection service
@@ -267,8 +265,6 @@ export class OptimizedPoseDetector {
 
     return Math.min(1.0, Math.max(0.0, averageVisibility));
   }
-
-  // Note: updateMetrics method removed - now handled by PoseDetectorMetricsAdapter
 
 
   /**
