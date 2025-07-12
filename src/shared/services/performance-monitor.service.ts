@@ -1,4 +1,4 @@
-import { errorMonitor } from './error-monitor.service';
+import { errorMonitor as defaultErrorMonitor } from './error-monitor.service';
 
 export interface MemoryUsage {
   used: number;
@@ -78,6 +78,7 @@ export interface PerformanceGradingThresholds {
 }
 
 export class PerformanceMonitor {
+  private errorMonitor: typeof defaultErrorMonitor;
   private frameCount = 0;
   private lastFrameTime = 0;
   private fpsHistory: number[] = [];
@@ -101,21 +102,25 @@ export class PerformanceMonitor {
   };
 
   // Operation tracking
-  private operationHistory: Map<string, OperationMetrics[]> = new Map();
-  private operationThresholds: Map<string, number> = new Map();
+  private operationHistory = new Map<string, OperationMetrics[]>();
+  private operationThresholds = new Map<string, number>();
   private readonly maxOperationHistorySize = 100;
 
   // Threshold violation tracking
   private operationViolationCallbacks: ((violation: ThresholdViolation) => void)[] = [];
   private fpsViolationCallbacks: { callback: (violation: ThresholdViolation) => void; threshold: number }[] = [];
-  private lastViolationTime: Map<string, number> = new Map();
+  private lastViolationTime = new Map<string, number>();
   private readonly violationCooldownMs = 1000; // 1 second cooldown
 
   // Error monitor integration
   private errorMonitorEnabled = false;
   private fpsCriticalThreshold = 15;
-  private lastErrorReportTime = 0;
+  private lastErrorReportTime = -Infinity; // Initialize to a time in the past to allow first error to report
   private readonly errorReportCooldownMs = 5000; // 5 seconds
+
+  constructor(errorMonitorInstance?: typeof defaultErrorMonitor) {
+    this.errorMonitor = errorMonitorInstance ?? defaultErrorMonitor;
+  }
 
   start(): void {
     if (this.isRunning) return;
@@ -218,7 +223,15 @@ export class PerformanceMonitor {
     };
   }
 
-  private measureFrame = (): void => {
+  resetErrorReportTime(): void {
+    this.lastErrorReportTime = -Infinity;
+  }
+
+  resetLastViolationTime(): void {
+    this.lastViolationTime.clear();
+  }
+
+  measureFrame = (): void => {
     if (!this.isRunning) return;
 
     const currentTime = performance.now();
@@ -245,7 +258,7 @@ export class PerformanceMonitor {
 
         const metrics = this.getCurrentMetrics();
         this.notifyObservers(metrics);
-        
+
         // Check FPS thresholds
         this.checkFPSThresholds();
       }
@@ -350,7 +363,7 @@ export class PerformanceMonitor {
     };
   }
 
-  private getMemoryUsage(): MemoryUsage {
+  getMemoryUsage(): MemoryUsage {
     return this.cachedMemoryUsage;
   }
 
@@ -379,7 +392,7 @@ export class PerformanceMonitor {
   }
 
   getOperationMetrics(operationName: string): OperationStats {
-    const history = this.operationHistory.get(operationName) || [];
+    const history = this.operationHistory.get(operationName) ?? [];
 
     if (history.length === 0) {
       return {
@@ -473,7 +486,7 @@ export class PerformanceMonitor {
     }
 
     // Check cooldown
-    const lastViolation = this.lastViolationTime.get(operation.name) || 0;
+    const lastViolation = this.lastViolationTime.get(operation.name) ?? 0;
     if (operation.timestamp - lastViolation < this.violationCooldownMs) {
       return;
     }
@@ -514,7 +527,7 @@ export class PerformanceMonitor {
     }
   }
 
-  private checkFPSThresholds(): void {
+  checkFPSThresholds(): void {
     const currentFPS = this.getCurrentFps();
 
     // Check custom FPS thresholds
@@ -550,7 +563,7 @@ export class PerformanceMonitor {
     }
 
     this.lastErrorReportTime = now;
-    errorMonitor.reportError(message, 'performance', severity, context);
+    this.errorMonitor.reportError(message, 'custom', severity, context);
   }
 }
 

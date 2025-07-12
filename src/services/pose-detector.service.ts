@@ -2,6 +2,9 @@ import type { PoseLandmarker, PoseLandmarkerResult } from '@mediapipe/tasks-visi
 import { FilesetResolver } from '@mediapipe/tasks-vision';
 
 import { errorMonitor } from '@/shared/services/error-monitor.service';
+import { performanceMonitor } from '@/shared/services/performance-monitor.service';
+
+import { PoseDetectorMetricsAdapter } from './adapters/pose-detector-metrics-adapter';
 
 /**
  * Configuration options for the OptimizedPoseDetector service
@@ -56,10 +59,8 @@ export class OptimizedPoseDetector {
   private isInitialized = false;
   private isInitializing = false;
   private config: Required<PoseDetectorConfig>;
-  private metrics: PoseDetectionMetrics;
+  private metricsAdapter: PoseDetectorMetricsAdapter;
   private lastFrameTime = 0;
-  private processingTimes: number[] = [];
-  private readonly maxProcessingTimeHistory = 30; // Track last 30 frames
   private readonly targetFPS = 30;
   private readonly minFrameInterval = 1000 / this.targetFPS; // ~33.33ms
 
@@ -77,13 +78,11 @@ export class OptimizedPoseDetector {
       outputSegmentationMasks: config.outputSegmentationMasks ?? false,
     };
 
-    this.metrics = {
-      totalFrames: 0,
-      successfulDetections: 0,
-      averageProcessingTime: 0,
-      successRate: 0,
-      currentFPS: 0,
-    };
+    // Initialize metrics adapter with shared performance monitor
+    this.metricsAdapter = new PoseDetectorMetricsAdapter(performanceMonitor);
+
+    // Start the performance monitor (it has internal guards against multiple starts)
+    performanceMonitor.start();
   }
 
   /**
@@ -189,7 +188,6 @@ export class OptimizedPoseDetector {
     }
 
     this.lastFrameTime = now;
-    this.metrics.totalFrames++;
 
     const startProcessingTime = performance.now();
 
@@ -198,22 +196,15 @@ export class OptimizedPoseDetector {
       const result = this.poseLandmarker.detectForVideo(videoElement, now);
       const processingTime = performance.now() - startProcessingTime;
 
-      // Update processing time history
-      this.processingTimes.push(processingTime);
-      if (this.processingTimes.length > this.maxProcessingTimeHistory) {
-        this.processingTimes.shift();
-      }
+      // Record frame metrics using the adapter
+      const isSuccess = result.landmarks.length > 0;
 
       // Calculate confidence based on landmark presence and quality
       const confidence = this.calculateConfidence(result);
       const isValid = confidence > 0.5 && result.landmarks.length > 0;
 
-      if (isValid) {
-        this.metrics.successfulDetections++;
-      }
-
-      // Update metrics
-      this.updateMetrics();
+      // Record metrics
+      this.metricsAdapter.recordFrame(processingTime, isSuccess);
 
       return {
         landmarks: result,
@@ -224,6 +215,9 @@ export class OptimizedPoseDetector {
       };
     } catch (error) {
       const processingTime = performance.now() - startProcessingTime;
+
+      // Record failed frame
+      this.metricsAdapter.recordFrame(processingTime, false);
 
       errorMonitor.reportError('Pose detection failed', 'custom', 'high', {
         error: error instanceof Error ? error.message : String(error),
@@ -272,30 +266,13 @@ export class OptimizedPoseDetector {
     return Math.min(1.0, Math.max(0.0, averageVisibility));
   }
 
-  /**
-   * Update performance metrics
-   */
-  private updateMetrics(): void {
-    if (this.processingTimes.length > 0) {
-      this.metrics.averageProcessingTime =
-        this.processingTimes.reduce((a, b) => a + b, 0) / this.processingTimes.length;
-    }
-
-    this.metrics.successRate =
-      this.metrics.totalFrames > 0 ? this.metrics.successfulDetections / this.metrics.totalFrames : 0;
-
-    // Calculate current FPS based on recent processing times
-    if (this.processingTimes.length > 5) {
-      const recentAverage = this.processingTimes.slice(-5).reduce((a, b) => a + b, 0) / 5;
-      this.metrics.currentFPS = recentAverage > 0 ? 1000 / recentAverage : 0;
-    }
-  }
+  // Note: updateMetrics method removed - now handled by PoseDetectorMetricsAdapter
 
   /**
    * Get current performance metrics
    */
   public getMetrics(): PoseDetectionMetrics {
-    return { ...this.metrics };
+    return this.metricsAdapter.getMetrics();
   }
 
   /**
@@ -322,17 +299,12 @@ export class OptimizedPoseDetector {
     this.poseLandmarker = null;
     this.isInitialized = false;
     this.isInitializing = false;
-    this.processingTimes = [];
-    this.metrics = {
-      totalFrames: 0,
-      successfulDetections: 0,
-      averageProcessingTime: 0,
-      successRate: 0,
-      currentFPS: 0,
-    };
+
+    // Reset metrics adapter
+    this.metricsAdapter.reset();
 
     errorMonitor.reportError('OptimizedPoseDetector cleanup completed', 'custom', 'low', {
-      finalMetrics: this.metrics,
+      finalMetrics: this.metricsAdapter.getMetrics(),
     });
   }
 

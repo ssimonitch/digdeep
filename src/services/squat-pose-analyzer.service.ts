@@ -2,6 +2,9 @@ import type { NormalizedLandmark, PoseLandmarker, PoseLandmarkerResult } from '@
 import { FilesetResolver } from '@mediapipe/tasks-vision';
 
 import { errorMonitor } from '@/shared/services/error-monitor.service';
+import { performanceMonitor } from '@/shared/services/performance-monitor.service';
+
+import { SquatAnalyzerMetricsAdapter } from './adapters/squat-analyzer-metrics-adapter';
 
 /**
  * MediaPipe Pose Landmark indices for squat analysis
@@ -110,11 +113,8 @@ export class SquatPoseAnalyzer {
   private isInitialized = false;
   private isInitializing = false;
   private config: Required<SquatPoseAnalyzerConfig>;
-  private metrics: SquatAnalysisMetrics;
+  private metricsAdapter: SquatAnalyzerMetricsAdapter;
   private lastFrameTime = 0;
-  private processingTimes: number[] = [];
-  private confidenceScores: number[] = [];
-  private readonly maxHistorySize = 30; // Track last 30 frames
   private readonly targetFPS = 30;
   private readonly minFrameInterval = 1000 / this.targetFPS; // ~33.33ms
 
@@ -132,14 +132,11 @@ export class SquatPoseAnalyzer {
       outputSegmentationMasks: config.outputSegmentationMasks ?? false,
     };
 
-    this.metrics = {
-      totalFrames: 0,
-      validSquatPoses: 0,
-      averageProcessingTime: 0,
-      successRate: 0,
-      currentFPS: 0,
-      averageConfidence: 0,
-    };
+    // Initialize metrics adapter with shared performance monitor
+    this.metricsAdapter = new SquatAnalyzerMetricsAdapter(performanceMonitor);
+
+    // Start the performance monitor (it has internal guards against multiple starts)
+    performanceMonitor.start();
   }
 
   /**
@@ -239,7 +236,6 @@ export class SquatPoseAnalyzer {
     }
 
     this.lastFrameTime = now;
-    this.metrics.totalFrames++;
 
     const startProcessingTime = performance.now();
 
@@ -248,29 +244,17 @@ export class SquatPoseAnalyzer {
       const result = this.poseLandmarker.detectForVideo(videoElement, now);
       const processingTime = performance.now() - startProcessingTime;
 
-      // Update processing time history
-      this.processingTimes.push(processingTime);
-      if (this.processingTimes.length > this.maxHistorySize) {
-        this.processingTimes.shift();
-      }
+      // Processing time will be recorded after full analysis
 
       // Calculate confidence based on squat-specific landmarks
       const confidence = this.calculateSquatConfidence(result);
-      this.confidenceScores.push(confidence);
-      if (this.confidenceScores.length > this.maxHistorySize) {
-        this.confidenceScores.shift();
-      }
 
       // Analyze squat-specific metrics
       const squatMetrics = this.analyzeSquatMetrics(result);
       const isValid = confidence > 0.5 && squatMetrics.hasValidSquatPose;
 
-      if (isValid) {
-        this.metrics.validSquatPoses++;
-      }
-
-      // Update metrics
-      this.updateMetrics();
+      // Record frame with metrics adapter
+      this.metricsAdapter.recordFrame(processingTime, isValid, confidence);
 
       return {
         landmarks: result,
@@ -282,6 +266,9 @@ export class SquatPoseAnalyzer {
       };
     } catch (error) {
       const processingTime = performance.now() - startProcessingTime;
+
+      // Record failed frame
+      this.metricsAdapter.recordFrame(processingTime, false, 0);
 
       errorMonitor.reportError('Squat pose analysis failed', 'custom', 'high', {
         error: error instanceof Error ? error.message : String(error),
@@ -651,34 +638,13 @@ export class SquatPoseAnalyzer {
     };
   }
 
-  /**
-   * Update performance metrics
-   */
-  private updateMetrics(): void {
-    if (this.processingTimes.length > 0) {
-      this.metrics.averageProcessingTime =
-        this.processingTimes.reduce((a, b) => a + b, 0) / this.processingTimes.length;
-    }
-
-    this.metrics.successRate =
-      this.metrics.totalFrames > 0 ? this.metrics.validSquatPoses / this.metrics.totalFrames : 0;
-
-    if (this.confidenceScores.length > 0) {
-      this.metrics.averageConfidence = this.confidenceScores.reduce((a, b) => a + b, 0) / this.confidenceScores.length;
-    }
-
-    // Calculate current FPS based on recent processing times
-    if (this.processingTimes.length > 5) {
-      const recentAverage = this.processingTimes.slice(-5).reduce((a, b) => a + b, 0) / 5;
-      this.metrics.currentFPS = recentAverage > 0 ? 1000 / recentAverage : 0;
-    }
-  }
+  // Note: updateMetrics method removed - now handled by SquatAnalyzerMetricsAdapter
 
   /**
    * Get current analysis metrics
    */
   public getMetrics(): SquatAnalysisMetrics {
-    return { ...this.metrics };
+    return this.metricsAdapter.getMetrics();
   }
 
   /**
@@ -705,19 +671,12 @@ export class SquatPoseAnalyzer {
     this.poseLandmarker = null;
     this.isInitialized = false;
     this.isInitializing = false;
-    this.processingTimes = [];
-    this.confidenceScores = [];
-    this.metrics = {
-      totalFrames: 0,
-      validSquatPoses: 0,
-      averageProcessingTime: 0,
-      successRate: 0,
-      currentFPS: 0,
-      averageConfidence: 0,
-    };
+
+    // Reset metrics adapter
+    this.metricsAdapter.reset();
 
     errorMonitor.reportError('SquatPoseAnalyzer cleanup completed', 'custom', 'low', {
-      finalMetrics: this.metrics,
+      finalMetrics: this.metricsAdapter.getMetrics(),
     });
   }
 

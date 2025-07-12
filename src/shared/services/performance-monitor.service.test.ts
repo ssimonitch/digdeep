@@ -1,7 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { errorMonitor } from './error-monitor.service';
 import { PerformanceMonitor } from './performance-monitor.service';
+
+// Create mock function reference using vi.hoisted
+const mockErrorMonitorReportError = vi.hoisted(() => vi.fn());
+
+// Mock the error monitor service
+vi.mock('@/shared/services/error-monitor.service', () => ({
+  errorMonitor: {
+    reportError: mockErrorMonitorReportError,
+  },
+}));
 
 // Mock requestAnimationFrame and cancelAnimationFrame
 const mockRequestAnimationFrame = vi.fn((cb: FrameRequestCallback) => {
@@ -73,11 +82,11 @@ describe('PerformanceMonitor', () => {
 
       // Simulate first frame
       currentTime = 0;
-      (monitor as unknown as { measureFrame: () => void }).measureFrame();
+      monitor.measureFrame();
 
       // Simulate second frame after 16ms (60 FPS)
       currentTime = 16;
-      (monitor as unknown as { measureFrame: () => void }).measureFrame();
+      monitor.measureFrame();
 
       const metrics = monitor.getCurrentMetrics();
       expect(metrics.fps).toBeCloseTo(62.5, 1); // 1000/16 = 62.5 FPS
@@ -89,7 +98,7 @@ describe('PerformanceMonitor', () => {
       // Simulate multiple frames
       for (let i = 0; i < 5; i++) {
         currentTime = i * 16;
-        (monitor as unknown as { measureFrame: () => void }).measureFrame();
+        monitor.measureFrame();
       }
 
       const metrics = monitor.getCurrentMetrics();
@@ -102,7 +111,7 @@ describe('PerformanceMonitor', () => {
       // Simulate more frames than max history size
       for (let i = 0; i < 70; i++) {
         currentTime = i * 16;
-        (monitor as unknown as { measureFrame: () => void }).measureFrame();
+        monitor.measureFrame();
       }
 
       expect((monitor as unknown as { fpsHistory: number[] }).fpsHistory.length).toBeLessThanOrEqual(60);
@@ -142,9 +151,9 @@ describe('PerformanceMonitor', () => {
 
       // Simulate slow frame (125ms = 8 FPS, well below 30 FPS target)
       currentTime = 0;
-      (monitor as unknown as { measureFrame: () => void }).measureFrame();
+      monitor.measureFrame();
       currentTime = 125;
-      (monitor as unknown as { measureFrame: () => void }).measureFrame();
+      monitor.measureFrame();
 
       const metrics = monitor.getCurrentMetrics();
       expect(metrics.frameDrops).toBeGreaterThan(0);
@@ -155,9 +164,9 @@ describe('PerformanceMonitor', () => {
 
       // Simulate good frame (16ms = ~60 FPS)
       currentTime = 0;
-      (monitor as unknown as { measureFrame: () => void }).measureFrame();
+      monitor.measureFrame();
       currentTime = 16;
-      (monitor as unknown as { measureFrame: () => void }).measureFrame();
+      monitor.measureFrame();
 
       const metrics = monitor.getCurrentMetrics();
       expect(metrics.frameDrops).toBe(0);
@@ -175,7 +184,7 @@ describe('PerformanceMonitor', () => {
       for (let i = 0; i < 15; i++) {
         // Needs 10+ frames to trigger notification
         currentTime = i * 16;
-        (monitor as unknown as { measureFrame: () => void }).measureFrame();
+        monitor.measureFrame();
       }
 
       expect(observer).toHaveBeenCalled();
@@ -194,7 +203,7 @@ describe('PerformanceMonitor', () => {
       // Simulate frames
       for (let i = 0; i < 15; i++) {
         currentTime = i * 16;
-        (monitor as unknown as { measureFrame: () => void }).measureFrame();
+        monitor.measureFrame();
       }
 
       expect(observer).not.toHaveBeenCalled();
@@ -208,7 +217,7 @@ describe('PerformanceMonitor', () => {
       // Generate some data
       for (let i = 0; i < 5; i++) {
         currentTime = i * 100; // Slow frames to create drops
-        (monitor as unknown as { measureFrame: () => void }).measureFrame();
+        monitor.measureFrame();
       }
 
       const beforeReset = monitor.getCurrentMetrics();
@@ -484,16 +493,16 @@ describe('PerformanceMonitor', () => {
 
       // Simulate frames that result in low FPS
       currentTime = 0;
-      (monitor as unknown as { measureFrame: () => void }).measureFrame();
+      monitor.measureFrame();
 
       // 100ms frame time = 10 FPS (below threshold)
       currentTime = 100;
-      (monitor as unknown as { measureFrame: () => void }).measureFrame();
+      monitor.measureFrame();
 
       // Should wait for enough frames before triggering
       for (let i = 2; i < 12; i++) {
         currentTime = i * 100;
-        (monitor as unknown as { measureFrame: () => void }).measureFrame();
+        monitor.measureFrame();
       }
 
       expect(callback).toHaveBeenCalled();
@@ -567,11 +576,11 @@ describe('PerformanceMonitor', () => {
     });
   });
 
-  describe.skip('ErrorMonitor integration - TODO: Fix mocking issue', () => {
+  describe('ErrorMonitor integration', () => {
     beforeEach(() => {
+      // Reset all mocks
       vi.clearAllMocks();
-      // Spy on the actual errorMonitor methods
-      vi.spyOn(errorMonitor, 'reportError').mockImplementation(() => 'mocked-error-id');
+      mockErrorMonitorReportError.mockClear();
     });
 
     afterEach(() => {
@@ -581,28 +590,26 @@ describe('PerformanceMonitor', () => {
     it('should report critical FPS drops to ErrorMonitor', () => {
       monitor.enableErrorMonitorIntegration(true);
       monitor.setFPSCriticalThreshold(20); // Critical when FPS < 20
-
-      // Reset the last error report time to avoid rate limiting
-      (monitor as unknown as { lastErrorReportTime: number }).lastErrorReportTime = 0;
+      monitor.resetErrorReportTime();
 
       monitor.start();
 
       // Simulate very low FPS (5 FPS = 200ms frame time)
       currentTime = 0;
-      (monitor as unknown as { measureFrame: () => void }).measureFrame();
+      monitor.measureFrame();
 
       // Create sustained low FPS - need to reach frameCount % 10 === 0
       // The monitor needs 10+ frames in history and frameCount % 10 === 0
       for (let i = 1; i <= 20; i++) {
         currentTime = i * 200;
-        (monitor as unknown as { measureFrame: () => void }).measureFrame();
+        monitor.measureFrame();
       }
 
       // Force a check by directly calling the private method
-      (monitor as unknown as { checkFPSThresholds: () => void }).checkFPSThresholds();
+      monitor.checkFPSThresholds();
 
       // Verify ErrorMonitor was called
-      expect(errorMonitor.reportError).toHaveBeenCalledWith(
+      expect(mockErrorMonitorReportError).toHaveBeenCalledWith(
         expect.stringContaining('Critical FPS drop detected'),
         'custom',
         'high',
@@ -618,7 +625,7 @@ describe('PerformanceMonitor', () => {
       monitor.setOperationThreshold('poseDetection', 30);
 
       // Reset the last error report time to avoid rate limiting
-      (monitor as unknown as { lastErrorReportTime: number }).lastErrorReportTime = 0;
+      monitor.resetErrorReportTime();
 
       // Multiple violations should trigger error reporting
       for (let i = 0; i < 5; i++) {
@@ -628,9 +635,10 @@ describe('PerformanceMonitor', () => {
           timestamp: 1000 + i * 100,
           success: true,
         });
+        monitor.resetLastViolationTime();
       }
 
-      expect(errorMonitor.reportError).toHaveBeenCalledWith(
+      expect(mockErrorMonitorReportError).toHaveBeenCalledWith(
         expect.stringContaining('Operation performance degraded'),
         'custom',
         'medium',
@@ -648,7 +656,7 @@ describe('PerformanceMonitor', () => {
       monitor.setOperationThreshold('spamTest', 10);
 
       // Reset the last error report time to avoid rate limiting
-      (monitor as unknown as { lastErrorReportTime: number }).lastErrorReportTime = 0;
+      monitor.resetErrorReportTime();
 
       // Many violations in quick succession
       for (let i = 0; i < 20; i++) {
@@ -658,10 +666,11 @@ describe('PerformanceMonitor', () => {
           timestamp: 1000 + i * 10,
           success: true,
         });
+        monitor.resetLastViolationTime();
       }
 
       // Should be rate-limited
-      expect(errorMonitor.reportError).toHaveBeenCalledTimes(1);
+      expect(mockErrorMonitorReportError).toHaveBeenCalledTimes(1);
     });
 
     it('should include performance context in error reports', () => {
@@ -669,8 +678,8 @@ describe('PerformanceMonitor', () => {
       monitor.setOperationThreshold('contextTest', 15);
 
       // Reset the last error report time and violation times
-      (monitor as unknown as { lastErrorReportTime: number }).lastErrorReportTime = 0;
-      (monitor as unknown as { lastViolationTime: Map<string, number> }).lastViolationTime.clear();
+      monitor.resetErrorReportTime();
+      monitor.resetLastViolationTime();
 
       // Create some history
       for (let i = 0; i < 10; i++) {
@@ -680,9 +689,10 @@ describe('PerformanceMonitor', () => {
           timestamp: 1000 + i * 100,
           success: i % 2 === 0,
         });
+        monitor.resetLastViolationTime();
       }
 
-      expect(errorMonitor.reportError).toHaveBeenCalledWith(
+      expect(mockErrorMonitorReportError).toHaveBeenCalledWith(
         expect.any(String),
         'custom',
         expect.any(String),
@@ -706,7 +716,7 @@ describe('PerformanceMonitor', () => {
         success: true,
       });
 
-      expect(errorMonitor.reportError).not.toHaveBeenCalled();
+      expect(mockErrorMonitorReportError).not.toHaveBeenCalled();
     });
 
     it('should report memory pressure issues', () => {
@@ -714,7 +724,7 @@ describe('PerformanceMonitor', () => {
       monitor.enableErrorMonitorIntegration(true);
 
       // Reset the last error report time to avoid rate limiting
-      (monitor as unknown as { lastErrorReportTime: number }).lastErrorReportTime = 0;
+      monitor.resetErrorReportTime();
 
       // Mock high memory usage
       (
@@ -727,7 +737,7 @@ describe('PerformanceMonitor', () => {
       // Trigger memory check again
       monitor.checkMemoryPressure();
 
-      expect(errorMonitor.reportError).toHaveBeenCalledWith(
+      expect(mockErrorMonitorReportError).toHaveBeenCalledWith(
         expect.stringContaining('High memory usage detected'),
         'custom',
         'high',
