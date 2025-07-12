@@ -4,7 +4,6 @@ import { FilesetResolver } from '@mediapipe/tasks-vision';
 import { errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
-import { SquatAnalyzerMetricsAdapter } from './adapters/squat-analyzer-metrics-adapter';
 
 /**
  * MediaPipe Pose Landmark indices for squat analysis
@@ -85,17 +84,6 @@ export interface SquatPoseAnalysis {
   };
 }
 
-/**
- * Performance metrics for squat analysis
- */
-interface SquatAnalysisMetrics {
-  totalFrames: number;
-  validSquatPoses: number;
-  averageProcessingTime: number;
-  successRate: number;
-  currentFPS: number;
-  averageConfidence: number;
-}
 
 /**
  * SquatPoseAnalyzer - Specialized MediaPipe Pose service for squat form analysis
@@ -113,7 +101,10 @@ export class SquatPoseAnalyzer {
   private isInitialized = false;
   private isInitializing = false;
   private config: Required<SquatPoseAnalyzerConfig>;
-  private metricsAdapter: SquatAnalyzerMetricsAdapter;
+  private totalFrames = 0;
+  private validSquatPoses = 0;
+  private confidenceScores: number[] = [];
+  private readonly maxHistorySize = 30;
   private lastFrameTime = 0;
   private readonly targetFPS = 30;
   private readonly minFrameInterval = 1000 / this.targetFPS; // ~33.33ms
@@ -131,9 +122,6 @@ export class SquatPoseAnalyzer {
       minTrackingConfidence: config.minTrackingConfidence ?? 0.7,
       outputSegmentationMasks: config.outputSegmentationMasks ?? false,
     };
-
-    // Initialize metrics adapter with shared performance monitor
-    this.metricsAdapter = new SquatAnalyzerMetricsAdapter(performanceMonitor);
 
     // Start the performance monitor (it has internal guards against multiple starts)
     performanceMonitor.start();
@@ -253,8 +241,25 @@ export class SquatPoseAnalyzer {
       const squatMetrics = this.analyzeSquatMetrics(result);
       const isValid = confidence > 0.5 && squatMetrics.hasValidSquatPose;
 
-      // Record frame with metrics adapter
-      this.metricsAdapter.recordFrame(processingTime, isValid, confidence);
+      // Record frame metrics
+      this.totalFrames++;
+      if (isValid) {
+        this.validSquatPoses++;
+      }
+
+      // Track confidence scores
+      this.confidenceScores.push(confidence);
+      if (this.confidenceScores.length > this.maxHistorySize) {
+        this.confidenceScores.shift();
+      }
+
+      // Record in PerformanceMonitor
+      performanceMonitor.recordOperation({
+        name: 'squatAnalysis',
+        processingTime,
+        timestamp: now,
+        success: isValid,
+      });
 
       return {
         landmarks: result,
@@ -268,7 +273,18 @@ export class SquatPoseAnalyzer {
       const processingTime = performance.now() - startProcessingTime;
 
       // Record failed frame
-      this.metricsAdapter.recordFrame(processingTime, false, 0);
+      this.totalFrames++;
+      this.confidenceScores.push(0);
+      if (this.confidenceScores.length > this.maxHistorySize) {
+        this.confidenceScores.shift();
+      }
+
+      performanceMonitor.recordOperation({
+        name: 'squatAnalysis',
+        processingTime,
+        timestamp: now,
+        success: false,
+      });
 
       errorMonitor.reportError('Squat pose analysis failed', 'custom', 'high', {
         error: error instanceof Error ? error.message : String(error),
@@ -638,14 +654,6 @@ export class SquatPoseAnalyzer {
     };
   }
 
-  // Note: updateMetrics method removed - now handled by SquatAnalyzerMetricsAdapter
-
-  /**
-   * Get current analysis metrics
-   */
-  public getMetrics(): SquatAnalysisMetrics {
-    return this.metricsAdapter.getMetrics();
-  }
 
   /**
    * Check if the analyzer is initialized and ready
@@ -672,11 +680,25 @@ export class SquatPoseAnalyzer {
     this.isInitialized = false;
     this.isInitializing = false;
 
-    // Reset metrics adapter
-    this.metricsAdapter.reset();
+    // Reset metrics
+    const averageConfidence =
+      this.confidenceScores.length > 0
+        ? this.confidenceScores.reduce((a, b) => a + b, 0) / this.confidenceScores.length
+        : 0;
+
+    const finalMetrics = {
+      totalFrames: this.totalFrames,
+      validSquatPoses: this.validSquatPoses,
+      successRate: this.totalFrames > 0 ? this.validSquatPoses / this.totalFrames : 0,
+      averageConfidence,
+    };
+
+    this.totalFrames = 0;
+    this.validSquatPoses = 0;
+    this.confidenceScores = [];
 
     errorMonitor.reportError('SquatPoseAnalyzer cleanup completed', 'custom', 'low', {
-      finalMetrics: this.metricsAdapter.getMetrics(),
+      finalMetrics,
     });
   }
 
