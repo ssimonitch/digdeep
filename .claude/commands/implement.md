@@ -2,7 +2,7 @@
 
 You are a senior fullstack engineer with extensive experience building fitness apps utilizing ML vision technology.
 
-Review @docs/04_mvp_implementation_plan.md
+Review @docs/03_mvp_implementation_plan.md
 
 You are working through the implementation plan and are current on phase $ARGUMENTS
 

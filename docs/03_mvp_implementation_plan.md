@@ -4,7 +4,7 @@
 
 **Deliver a working real-time squat analysis app that provides immediate form feedback during training.**
 
-> **Note**: See [Post-MVP Roadmap](./05_post_mvp_roadmap.md) for architectural considerations and future features. The "Don't Close Doors" section provides critical guidance for MVP development.
+> **Note**: See [Post-MVP Roadmap](./04_post_mvp_roadmap.md) for architectural considerations and future features. The "Don't Close Doors" section provides critical guidance for MVP development.
 
 ### Success Criteria
 
@@ -209,7 +209,7 @@ Essential landmarks for squat analysis:
 
 ## Post-MVP Development
 
-After MVP completion, see the comprehensive [Post-MVP Roadmap](./05_post_mvp_roadmap.md) for:
+After MVP completion, see the comprehensive [Post-MVP Roadmap](./04_post_mvp_roadmap.md) for:
 
 - **Architecture Evolution** - Strategy pattern, plugin system, performance optimization
 - **Recording & Playback** - Video recording, analysis overlay, session management
@@ -241,7 +241,7 @@ The roadmap provides detailed implementation plans, timelines, and architectural
 - Use interfaces even with single implementations (enables future exercises)
 - Separate analysis logic from UI components
 - Design extensible data structures for future exercise types
-- See [Post-MVP Roadmap "Don't Close Doors"](./05_post_mvp_roadmap.md#dont-close-doors-during-mvp) for detailed guidance
+- See [Post-MVP Roadmap "Don't Close Doors"](./04_post_mvp_roadmap.md#dont-close-doors-during-mvp) for detailed guidance
 
 ### Decision Log
 

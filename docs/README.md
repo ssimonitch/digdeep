@@ -6,13 +6,13 @@ This directory contains the comprehensive documentation for DigDeep, a web-based
 
 ### Primary Documents
 
-1. **[MVP Implementation Plan](./04_mvp_implementation_plan.md)**
+1. **[MVP Implementation Plan](./03_mvp_implementation_plan.md)**
 
    - **Purpose**: Immediate 2-3 week delivery roadmap
    - **Focus**: Real-time squat analysis with visual feedback
    - **Use**: Day-to-day development execution
 
-2. **[Post-MVP Roadmap](./05_post_mvp_roadmap.md)**
+2. **[Post-MVP Roadmap](./04_post_mvp_roadmap.md)**
 
    - **Purpose**: 6+ month product evolution vision
    - **Focus**: Architecture evolution, multi-exercise support, advanced features
@@ -39,7 +39,7 @@ This directory contains the comprehensive documentation for DigDeep, a web-based
 
 ### Starting Development
 
-→ Read [MVP Implementation Plan](./04_mvp_implementation_plan.md)
+→ Read [MVP Implementation Plan](./03_mvp_implementation_plan.md)
 
 ### Technical Implementation
 
@@ -47,11 +47,11 @@ This directory contains the comprehensive documentation for DigDeep, a web-based
 
 ### Future Planning
 
-→ Review [Post-MVP Roadmap](./05_post_mvp_roadmap.md)
+→ Review [Post-MVP Roadmap](./04_post_mvp_roadmap.md)
 
 ### Architecture Decisions
 
-→ Check "Don't Close Doors" section in [Post-MVP Roadmap](./05_post_mvp_roadmap.md#dont-close-doors-during-mvp)
+→ Check "Don't Close Doors" section in [Post-MVP Roadmap](./04_post_mvp_roadmap.md#dont-close-doors-during-mvp)
 
 ## Documentation Principles
 
