@@ -227,11 +227,11 @@ interface ExerciseMetrics {
 
 #### 1.5 Create BasePoseDetector Class
 
-- [ ] Write tests for MediaPipe initialization
-- [ ] Write tests for frame processing pipeline
-- [ ] Write tests for GPU/CPU fallback behavior
-- [ ] Implement BasePoseDetector with common logic
-- [ ] Test resource management and cleanup
+- [x] Write tests for MediaPipe initialization
+- [x] Write tests for frame processing pipeline
+- [x] Write tests for GPU/CPU fallback behavior
+- [x] Implement BasePoseDetector with common logic
+- [x] Test resource management and cleanup
 
 #### 1.6 Refactor SquatPoseAnalyzer
 

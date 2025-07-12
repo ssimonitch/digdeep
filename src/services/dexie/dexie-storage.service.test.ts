@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createTestDatabaseFactory } from '@/test/test-database-factory';
 import {
@@ -124,16 +124,24 @@ describe('DexieStorageService', () => {
 
     it('should update a workout session', async () => {
       const session = await service.createWorkoutSession(createMockWorkoutSession());
+      const originalUpdatedAt = session.updatedAt.getTime();
 
-      // Add small delay to ensure timestamp difference
-      await new Promise((resolve) => setTimeout(resolve, 1));
+      // Mock Date constructor to ensure timestamp progression
+      const mockDate = new Date(originalUpdatedAt + 1000);
+      const originalDate = global.Date;
+      global.Date = vi.fn(() => mockDate) as unknown as DateConstructor;
+      (global.Date as unknown as DateConstructor).now = originalDate.now;
 
       const updates = { duration: 7200, notes: 'Updated notes' };
       const updated = await service.updateWorkoutSession(session.id, updates);
 
+      // Restore original Date
+      global.Date = originalDate;
+
       expect(updated.duration).toBe(7200);
       expect(updated.notes).toBe('Updated notes');
-      expect(updated.updatedAt.getTime()).toBeGreaterThan(session.updatedAt.getTime());
+      expect(updated.updatedAt.getTime()).toBe(mockDate.getTime());
+      expect(updated.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt);
     });
 
     it('should delete a workout session and cascading data', async () => {

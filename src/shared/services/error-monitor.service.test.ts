@@ -204,11 +204,22 @@ describe('ErrorMonitor', () => {
 
   describe('error summary', () => {
     beforeEach(() => {
+      // Mock Date.now() to ensure predictable timestamps
+      let mockTime = 1000;
+      vi.spyOn(Date, 'now').mockImplementation(() => {
+        mockTime += 100; // Increment by 100ms for each call
+        return mockTime;
+      });
+
       // Set up some test errors
       monitor.reportError('Custom error 1', 'custom', 'low');
       monitor.reportError('Custom error 2', 'custom', 'high');
       monitor.reportJavaScriptError(new Error('JS error'), 'critical');
       monitor.reportNetworkError('/api/test', 500, 'Server Error');
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
     });
 
     it('should generate correct error summary', () => {

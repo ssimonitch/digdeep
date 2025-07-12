@@ -349,6 +349,7 @@ describe('PermissionService', () => {
     });
 
     it('should handle permission change events', async () => {
+      vi.useFakeTimers();
       const callback = vi.fn();
       permissionService.onPermissionChange(callback);
 
@@ -366,10 +367,11 @@ describe('PermissionService', () => {
 
       await permissionService.checkPermissionStatus();
 
-      // Wait for async change event
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      // Advance timers to trigger the change event
+      await vi.runAllTimersAsync();
 
       expect(callback).toHaveBeenCalled();
+      vi.useRealTimers();
     });
   });
 
