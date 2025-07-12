@@ -211,11 +211,11 @@ interface ExerciseMetrics {
 
 #### 1.3 Extract PerformanceMonitor Utility
 
-- [ ] Write tests for metrics tracking (FPS, processing time)
-- [ ] Write tests for performance history management
-- [ ] Write tests for performance threshold detection
-- [ ] Implement PerformanceMonitor class to pass tests
-- [ ] Integrate with existing error monitoring system
+- [x] Write tests for metrics tracking (FPS, processing time)
+- [x] Write tests for performance history management
+- [x] Write tests for performance threshold detection
+- [x] Implement PerformanceMonitor class to pass tests
+- [x] Integrate with existing error monitoring system
 
 #### 1.4 Extract LandmarkValidator Utility
 
