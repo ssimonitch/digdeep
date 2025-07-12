@@ -219,11 +219,11 @@ interface ExerciseMetrics {
 
 #### 1.4 Extract LandmarkValidator Utility
 
-- [ ] Write tests for landmark visibility validation
-- [ ] Write tests for pose completeness validation
-- [ ] Write tests for landmark quality assessment
-- [ ] Implement LandmarkValidator class to pass tests
-- [ ] Test integration with confidence calculations
+- [x] Write tests for landmark visibility validation
+- [x] Write tests for pose completeness validation
+- [x] Write tests for landmark quality assessment
+- [x] Implement LandmarkValidator class to pass tests
+- [x] Test integration with confidence calculations
 
 #### 1.5 Create BasePoseDetector Class
 
