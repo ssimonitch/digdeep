@@ -266,7 +266,6 @@ export class OptimizedPoseDetector {
     return Math.min(1.0, Math.max(0.0, averageVisibility));
   }
 
-
   /**
    * Check if the detector is initialized and ready
    */

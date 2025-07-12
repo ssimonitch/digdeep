@@ -4,7 +4,6 @@ import { FilesetResolver } from '@mediapipe/tasks-vision';
 import { errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
-
 /**
  * MediaPipe Pose Landmark indices for squat analysis
  * Based on the 33-point pose model
@@ -83,7 +82,6 @@ export interface SquatPoseAnalysis {
     };
   };
 }
-
 
 /**
  * SquatPoseAnalyzer - Specialized MediaPipe Pose service for squat form analysis
@@ -653,7 +651,6 @@ export class SquatPoseAnalyzer {
       },
     };
   }
-
 
   /**
    * Check if the analyzer is initialized and ready
