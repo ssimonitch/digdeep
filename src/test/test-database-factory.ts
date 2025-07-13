@@ -1,6 +1,6 @@
 import { Dexie } from 'dexie';
 
-import { DigDeepDatabase } from '@/services/dexie/dexie-storage.service';
+import { DigDeepDatabase } from '@/infrastructure/storage/dexie/dexie-storage.service';
 
 /**
  * Creates a test database with a unique name to prevent conflicts between tests

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Performance testing examples and usage patterns
  * This file demonstrates how to use the benchmarking infrastructure

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {

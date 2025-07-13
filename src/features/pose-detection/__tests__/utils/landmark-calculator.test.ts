@@ -1,15 +1,14 @@
 import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 import { describe, expect, it } from 'vitest';
 
-import { LANDMARK_INDICES, SQUAT_FIXTURES } from '@/test/pose-detection/fixtures/landmark-fixtures';
+// Import the functions we'll be testing
+import { LandmarkCalculator } from '../../utils/landmark-calculator.util';
+import { LANDMARK_INDICES, SQUAT_FIXTURES } from '../pose-detection/fixtures/landmark-fixtures';
 import {
   approximatelyEqual,
   createAngleTestLandmarks,
   createDistanceTestLandmarks,
-} from '@/test/pose-detection/utils/test-utilities';
-
-// Import the functions we'll be testing
-import { LandmarkCalculator } from '../landmark-calculator.util';
+} from '../pose-detection/utils/test-utilities';
 
 /**
  * Test suite for angle calculations

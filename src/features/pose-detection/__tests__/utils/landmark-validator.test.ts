@@ -1,8 +1,8 @@
 import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import type { QualityConfig } from '../landmark-validator';
-import { LandmarkValidator } from '../landmark-validator';
+import type { QualityConfig } from '../../utils/landmark-validator';
+import { LandmarkValidator } from '../../utils/landmark-validator';
 
 // Test fixtures
 const createLandmark = (visibility: number, x = 0.5, y = 0.5, z = 0): NormalizedLandmark => ({

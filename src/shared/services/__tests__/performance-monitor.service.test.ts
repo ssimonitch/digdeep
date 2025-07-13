@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PerformanceMonitor } from './performance-monitor.service';
+import { PerformanceMonitor } from '../performance-monitor.service';
 
 // Create mock function reference using vi.hoisted
 const mockErrorMonitorReportError = vi.hoisted(() => vi.fn());

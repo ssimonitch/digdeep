@@ -2,9 +2,9 @@ import type { NormalizedLandmark, PoseLandmarkerResult } from '@mediapipe/tasks-
 
 import { errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
-import { LandmarkCalculator } from '@/shared/utils/landmark-calculator.util';
-import { LandmarkValidator } from '@/shared/utils/landmark-validator';
 
+import { LandmarkCalculator } from '../utils/landmark-calculator.util';
+import { LandmarkValidator } from '../utils/landmark-validator';
 import type { PoseDetectorConfig } from './base-pose-detector';
 import { BasePoseDetector } from './base-pose-detector';
 

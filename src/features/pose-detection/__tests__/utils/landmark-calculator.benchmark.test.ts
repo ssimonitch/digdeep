@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { LANDMARK_INDICES, SQUAT_FIXTURES } from '@/test/pose-detection/fixtures/landmark-fixtures';
-
-import { LandmarkCalculator } from '../landmark-calculator.util';
+import { LandmarkCalculator } from '../../utils/landmark-calculator.util';
+import { LANDMARK_INDICES, SQUAT_FIXTURES } from '../pose-detection/fixtures/landmark-fixtures';
 
 describe('LandmarkCalculator Performance Benchmarks', () => {
   const landmarks = SQUAT_FIXTURES.properDepth.landmarks[0];

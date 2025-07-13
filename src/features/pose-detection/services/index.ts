@@ -1,2 +1,2 @@
-export * from './dexie/dexie-storage.service';
+export * from './base-pose-detector';
 export * from './squat-pose-analyzer.service';

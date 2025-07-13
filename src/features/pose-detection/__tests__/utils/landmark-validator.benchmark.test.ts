@@ -1,7 +1,7 @@
 import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 import { describe, expect, it } from 'vitest';
 
-import { LandmarkValidator } from '../landmark-validator';
+import { LandmarkValidator } from '../../utils/landmark-validator';
 
 // Create realistic landmark data
 const createRealisticLandmarks = (): NormalizedLandmark[] => {

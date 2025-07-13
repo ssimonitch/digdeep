@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useCallback } from 'react';
 
-import { getDexieStorage } from '@/services/dexie/dexie-storage.service';
+import { getDexieStorage } from '@/infrastructure/storage/dexie/dexie-storage.service';
 import type { Exercise, Set, SquatAnalysis, UserProfile, WorkoutSession } from '@/types/workout.types';
 
 // Live query hooks for reactive data
@@ -166,4 +166,4 @@ export function useDexieStorage(userId?: string) {
 }
 
 // Direct database access for advanced queries
-export { db } from '@/services/dexie/dexie-storage.service';
+export { db } from '@/infrastructure/storage/dexie/dexie-storage.service';

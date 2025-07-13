@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DexieStorageService, DigDeepDatabase } from '@/services/dexie/dexie-storage.service';
+import { DexieStorageService, DigDeepDatabase } from '@/infrastructure/storage/dexie/dexie-storage.service';
 
 import { createTestDatabaseFactory } from '../test-database-factory';
 import {

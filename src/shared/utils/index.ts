@@ -1,2 +1,2 @@
-export * from './landmark-calculator.util';
-export * from './landmark-validator';
+// Truly shared utilities only
+// Pose detection utilities moved to @/features/pose-detection/utils/

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ErrorMonitor } from './error-monitor.service';
+import { ErrorMonitor } from '../error-monitor.service';
 
 // Mock global error handlers
 const mockAddEventListener = vi.fn();

@@ -1,9 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SQUAT_FIXTURES } from '@/test/pose-detection/fixtures/landmark-fixtures';
-import { createMockVideoElement } from '@/test/pose-detection/mocks/mediapipe-mocks';
-
-import { SquatPoseAnalyzer } from './squat-pose-analyzer.service';
+import { SquatPoseAnalyzer } from '../../services/squat-pose-analyzer.service';
+import { SQUAT_FIXTURES } from '../pose-detection/fixtures/landmark-fixtures';
+import { createMockVideoElement } from '../pose-detection/mocks/mediapipe-mocks';
 
 // Mock MediaPipe at the top level
 vi.mock('@mediapipe/tasks-vision');
