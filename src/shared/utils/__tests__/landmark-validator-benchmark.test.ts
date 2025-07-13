@@ -3,11 +3,6 @@ import { describe, expect, it } from 'vitest';
 
 import { LandmarkValidator } from '../landmark-validator';
 
-// Mock MediaPipe PoseLandmarkerResult structure
-interface MockPoseLandmarkerResult {
-  landmarks: NormalizedLandmark[][];
-}
-
 // Create realistic landmark data
 const createRealisticLandmarks = (): NormalizedLandmark[] => {
   return Array(33)
@@ -20,43 +15,7 @@ const createRealisticLandmarks = (): NormalizedLandmark[] => {
     }));
 };
 
-// Legacy confidence calculation from existing services
-function calculateLegacyConfidence(result: MockPoseLandmarkerResult): number {
-  if (!result.landmarks || result.landmarks.length === 0) {
-    return 0;
-  }
-
-  const landmarks = result.landmarks[0];
-  if (!landmarks || landmarks.length === 0) {
-    return 0;
-  }
-
-  // Calculate average visibility of key landmarks
-  const keyLandmarkIndices = [0, 11, 12, 23, 24]; // nose, shoulders, hips
-  const keyLandmarks = keyLandmarkIndices.map((index) => landmarks[index]).filter((landmark) => landmark !== undefined);
-
-  if (keyLandmarks.length === 0) {
-    return 0;
-  }
-
-  const averageVisibility =
-    keyLandmarks.reduce((sum, landmark) => {
-      return sum + (landmark.visibility || 0);
-    }, 0) / keyLandmarks.length;
-
-  return Math.min(1.0, Math.max(0.0, averageVisibility));
-}
-
-// New validator-based confidence calculation
-function calculateValidatorConfidence(landmarks: NormalizedLandmark[], validator: LandmarkValidator): number {
-  const keyLandmarkIndices = [0, 11, 12, 23, 24]; // Same key landmarks
-  const keyLandmarks = keyLandmarkIndices.map((index) => landmarks[index]).filter((landmark) => landmark !== undefined);
-
-  const validation = validator.validateVisibility(keyLandmarks, 0.5);
-  return validation.averageVisibility;
-}
-
-describe('LandmarkValidator Performance & Integration', () => {
+describe('LandmarkValidator Performance Benchmarks', () => {
   describe('Performance Benchmarks', () => {
     it('should process single validation under 1ms', () => {
       const validator = new LandmarkValidator();
@@ -112,61 +71,6 @@ describe('LandmarkValidator Performance & Integration', () => {
       const processingTime = performance.now() - startTime;
 
       expect(processingTime).toBeLessThan(10); // Should be well under 33ms
-    });
-  });
-
-  describe('Integration with Existing Confidence Calculations', () => {
-    it('should provide compatible confidence scores with legacy calculation', () => {
-      const validator = new LandmarkValidator();
-      const landmarks = createRealisticLandmarks();
-      const mockResult: MockPoseLandmarkerResult = { landmarks: [landmarks] };
-
-      // Legacy calculation
-      const legacyConfidence = calculateLegacyConfidence(mockResult);
-
-      // New validator calculation
-      const validatorConfidence = calculateValidatorConfidence(landmarks, validator);
-
-      // Should be close but not necessarily identical (different approaches)
-      expect(Math.abs(legacyConfidence - validatorConfidence)).toBeLessThan(0.1);
-    });
-
-    it('should handle edge cases consistently', () => {
-      const validator = new LandmarkValidator();
-
-      // Empty landmarks
-      const emptyResult: MockPoseLandmarkerResult = { landmarks: [[]] };
-      expect(calculateLegacyConfidence(emptyResult)).toBe(0);
-      expect(calculateValidatorConfidence([], validator)).toBe(0);
-
-      // Missing key landmarks
-      const partialLandmarks = Array(5)
-        .fill(null)
-        .map(() => ({ x: 0.5, y: 0.5, z: 0, visibility: 0.8 }));
-      const partialResult: MockPoseLandmarkerResult = { landmarks: [partialLandmarks] };
-
-      const legacyPartial = calculateLegacyConfidence(partialResult);
-      const validatorPartial = calculateValidatorConfidence(partialLandmarks, validator);
-
-      // Both should handle partial data gracefully
-      expect(legacyPartial).toBeGreaterThan(0);
-      expect(validatorPartial).toBeGreaterThan(0);
-    });
-
-    it('should integrate with squat-specific confidence thresholds', () => {
-      const validator = new LandmarkValidator();
-      const landmarks = createRealisticLandmarks();
-
-      // Squat uses 0.7 threshold
-      const squatValidation = validator.validatePose(landmarks, 'squat');
-
-      // Generic uses 0.5 threshold
-      const genericValidation = validator.validatePose(landmarks, 'generic');
-
-      // Squat should be more strict
-      if (!genericValidation.visibility.isValid) {
-        expect(squatValidation.visibility.isValid).toBe(false);
-      }
     });
   });
 

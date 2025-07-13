@@ -3,7 +3,7 @@
  * These mocks enable testing without loading actual MediaPipe resources
  */
 
-import type { NormalizedLandmark, PoseLandmarkerResult } from '@mediapipe/tasks-vision';
+import type { NormalizedLandmark, PoseLandmarkerOptions, PoseLandmarkerResult } from '@mediapipe/tasks-vision';
 
 import { createMockPoseResult } from '../fixtures/landmark-fixtures';
 
@@ -81,9 +81,9 @@ export class MockPoseLandmarker {
   private static createFromOptionsCallCount = 0;
 
   private isClosed = false;
-  private options: Record<string, unknown>;
+  private options: PoseLandmarkerOptions;
 
-  constructor(options: Record<string, unknown>) {
+  constructor(options: PoseLandmarkerOptions) {
     this.options = options;
     MockPoseLandmarker.instances.push(this);
   }
@@ -93,7 +93,7 @@ export class MockPoseLandmarker {
    */
   static async createFromOptions(
     vision: MockVisionModule,
-    options: Record<string, unknown>,
+    options: PoseLandmarkerOptions,
   ): Promise<MockPoseLandmarker> {
     MockPoseLandmarker.createFromOptionsCallCount++;
 
@@ -184,7 +184,7 @@ export class MockPoseLandmarker {
   /**
    * Get current options
    */
-  getOptions(): Record<string, unknown> {
+  getOptions(): PoseLandmarkerOptions {
     return { ...this.options };
   }
 

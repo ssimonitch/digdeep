@@ -1,3 +1,5 @@
+export type ErrorContext = Record<string, unknown>;
+
 export interface ErrorReport {
   id: string;
   type: 'javascript' | 'promise' | 'network' | 'media' | 'custom';
@@ -8,7 +10,7 @@ export interface ErrorReport {
   lineNumber?: number;
   columnNumber?: number;
   userAgent: string;
-  context?: Record<string, unknown>;
+  context?: ErrorContext;
   severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
@@ -46,7 +48,7 @@ export class ErrorMonitor {
     message: string,
     type: ErrorReport['type'] = 'custom',
     severity: ErrorReport['severity'] = 'medium',
-    context?: Record<string, unknown>,
+    context?: ErrorContext,
   ): string {
     const error: ErrorReport = {
       id: this.generateErrorId(),
@@ -62,11 +64,7 @@ export class ErrorMonitor {
     return error.id;
   }
 
-  reportJavaScriptError(
-    error: Error,
-    severity: ErrorReport['severity'] = 'high',
-    context?: Record<string, unknown>,
-  ): string {
+  reportJavaScriptError(error: Error, severity: ErrorReport['severity'] = 'high', context?: ErrorContext): string {
     const errorReport: ErrorReport = {
       id: this.generateErrorId(),
       type: 'javascript',
@@ -82,7 +80,7 @@ export class ErrorMonitor {
     return errorReport.id;
   }
 
-  reportNetworkError(url: string, status: number, statusText: string, context?: Record<string, unknown>): string {
+  reportNetworkError(url: string, status: number, statusText: string, context?: ErrorContext): string {
     const severity: ErrorReport['severity'] = status >= 500 ? 'high' : 'medium';
 
     const error: ErrorReport = {
@@ -100,7 +98,7 @@ export class ErrorMonitor {
     return error.id;
   }
 
-  reportMediaError(mediaElement: HTMLMediaElement, context?: Record<string, unknown>): string {
+  reportMediaError(mediaElement: HTMLMediaElement, context?: ErrorContext): string {
     const error = mediaElement.error;
     let message = 'Unknown media error';
     let severity: ErrorReport['severity'] = 'medium';

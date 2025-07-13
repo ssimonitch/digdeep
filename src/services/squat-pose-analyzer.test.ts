@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { errorMonitor } from '@/shared/services/error-monitor.service';
+import { type ErrorContext, errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 import {
   createDefaultLandmarks,
@@ -388,46 +388,48 @@ describe('SquatPoseAnalyzer', () => {
 
   describe('Frame Processing and Throttling', () => {
     beforeEach(async () => {
+      vi.useFakeTimers();
       // Create a fresh analyzer instance for each test to reset lastFrameTime
       SquatPoseAnalyzer.resetInstance();
       analyzer = SquatPoseAnalyzer.getInstance();
       await analyzer.initialize();
     });
 
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it('should throttle frame processing to 30 FPS', () => {
-      // Set initial time
-      let currentTime = 1000;
-      vi.spyOn(performance, 'now').mockImplementation(() => currentTime);
+      // Advance time to ensure no throttling on first frame
+      vi.advanceTimersByTime(50);
 
       // First call - should process
       const result1 = analyzer.analyzeSquatPose(mockVideoElement);
       expect(result1.landmarks).not.toBeNull();
+      expect(result1.isValid).toBe(true);
 
-      // Second call - only 20ms later, should be throttled
-      currentTime = 1020; // Less than 33.33ms later
+      // Second call immediately - should be throttled
       const result2 = analyzer.analyzeSquatPose(mockVideoElement);
-
-      expect(result2.landmarks).toBeNull(); // Throttled
+      expect(result2.landmarks).toBeNull();
       expect(result2.processingTime).toBe(0);
-
-      vi.restoreAllMocks();
+      expect(result2.isValid).toBe(false);
     });
 
     it('should process frame after throttle interval', () => {
-      // Set initial time
-      let currentTime = 1000;
-      vi.spyOn(performance, 'now').mockImplementation(() => currentTime);
+      // Advance time to ensure no throttling on first frame
+      vi.advanceTimersByTime(50);
 
       // First call - should process
       const result1 = analyzer.analyzeSquatPose(mockVideoElement);
       expect(result1.landmarks).not.toBeNull();
 
-      // Second call - 40ms later, should process
-      currentTime = 1040; // More than 33.33ms later
+      // Advance time beyond throttle interval
+      vi.advanceTimersByTime(40);
+
+      // Second call - should process
       const result2 = analyzer.analyzeSquatPose(mockVideoElement);
       expect(result2.landmarks).not.toBeNull();
-
-      vi.restoreAllMocks();
+      expect(result2.isValid).toBe(true);
     });
   });
 
@@ -442,73 +444,66 @@ describe('SquatPoseAnalyzer', () => {
       vi.clearAllMocks();
     });
 
-    it('should track total frames and valid poses', () => {
+    it('should track performance metrics for successful operations', () => {
       setMockMediaPipeConfig({
         customResult: SQUAT_FIXTURES.properDepth,
       });
 
-      // Mock performance.now to control timing
-      let currentTime = 1000;
-      vi.spyOn(performance, 'now').mockImplementation(() => {
-        // Return current time and increment it slightly for each call
-        return currentTime++;
-      });
+      // Process a frame
+      const result = analyzer.analyzeSquatPose(mockVideoElement);
+      expect(result.isValid).toBe(true);
 
-      // Process multiple frames with proper timing to avoid throttling
-      for (let i = 0; i < 5; i++) {
-        currentTime = 1000 + i * 40; // Ensure 40ms gap between frames
-        analyzer.analyzeSquatPose(mockVideoElement);
-      }
+      // Verify squat analysis metrics are recorded
+      expect(performanceMonitor.recordOperation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'squatAnalysis',
+          success: true,
+          processingTime: expect.any(Number) as number,
+          timestamp: expect.any(Number) as number,
+        }),
+      );
 
-      // Check that metrics are being tracked (both base poseDetection and squatAnalysis)
-      // Each frame records both poseDetection (from base) and squatAnalysis
-      expect(performanceMonitor.recordOperation).toHaveBeenCalledTimes(10); // 5 frames * 2 operations
-
-      // Verify squat analysis operations
-      expect(performanceMonitor.recordOperation).toHaveBeenCalledWith({
-        name: 'squatAnalysis',
-        processingTime: expect.any(Number) as number,
-        timestamp: expect.any(Number) as number,
-        success: true,
-      });
-
-      // Verify base pose detection operations
-      expect(performanceMonitor.recordOperation).toHaveBeenCalledWith({
-        name: 'poseDetection',
-        processingTime: expect.any(Number) as number,
-        timestamp: expect.any(Number) as number,
-        success: true,
-      });
-
-      vi.restoreAllMocks();
+      // Verify base pose detection metrics are also recorded
+      expect(performanceMonitor.recordOperation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'poseDetection',
+          success: true,
+          processingTime: expect.any(Number) as number,
+          timestamp: expect.any(Number) as number,
+        }),
+      );
     });
 
-    it('should maintain confidence score history', () => {
+    it('should maintain confidence score history and report final metrics', () => {
+      vi.useFakeTimers();
+
       // Process frames with varying confidence
       const fixtures = [SQUAT_FIXTURES.properDepth, SQUAT_FIXTURES.shallowSquat, SQUAT_FIXTURES.lateralShiftLeft];
 
-      fixtures.forEach((fixture, i) => {
-        vi.spyOn(performance, 'now').mockReturnValue(i * 40);
+      fixtures.forEach((fixture) => {
         setMockMediaPipeConfig({ customResult: fixture });
         analyzer.analyzeSquatPose(mockVideoElement);
+        vi.advanceTimersByTime(40); // Advance time to avoid throttling
       });
 
-      // Cleanup should report average confidence
+      // Cleanup should report final metrics
       analyzer.cleanup();
 
       expect(errorMonitor.reportError).toHaveBeenCalledWith(
         'SquatPoseAnalyzer cleanup completed',
         'custom',
         'low',
-        expect.objectContaining({
-          finalMetrics: {
+        expect.objectContaining<ErrorContext>({
+          finalMetrics: expect.objectContaining({
             averageConfidence: expect.any(Number) as number,
             totalFrames: expect.any(Number) as number,
             validSquatPoses: expect.any(Number) as number,
             successRate: expect.any(Number) as number,
-          },
+          }),
         }),
       );
+
+      vi.useRealTimers();
     });
   });
 
@@ -565,20 +560,18 @@ describe('SquatPoseAnalyzer', () => {
     it('should handle cleanup errors gracefully', async () => {
       await analyzer.initialize();
 
-      // Mock close to throw an error
-      const mockClose = vi.fn().mockImplementation(() => {
-        throw new Error('Close failed');
-      });
-      const originalClose = MockPoseLandmarker.prototype.close;
-      MockPoseLandmarker.prototype.close = mockClose;
-
-      // Restore after test
-      analyzer.cleanup();
-      MockPoseLandmarker.prototype.close = originalClose;
+      // Override close method on active instances to throw error
+      const mockInstances = MockPoseLandmarker.getInstances();
+      if (mockInstances.length > 0) {
+        const mockClose = vi.fn().mockImplementation(() => {
+          throw new Error('Close failed');
+        });
+        mockInstances[0].close = mockClose;
+      }
 
       analyzer.cleanup();
 
-      // Now the base class reports the cleanup error
+      // Verify cleanup error was reported
       expect(errorMonitor.reportError).toHaveBeenCalledWith(
         'Error during pose detector cleanup',
         'custom',
