@@ -290,6 +290,247 @@ describe('SquatPoseAnalyzer', () => {
       expect(result.squatMetrics.balance.lateralDeviation).toBeNull();
       expect(result.squatMetrics.balance.isBalanced).toBe(false);
     });
+
+    describe('Lateral Shift History Tracking', () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('should track lateral shift values in history array', () => {
+        // Process multiple frames with different lateral shifts
+        const fixtures = [SQUAT_FIXTURES.standing, SQUAT_FIXTURES.shallowSquat, SQUAT_FIXTURES.properDepth];
+
+        const lateralShifts: number[] = [];
+
+        fixtures.forEach((fixture) => {
+          // Advance time to avoid throttling
+          vi.advanceTimersByTime(40);
+
+          setMockMediaPipeConfig({ customResult: fixture });
+          const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+          if (result.squatMetrics.balance.lateralDeviation !== null) {
+            lateralShifts.push(result.squatMetrics.balance.lateralDeviation);
+          }
+        });
+
+        // Get the analyzer's shift history
+        vi.advanceTimersByTime(40);
+        const finalResult = analyzer.analyzeSquatPose(mockVideoElement);
+
+        expect(finalResult.squatMetrics.balance.shiftHistory).toBeDefined();
+        expect(finalResult.squatMetrics.balance.shiftHistory).toBeInstanceOf(Array);
+        expect(finalResult.squatMetrics.balance.shiftHistory.length).toBeGreaterThan(0);
+      });
+
+      it('should limit history to 30 entries (circular buffer)', () => {
+        // Process more than 30 frames
+        for (let i = 0; i < 35; i++) {
+          vi.advanceTimersByTime(40);
+          setMockMediaPipeConfig({
+            customResult: i % 2 === 0 ? SQUAT_FIXTURES.standing : SQUAT_FIXTURES.shallowSquat,
+          });
+          analyzer.analyzeSquatPose(mockVideoElement);
+        }
+
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        expect(result.squatMetrics.balance.shiftHistory).toBeDefined();
+        expect(result.squatMetrics.balance.shiftHistory.length).toBeLessThanOrEqual(30);
+      });
+
+      it('should track maximum lateral shift value', () => {
+        // Create custom fixture with larger lateral shift
+        const largeShiftFixture = createMockPoseResult(
+          (() => {
+            const landmarks = createDefaultLandmarks();
+            // Create significant lateral shift - hips shifted left but knees centered
+            landmarks[LANDMARK_INDICES.LEFT_HIP].x = 0.4;
+            landmarks[LANDMARK_INDICES.RIGHT_HIP].x = 0.46; // Hip midpoint: 0.43
+            landmarks[LANDMARK_INDICES.LEFT_KNEE].x = 0.47;
+            landmarks[LANDMARK_INDICES.RIGHT_KNEE].x = 0.53; // Knee midpoint: 0.5
+            // This creates a 0.07 lateral deviation
+            return landmarks;
+          })(),
+        );
+
+        // Process frames with increasing lateral shift
+        const fixtures = [
+          SQUAT_FIXTURES.standing,
+          SQUAT_FIXTURES.shallowSquat,
+          largeShiftFixture,
+          SQUAT_FIXTURES.properDepth,
+        ];
+
+        fixtures.forEach((fixture) => {
+          vi.advanceTimersByTime(40);
+          setMockMediaPipeConfig({ customResult: fixture });
+          analyzer.analyzeSquatPose(mockVideoElement);
+        });
+
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        expect(result.squatMetrics.balance.maxLateralShift).toBeDefined();
+        expect(result.squatMetrics.balance.maxLateralShift).toBeGreaterThan(0);
+        // Should capture the large shift we created
+        expect(result.squatMetrics.balance.maxLateralShift).toBeCloseTo(0.07, 2);
+      });
+
+      it('should track depth at maximum lateral shift', () => {
+        // Create fixture at specific depth with lateral shift
+        const shiftAtDepthFixture = createMockPoseResult(
+          (() => {
+            const landmarks = createDefaultLandmarks();
+            // Set at 75% depth
+            landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.65;
+            landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.65;
+            landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+            landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+            // Add lateral shift
+            landmarks[LANDMARK_INDICES.LEFT_HIP].x = 0.43;
+            landmarks[LANDMARK_INDICES.RIGHT_HIP].x = 0.49; // Hip midpoint: 0.46
+            landmarks[LANDMARK_INDICES.LEFT_KNEE].x = 0.47;
+            landmarks[LANDMARK_INDICES.RIGHT_KNEE].x = 0.53; // Knee midpoint: 0.5
+            return landmarks;
+          })(),
+        );
+
+        // Process sequence: standing -> shallow -> shift at depth -> proper depth
+        const fixtures = [
+          SQUAT_FIXTURES.standing,
+          SQUAT_FIXTURES.shallowSquat,
+          shiftAtDepthFixture,
+          SQUAT_FIXTURES.properDepth,
+        ];
+
+        fixtures.forEach((fixture) => {
+          vi.advanceTimersByTime(40);
+          setMockMediaPipeConfig({ customResult: fixture });
+          analyzer.analyzeSquatPose(mockVideoElement);
+        });
+
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        expect(result.squatMetrics.balance.maxShiftDepth).toBeDefined();
+        expect(result.squatMetrics.balance.maxShiftDepth).toBeCloseTo(75, 5);
+      });
+
+      it('should detect maximum shift at bottom position', () => {
+        // Create fixtures simulating a typical squat pattern where shift worsens at bottom
+        const smallShiftFixture = createMockPoseResult(
+          (() => {
+            const landmarks = createDefaultLandmarks();
+            // Shallow squat (50% depth) with small shift
+            landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.6;
+            landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.6;
+            landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+            landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+            // Small lateral shift
+            landmarks[LANDMARK_INDICES.LEFT_HIP].x = 0.46;
+            landmarks[LANDMARK_INDICES.RIGHT_HIP].x = 0.52; // Hip midpoint: 0.49
+            landmarks[LANDMARK_INDICES.LEFT_KNEE].x = 0.47;
+            landmarks[LANDMARK_INDICES.RIGHT_KNEE].x = 0.53; // Knee midpoint: 0.5
+            // This creates a 0.01 lateral deviation
+            return landmarks;
+          })(),
+        );
+
+        const bottomPositionShiftFixture = createMockPoseResult(
+          (() => {
+            const landmarks = createDefaultLandmarks();
+            // Bottom position (100% depth) with larger shift
+            landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.7;
+            landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.7;
+            landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+            landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+            // Larger lateral shift at bottom
+            landmarks[LANDMARK_INDICES.LEFT_HIP].x = 0.42;
+            landmarks[LANDMARK_INDICES.RIGHT_HIP].x = 0.48; // Hip midpoint: 0.45
+            landmarks[LANDMARK_INDICES.LEFT_KNEE].x = 0.47;
+            landmarks[LANDMARK_INDICES.RIGHT_KNEE].x = 0.53; // Knee midpoint: 0.5
+            // This creates a 0.05 lateral deviation
+            return landmarks;
+          })(),
+        );
+
+        // Process sequence: standing → shallow with small shift → bottom with large shift → ascending
+        const fixtures = [
+          SQUAT_FIXTURES.standing,
+          smallShiftFixture,
+          bottomPositionShiftFixture,
+          SQUAT_FIXTURES.shallowSquat, // ascending
+        ];
+
+        fixtures.forEach((fixture) => {
+          vi.advanceTimersByTime(40);
+          setMockMediaPipeConfig({ customResult: fixture });
+          analyzer.analyzeSquatPose(mockVideoElement);
+        });
+
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        // Should capture the maximum shift that occurred at bottom position
+        expect(result.squatMetrics.balance.maxLateralShift).toBeCloseTo(0.05, 2);
+        expect(result.squatMetrics.balance.maxShiftDepth).toBeDefined();
+        expect(result.squatMetrics.balance.maxShiftDepth).toBeCloseTo(100, 5);
+      });
+
+      it('should clear history when reset is called', () => {
+        // Process some frames to build history
+        const fixtures = [SQUAT_FIXTURES.standing, SQUAT_FIXTURES.shallowSquat, SQUAT_FIXTURES.properDepth];
+
+        fixtures.forEach((fixture) => {
+          vi.advanceTimersByTime(40);
+          setMockMediaPipeConfig({ customResult: fixture });
+          analyzer.analyzeSquatPose(mockVideoElement);
+        });
+
+        // Verify history exists
+        vi.advanceTimersByTime(40);
+        let result = analyzer.analyzeSquatPose(mockVideoElement);
+        expect(result.squatMetrics.balance.shiftHistory.length).toBeGreaterThan(0);
+
+        // Reset analyzer
+        analyzer.resetShiftHistory();
+
+        // Verify history is cleared
+        vi.advanceTimersByTime(40);
+        result = analyzer.analyzeSquatPose(mockVideoElement);
+        expect(result.squatMetrics.balance.shiftHistory.length).toBe(1); // Only current frame
+        expect(result.squatMetrics.balance.maxLateralShift).toBe(0);
+        expect(result.squatMetrics.balance.maxShiftDepth).toBeNull();
+      });
+
+      it('should handle null lateral deviation values in history', () => {
+        // Process frames including one with missing landmarks
+        const fixtures = [
+          SQUAT_FIXTURES.standing,
+          { landmarks: [], worldLandmarks: [], close: vi.fn() }, // Will produce null deviation
+          SQUAT_FIXTURES.properDepth,
+        ];
+
+        fixtures.forEach((fixture) => {
+          vi.advanceTimersByTime(40);
+          setMockMediaPipeConfig({ customResult: fixture });
+          analyzer.analyzeSquatPose(mockVideoElement);
+        });
+
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        // History should only contain valid (non-null) values
+        expect(result.squatMetrics.balance.shiftHistory).toBeDefined();
+        expect(result.squatMetrics.balance.shiftHistory.every((shift) => typeof shift === 'number')).toBe(true);
+      });
+    });
   });
 
   describe('Depth Achievement Analysis', () => {
@@ -306,7 +547,8 @@ describe('SquatPoseAnalyzer', () => {
 
       expect(result.squatMetrics.depth.hasAchievedDepth).toBe(true);
       expect(result.squatMetrics.depth.hipKneeRatio).toBeGreaterThanOrEqual(1.0);
-      expect(result.squatMetrics.depth.depthPercentage).toBe(100);
+      // Proper depth fixture has hips below knees (0.72 vs 0.7), so >100%
+      expect(result.squatMetrics.depth.depthPercentage).toBeGreaterThan(100);
     });
 
     it('should detect shallow squat', () => {
@@ -338,6 +580,320 @@ describe('SquatPoseAnalyzer', () => {
       // At parallel (ratio = 1.0), depth percentage should be 100%
       expect(result.squatMetrics.depth.hipKneeRatio).toBeCloseTo(1.0, 0.01);
       expect(result.squatMetrics.depth.depthPercentage).toBeCloseTo(100, 1);
+    });
+
+    describe('Enhanced Depth Percentage (0-100% scale)', () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('should calculate 0% depth at standing position', () => {
+        // Use standing fixture where hips are well above knees
+        setMockMediaPipeConfig({
+          customResult: SQUAT_FIXTURES.standing,
+        });
+
+        // Advance time to allow frame to be processed
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        expect(result.squatMetrics.depth.depthPercentage).toBe(0);
+        expect(result.squatMetrics.depth.hasAchievedDepth).toBe(false);
+      });
+
+      it('should calculate 100% depth when hip Y equals knee Y', () => {
+        // Create a squat where hip and knee are at exact same height
+        const landmarks = createDefaultLandmarks();
+        landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.7;
+        landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.7;
+        landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+        landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+
+        setMockMediaPipeConfig({
+          customResult: createMockPoseResult(landmarks),
+        });
+
+        // Advance time to allow frame to be processed
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        expect(result.squatMetrics.depth.depthPercentage).toBe(100);
+      });
+
+      it('should calculate >100% depth when hip is below knee', () => {
+        // Create a deep squat where hips are below knees
+        const landmarks = createDefaultLandmarks();
+        landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.75; // Lower than knees
+        landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.75;
+        landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+        landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+
+        setMockMediaPipeConfig({
+          customResult: createMockPoseResult(landmarks),
+        });
+
+        // Advance time to allow frame to be processed
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        expect(result.squatMetrics.depth.depthPercentage).toBeGreaterThan(100);
+        expect(result.squatMetrics.depth.hasAchievedDepth).toBe(true);
+      });
+
+      it('should calculate intermediate depth percentages correctly', () => {
+        // Test 50% depth - halfway between standing and parallel
+        const landmarks = createDefaultLandmarks();
+        // Standing: hips at 0.5, knees at 0.7 (0.2 difference)
+        // 50% depth: hips should be at 0.6 (halfway to knee level)
+        landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.6;
+        landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.6;
+        landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+        landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+
+        setMockMediaPipeConfig({
+          customResult: createMockPoseResult(landmarks),
+        });
+
+        // Advance time to allow frame to be processed
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        expect(result.squatMetrics.depth.depthPercentage).toBeCloseTo(50, 5);
+      });
+
+      it('should handle edge case where knees are higher than hips in standing', () => {
+        // Unusual case but should handle gracefully
+        const landmarks = createDefaultLandmarks();
+        landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.8;
+        landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.8;
+        landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.6;
+        landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.6;
+
+        setMockMediaPipeConfig({
+          customResult: createMockPoseResult(landmarks),
+        });
+
+        // Advance time to allow frame to be processed
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        // Should already be at "depth" even though standing
+        expect(result.squatMetrics.depth.depthPercentage).toBeGreaterThan(100);
+      });
+
+      it('should use average of left/right sides for depth calculation', () => {
+        // Test with asymmetric squat
+        const landmarks = createDefaultLandmarks();
+        landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.68;
+        landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.72; // Deeper on right
+        landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+        landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+
+        setMockMediaPipeConfig({
+          customResult: createMockPoseResult(landmarks),
+        });
+
+        // Advance time to allow frame to be processed
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        // Average hip Y: 0.7, Average knee Y: 0.7 -> 100% depth
+        expect(result.squatMetrics.depth.depthPercentage).toBe(100);
+      });
+
+      it('should track starting position for accurate depth calculation', () => {
+        // Note: This test validates that our depth calculation works with different positions
+        // In the future, we could track actual starting position per session
+
+        // First analyze standing position
+        setMockMediaPipeConfig({
+          customResult: SQUAT_FIXTURES.standing,
+        });
+        const standingResult = analyzer.analyzeSquatPose(mockVideoElement);
+        expect(standingResult.squatMetrics.depth.depthPercentage).toBeNull();
+
+        // Advance time to allow next frame to be processed (avoid throttling)
+        vi.advanceTimersByTime(40);
+
+        // Then analyze squat position
+        setMockMediaPipeConfig({
+          customResult: SQUAT_FIXTURES.shallowSquat,
+        });
+        const squatResult = analyzer.analyzeSquatPose(mockVideoElement);
+
+        // Shallow squat should be between 0 and 100%
+        expect(squatResult.squatMetrics.depth.depthPercentage).toBeGreaterThan(0);
+        expect(squatResult.squatMetrics.depth.depthPercentage).toBeLessThan(100);
+      });
+    });
+
+    describe('Configurable Depth Threshold', () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('should use default 90% depth threshold when not configured', () => {
+        // Create squat at 85% depth
+        const landmarks = createDefaultLandmarks();
+        // Standing: hips at 0.5, knees at 0.7
+        // 85% depth: hips at 0.67 (85% of the way from 0.5 to 0.7)
+        landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.67;
+        landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.67;
+        landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+        landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+
+        setMockMediaPipeConfig({
+          customResult: createMockPoseResult(landmarks),
+        });
+
+        // Advance time to allow frame to be processed
+        vi.advanceTimersByTime(40);
+        const result = analyzer.analyzeSquatPose(mockVideoElement);
+
+        // At 85% depth with 90% threshold, should not achieve depth
+        expect(result.squatMetrics.depth.depthPercentage).toBeCloseTo(85, 5);
+        expect(result.squatMetrics.depth.hasAchievedDepth).toBe(false);
+      });
+
+      it('should respect custom depth threshold configuration', async () => {
+        // Create analyzer with custom 80% threshold
+        const customAnalyzer = new SquatPoseAnalyzer({
+          depthThreshold: 0.8, // 80%
+        });
+        await customAnalyzer.initialize();
+
+        // Create squat at 85% depth
+        const landmarks = createDefaultLandmarks();
+        landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.67;
+        landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.67;
+        landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+        landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+
+        setMockMediaPipeConfig({
+          customResult: createMockPoseResult(landmarks),
+        });
+
+        // Advance time to allow frame to be processed
+        vi.advanceTimersByTime(40);
+        const result = customAnalyzer.analyzeSquatPose(mockVideoElement);
+
+        // At 85% depth with 80% threshold, should achieve depth
+        expect(result.squatMetrics.depth.depthPercentage).toBeCloseTo(85, 5);
+        expect(result.squatMetrics.depth.hasAchievedDepth).toBe(true);
+
+        customAnalyzer.cleanup();
+      });
+
+      it('should handle threshold at exactly the depth percentage', async () => {
+        // Create analyzer with 70% threshold
+        const customAnalyzer = new SquatPoseAnalyzer({
+          depthThreshold: 0.7, // 70%
+        });
+        await customAnalyzer.initialize();
+
+        // Create squat at exactly 70% depth
+        const landmarks = createDefaultLandmarks();
+        // 70% of the way from 0.5 to 0.7 = 0.64
+        landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.64;
+        landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.64;
+        landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+        landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+
+        setMockMediaPipeConfig({
+          customResult: createMockPoseResult(landmarks),
+        });
+
+        // Advance time to allow frame to be processed
+        vi.advanceTimersByTime(40);
+        const result = customAnalyzer.analyzeSquatPose(mockVideoElement);
+
+        // At exactly threshold depth, should achieve depth
+        expect(result.squatMetrics.depth.depthPercentage).toBeCloseTo(70, 5);
+        expect(result.squatMetrics.depth.hasAchievedDepth).toBe(true);
+
+        customAnalyzer.cleanup();
+      });
+
+      it('should allow 100% threshold for full depth requirement', async () => {
+        // Create analyzer requiring full parallel
+        const strictAnalyzer = new SquatPoseAnalyzer({
+          depthThreshold: 1.0, // 100%
+        });
+        await strictAnalyzer.initialize();
+
+        // Test at 95% depth
+        const landmarks = createDefaultLandmarks();
+        landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.69;
+        landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.69;
+        landmarks[LANDMARK_INDICES.LEFT_KNEE].y = 0.7;
+        landmarks[LANDMARK_INDICES.RIGHT_KNEE].y = 0.7;
+
+        setMockMediaPipeConfig({
+          customResult: createMockPoseResult(landmarks),
+        });
+
+        // Advance time to allow frame to be processed
+        vi.advanceTimersByTime(40);
+        const result = strictAnalyzer.analyzeSquatPose(mockVideoElement);
+
+        // At 95% depth with 100% threshold, should not achieve depth
+        expect(result.squatMetrics.depth.hasAchievedDepth).toBe(false);
+
+        // Advance time to allow next frame to be processed
+        vi.advanceTimersByTime(40);
+
+        // Now test at exactly 100%
+        landmarks[LANDMARK_INDICES.LEFT_HIP].y = 0.7;
+        landmarks[LANDMARK_INDICES.RIGHT_HIP].y = 0.7;
+
+        setMockMediaPipeConfig({
+          customResult: createMockPoseResult(landmarks),
+        });
+
+        const result2 = strictAnalyzer.analyzeSquatPose(mockVideoElement);
+
+        // At 100% depth, should achieve depth
+        expect(result2.squatMetrics.depth.hasAchievedDepth).toBe(true);
+
+        strictAnalyzer.cleanup();
+      });
+
+      it('should validate threshold is between 0 and 1', () => {
+        // Test invalid thresholds
+        expect(() => {
+          new SquatPoseAnalyzer({ depthThreshold: -0.1 });
+        }).toThrow('Depth threshold must be between 0 and 1');
+
+        expect(() => {
+          new SquatPoseAnalyzer({ depthThreshold: 1.5 });
+        }).toThrow('Depth threshold must be between 0 and 1');
+      });
+
+      it('should include threshold in depth metrics', async () => {
+        const customAnalyzer = new SquatPoseAnalyzer({
+          depthThreshold: 0.85,
+        });
+        await customAnalyzer.initialize();
+
+        setMockMediaPipeConfig({
+          customResult: SQUAT_FIXTURES.shallowSquat,
+        });
+
+        const result = customAnalyzer.analyzeSquatPose(mockVideoElement);
+
+        // Should include the configured threshold in the result
+        expect(result.squatMetrics.depth.depthThreshold).toBe(0.85);
+
+        customAnalyzer.cleanup();
+      });
     });
   });
 

@@ -115,14 +115,14 @@ Essential landmarks for squat analysis:
 
 #### Step 1.2: Implement Squat Metrics
 
-- [ ] **Depth Detection**
-  - [ ] Calculate hip-to-knee Y-coordinate comparison
-  - [ ] Implement depth percentage (0-100% where 100% = hip below knee)
-  - [ ] Add depth achievement threshold (configurable, default 90%)
-- [ ] **Balance Analysis**
-  - [ ] Calculate lateral shift between left/right hip positions
-  - [ ] Detect maximum shift at bottom position
-  - [ ] Define acceptable shift threshold (e.g., < 5% of hip width)
+- [x] **Depth Detection**
+  - [x] Calculate hip-to-knee Y-coordinate comparison
+  - [x] Implement depth percentage (0-100% where 100% = hip below knee)
+  - [x] Add depth achievement threshold (configurable, default 90%)
+- [x] **Balance Analysis**
+  - [x] Calculate lateral shift between left/right hip positions
+  - [x] Detect maximum shift at bottom position
+  - [x] Define acceptable shift threshold (e.g., < 5% of hip width)
 
 #### Step 1.3: Bar Path & Rep Counting
 
