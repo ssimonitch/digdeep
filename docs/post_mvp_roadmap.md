@@ -62,7 +62,7 @@ interface SquatResult {
 - Hooks manage state and effects
 - Utils contain pure functions
 
-## Phase 1: Architecture Evolution (4-6 weeks)
+## Phase 1: Architecture Evolution
 
 ### Goal: Transform MVP into extensible multi-exercise platform
 
@@ -130,7 +130,7 @@ interface ExercisePlugin {
 - Parallel processing capability
 - Better performance scaling
 
-## Phase 2: Core Features (6-8 weeks)
+## Phase 2: Core Features
 
 ### 2.1 Recording & Playback System
 
@@ -196,7 +196,7 @@ interface ExercisePlugin {
 - [ ] Personal records detection
 - [ ] Trend visualization
 
-## Phase 3: Multi-Exercise Support (8-10 weeks)
+## Phase 3: Multi-Exercise Support
 
 ### 3.1 Bench Press Analysis
 
@@ -241,7 +241,7 @@ interface ExercisePlugin {
 - [ ] Shoulder mobility
 - [ ] Press behind neck safety
 
-## Phase 4: Backend & Multi-Device (4-6 weeks)
+## Phase 4: Backend & Multi-Device
 
 ### 4.1 Supabase Integration
 
@@ -275,7 +275,7 @@ interface ExercisePlugin {
 - [ ] Privacy controls
 - [ ] Cleanup policies
 
-## Phase 5: Intelligence & Coaching (6-8 weeks)
+## Phase 5: Intelligence & Coaching
 
 ### 5.1 AI-Powered Insights
 
@@ -309,7 +309,7 @@ interface ExercisePlugin {
 - [ ] Depth achievement buzz
 - [ ] Balance warning pulses
 
-## Phase 6: Social & Gamification (4-6 weeks)
+## Phase 6: Social & Gamification
 
 ### 6.1 Social Features
 

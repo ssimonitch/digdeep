@@ -4,7 +4,7 @@
 
 **Deliver a working real-time squat analysis app that provides immediate form feedback during training.**
 
-> **Note**: See [Post-MVP Roadmap](./04_post_mvp_roadmap.md) for architectural considerations and future features. The "Don't Close Doors" section provides critical guidance for MVP development.
+> **Note**: See [Post-MVP Roadmap](./post_mvp_roadmap.md) for architectural considerations and future features. The "Don't Close Doors" section provides critical guidance for MVP development.
 
 ### Success Criteria
 
@@ -14,8 +14,6 @@
 - Visual feedback through UI components
 - Maintains 30+ FPS performance
 - Works reliably in gym lighting conditions
-
-### Target Timeline: 2-3 Weeks
 
 ## Foundation Complete ✅
 
@@ -103,9 +101,9 @@ Essential landmarks for squat analysis:
 
 ## MVP Implementation Steps
 
-### Week 1: Core Analysis Engine
+### Phase 1: Core Analysis Engine
 
-#### Day 1-2: Complete Pose Detection Refactoring
+#### Step 1.1: Complete Pose Detection Refactoring
 
 > **Implementation Guide**: See [Pose Detection Analysis Phase 1.6](./reference/pose_detection_analysis.md#16-refactor-squatposeanalyzer) for detailed TDD approach and testing requirements.
 >
@@ -115,7 +113,7 @@ Essential landmarks for squat analysis:
 - [x] Verify all tests pass and no performance regression
 - [x] Remove duplicated detection logic
 
-#### Day 3-4: Implement Squat Metrics
+#### Step 1.2: Implement Squat Metrics
 
 - [ ] **Depth Detection**
   - [ ] Calculate hip-to-knee Y-coordinate comparison
@@ -126,7 +124,7 @@ Essential landmarks for squat analysis:
   - [ ] Detect maximum shift at bottom position
   - [ ] Define acceptable shift threshold (e.g., < 5% of hip width)
 
-#### Day 5-6: Bar Path & Rep Counting
+#### Step 1.3: Bar Path & Rep Counting
 
 - [ ] **Bar Path Tracking**
   - [ ] Track shoulder midpoint (landmarks 11, 12)
@@ -137,29 +135,29 @@ Essential landmarks for squat analysis:
   - [ ] Detect rep completion when returning to standing
   - [ ] Track rep quality based on depth and balance
 
-#### Day 7: Integration & Testing
+#### Step 1.4: Integration & Testing
 
 - [ ] Create `useSquatAnalysis` hook combining all metrics
 - [ ] Test with mock data and real camera input
 - [ ] Verify 30+ FPS performance maintained
 
-### Week 2: Active Analysis Screen & UI
+### Phase 2: Active Analysis Screen & UI
 
-#### Day 8-9: Active Analysis Screen
+#### Step 2.1: Active Analysis Screen
 
 - [ ] Create `ActiveAnalysisScreen` component
 - [ ] Integrate camera feed display
 - [ ] Add pose landmark overlay visualization
 - [ ] Implement navigation from Home screen
 
-#### Day 10-11: Analysis Controls
+#### Step 2.2: Analysis Controls
 
 - [ ] Add Start/Stop analysis button
 - [ ] Create analysis state management (idle, analyzing, paused)
 - [ ] Implement rep counter display
 - [ ] Add pose confidence indicator
 
-#### Day 12-13: Real-Time Feedback Components
+#### Step 2.3: Real-Time Feedback Components
 
 - [ ] **BalanceMeter Component**
   - [ ] Horizontal bar with center line
@@ -171,37 +169,37 @@ Essential landmarks for squat analysis:
   - [ ] Success pulse animation at target depth
   - [ ] Numeric percentage display option
 
-#### Day 14: Integration & Polish
+#### Step 2.4: Integration & Polish
 
 - [ ] Connect analysis data to UI components
 - [ ] Add smooth animations and transitions
 - [ ] Implement error states and recovery
 - [ ] Final testing in various lighting conditions
 
-### Week 3: Testing & Refinement
+### Phase 3: Testing & Refinement
 
-#### Day 15-16: Gym Testing
+#### Step 3.1: Gym Testing
 
 - [ ] Test in actual gym environment
 - [ ] Verify pose detection accuracy
 - [ ] Check UI visibility under gym lighting
 - [ ] Gather initial user feedback
 
-#### Day 17-18: Performance Optimization
+#### Step 3.2: Performance Optimization
 
 - [ ] Profile and optimize any bottlenecks
 - [ ] Ensure consistent 30+ FPS
 - [ ] Minimize memory usage
 - [ ] Add performance guards
 
-#### Day 19-20: Bug Fixes & Polish
+#### Step 3.3: Bug Fixes & Polish
 
 - [ ] Fix issues found during testing
 - [ ] Improve error messages
 - [ ] Add helpful onboarding hints
 - [ ] Final UI polish
 
-#### Day 21: MVP Complete 🎉
+#### Step 3.4: MVP Complete 🎉
 
 - [ ] Deploy to test environment
 - [ ] Document known limitations
@@ -209,7 +207,7 @@ Essential landmarks for squat analysis:
 
 ## Post-MVP Development
 
-After MVP completion, see the comprehensive [Post-MVP Roadmap](./04_post_mvp_roadmap.md) for:
+After MVP completion, see the comprehensive [Post-MVP Roadmap](./post_mvp_roadmap.md) for:
 
 - **Architecture Evolution** - Strategy pattern, plugin system, performance optimization
 - **Recording & Playback** - Video recording, analysis overlay, session management
@@ -241,7 +239,7 @@ The roadmap provides detailed implementation plans, timelines, and architectural
 - Use interfaces even with single implementations (enables future exercises)
 - Separate analysis logic from UI components
 - Design extensible data structures for future exercise types
-- See [Post-MVP Roadmap "Don't Close Doors"](./04_post_mvp_roadmap.md#dont-close-doors-during-mvp) for detailed guidance
+- See [Post-MVP Roadmap "Don't Close Doors"](./post_mvp_roadmap.md#dont-close-doors-during-mvp) for detailed guidance
 
 ### Decision Log
 
