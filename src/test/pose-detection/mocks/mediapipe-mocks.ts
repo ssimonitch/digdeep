@@ -92,7 +92,7 @@ export class MockPoseLandmarker {
    * Mock createFromOptions factory method
    */
   static async createFromOptions(
-    vision: MockVisionModule,
+    _vision: MockVisionModule,
     options: PoseLandmarkerOptions,
   ): Promise<MockPoseLandmarker> {
     MockPoseLandmarker.createFromOptionsCallCount++;
@@ -112,7 +112,7 @@ export class MockPoseLandmarker {
   /**
    * Mock detectForVideo method
    */
-  detectForVideo(videoElement: HTMLVideoElement, timestamp: number): PoseLandmarkerResult {
+  detectForVideo(_videoElement: HTMLVideoElement, timestamp: number): PoseLandmarkerResult {
     MockPoseLandmarker.detectForVideoCallCount++;
 
     if (this.isClosed) {
