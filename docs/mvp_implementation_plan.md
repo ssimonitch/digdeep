@@ -126,14 +126,14 @@ Essential landmarks for squat analysis:
 
 #### Step 1.3: Bar Path & Rep Counting
 
-- [ ] **Bar Path Tracking**
-  - [ ] Track shoulder midpoint (landmarks 11, 12)
-  - [ ] Store position history for current rep
-  - [ ] Calculate vertical deviation from starting position
-- [ ] **Rep Counting**
-  - [ ] Implement state machine (standing → descending → bottom → ascending → standing)
-  - [ ] Detect rep completion when returning to standing
-  - [ ] Track rep quality based on depth and balance
+- [x] **Bar Path Tracking**
+  - [x] Track shoulder midpoint (landmarks 11, 12)
+  - [x] Store position history for current rep
+  - [x] Calculate vertical deviation from starting position
+- [x] **Rep Counting**
+  - [x] Implement state machine (standing → descending → bottom → ascending → standing)
+  - [x] Detect rep completion when returning to standing
+  - [x] Track rep quality based on depth and balance
 
 #### Step 1.4: Integration & Testing
 

@@ -68,6 +68,53 @@ export interface RepData {
   isValid: boolean;
 }
 
+export interface SquatMetrics {
+  hasValidSquatPose: boolean;
+  keyLandmarkVisibility: {
+    hips: number;
+    knees: number;
+    ankles: number;
+    shoulders: number;
+  };
+  jointAngles: {
+    leftKneeAngle: number | null;
+    rightKneeAngle: number | null;
+    leftHipAngle: number | null;
+    rightHipAngle: number | null;
+    averageKneeAngle: number | null;
+  };
+  barPosition: {
+    shoulderMidpoint: { x: number; y: number; z: number } | null;
+    isValidBarPosition: boolean;
+  };
+  balance: {
+    lateralDeviation: number | null;
+    isBalanced: boolean;
+    shiftHistory: number[];
+    maxLateralShift: number;
+    maxShiftDepth: number | null;
+  };
+  depth: {
+    hipKneeRatio: number | null;
+    hasAchievedDepth: boolean;
+    depthPercentage: number | null;
+    depthThreshold?: number;
+  };
+  barPath: {
+    currentPosition: { x: number; y: number; z: number } | null;
+    history: BarPathPoint[];
+    verticalDeviation: number | null;
+    maxDeviation: number;
+    startingPosition: { x: number; y: number; z: number } | null;
+  };
+  repCounting: {
+    currentRep: RepData | null;
+    repCount: number;
+    phase: RepPhase;
+    completedReps: RepData[];
+  };
+}
+
 /**
  * Squat-specific pose analysis result
  */
@@ -77,52 +124,7 @@ export interface SquatPoseAnalysis {
   confidence: number;
   processingTime: number;
   isValid: boolean;
-  squatMetrics: {
-    hasValidSquatPose: boolean;
-    keyLandmarkVisibility: {
-      hips: number;
-      knees: number;
-      ankles: number;
-      shoulders: number;
-    };
-    jointAngles: {
-      leftKneeAngle: number | null;
-      rightKneeAngle: number | null;
-      leftHipAngle: number | null;
-      rightHipAngle: number | null;
-      averageKneeAngle: number | null;
-    };
-    barPosition: {
-      shoulderMidpoint: { x: number; y: number; z: number } | null;
-      isValidBarPosition: boolean;
-    };
-    balance: {
-      lateralDeviation: number | null;
-      isBalanced: boolean;
-      shiftHistory: number[];
-      maxLateralShift: number;
-      maxShiftDepth: number | null;
-    };
-    depth: {
-      hipKneeRatio: number | null;
-      hasAchievedDepth: boolean;
-      depthPercentage: number | null;
-      depthThreshold?: number;
-    };
-    barPath: {
-      currentPosition: { x: number; y: number; z: number } | null;
-      history: BarPathPoint[];
-      verticalDeviation: number | null;
-      maxDeviation: number;
-      startingPosition: { x: number; y: number; z: number } | null;
-    };
-    repCounting: {
-      currentRep: RepData | null;
-      repCount: number;
-      phase: RepPhase;
-      completedReps: RepData[];
-    };
-  };
+  squatMetrics: SquatMetrics;
 }
 
 /**
@@ -295,8 +297,8 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
   /**
    * Analyze squat-specific metrics from pose landmarks
    */
-  private analyzeSquatMetrics(result: PoseLandmarkerResult, timestamp: number) {
-    const emptyMetrics = {
+  private analyzeSquatMetrics(result: PoseLandmarkerResult, timestamp: number): SquatMetrics {
+    const emptyMetrics: SquatMetrics = {
       hasValidSquatPose: false,
       keyLandmarkVisibility: {
         hips: 0,
@@ -326,6 +328,19 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
         hipKneeRatio: null,
         hasAchievedDepth: false,
         depthPercentage: null,
+      },
+      barPath: {
+        currentPosition: null,
+        history: [],
+        verticalDeviation: null,
+        maxDeviation: 0,
+        startingPosition: null,
+      },
+      repCounting: {
+        currentRep: null,
+        repCount: 0,
+        phase: 'standing' as RepPhase,
+        completedReps: [],
       },
     };
 
