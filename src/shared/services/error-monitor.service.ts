@@ -1,8 +1,11 @@
 export type ErrorContext = Record<string, unknown>;
 
+export type ErrorType = 'javascript' | 'promise' | 'network' | 'media' | 'performance' | 'custom';
+export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
+
 export interface ErrorReport {
   id: string;
-  type: 'javascript' | 'promise' | 'network' | 'media' | 'custom';
+  type: ErrorType;
   message: string;
   stack?: string;
   timestamp: number;
@@ -11,7 +14,7 @@ export interface ErrorReport {
   columnNumber?: number;
   userAgent: string;
   context?: ErrorContext;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: ErrorSeverity;
 }
 
 export interface ErrorSummary {
@@ -46,8 +49,8 @@ export class ErrorMonitor {
 
   reportError(
     message: string,
-    type: ErrorReport['type'] = 'custom',
-    severity: ErrorReport['severity'] = 'medium',
+    type: ErrorType = 'custom',
+    severity: ErrorSeverity = 'medium',
     context?: ErrorContext,
   ): string {
     const error: ErrorReport = {
@@ -64,7 +67,7 @@ export class ErrorMonitor {
     return error.id;
   }
 
-  reportJavaScriptError(error: Error, severity: ErrorReport['severity'] = 'high', context?: ErrorContext): string {
+  reportJavaScriptError(error: Error, severity: ErrorSeverity = 'high', context?: ErrorContext): string {
     const errorReport: ErrorReport = {
       id: this.generateErrorId(),
       type: 'javascript',
@@ -81,7 +84,7 @@ export class ErrorMonitor {
   }
 
   reportNetworkError(url: string, status: number, statusText: string, context?: ErrorContext): string {
-    const severity: ErrorReport['severity'] = status >= 500 ? 'high' : 'medium';
+    const severity: ErrorSeverity = status >= 500 ? 'high' : 'medium';
 
     const error: ErrorReport = {
       id: this.generateErrorId(),
@@ -101,7 +104,7 @@ export class ErrorMonitor {
   reportMediaError(mediaElement: HTMLMediaElement, context?: ErrorContext): string {
     const error = mediaElement.error;
     let message = 'Unknown media error';
-    let severity: ErrorReport['severity'] = 'medium';
+    let severity: ErrorSeverity = 'medium';
 
     if (error) {
       switch (error.code) {

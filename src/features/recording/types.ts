@@ -95,7 +95,7 @@ export interface CameraConfig {
   /** Preferred camera facing mode */
   facingMode: 'user' | 'environment';
   /** Video codec preference */
-  codec?: string;
+  codec?: 'video/webm;codecs=vp9' | 'video/webm;codecs=vp8' | 'video/webm' | 'video/mp4';
   /** Specific device ID (optional) */
   deviceId?: string;
 }

@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { errorMonitor } from '@/shared/services/error-monitor.service';
 
+import { CAMERA_CONSTRAINTS, createSafeCameraConfig, partialCameraConfigSchema } from '../schemas';
 import type { CameraConfig, CameraEvents, CameraPermission, CameraStream } from '../types';
+import { useCameraPermissions } from './useCameraPermissions';
 
 /**
  * Camera hook configuration options
@@ -25,7 +27,7 @@ export interface UseCameraReturn {
   /** Initialize camera with permissions */
   initialize: () => Promise<void>;
   /** Start camera stream */
-  start: () => Promise<void>;
+  start: () => Promise<MediaStream>;
   /** Stop camera stream */
   stop: () => void;
   /** Switch camera facing mode */
@@ -38,22 +40,163 @@ export interface UseCameraReturn {
   requestPermissions: () => Promise<CameraPermission>;
 }
 
+// Default camera configuration is created inside the hook using createSafeCameraConfig()
+
 /**
- * Default camera configuration optimized for 30 FPS performance
+ * Camera state action types for useReducer
  */
-const DEFAULT_CAMERA_CONFIG: CameraConfig = {
-  width: 1280,
-  height: 720,
-  frameRate: 30,
-  facingMode: 'environment', // Rear camera for squat recording
-  codec: 'video/webm;codecs=vp9',
+type CameraAction =
+  | { type: 'INIT_START' }
+  | { type: 'INIT_SUCCESS'; permission: CameraPermission }
+  | { type: 'INIT_ERROR'; error: string }
+  | { type: 'PERMISSION_PENDING' }
+  | { type: 'PERMISSION_UPDATE'; permission: CameraPermission }
+  | { type: 'STREAM_START' }
+  | { type: 'STREAM_SUCCESS'; stream: MediaStream }
+  | { type: 'STREAM_STOP' }
+  | { type: 'STREAM_ERROR'; error: string }
+  | { type: 'CONFIG_UPDATE'; config: Partial<CameraConfig> }
+  | { type: 'ERROR'; error: string }
+  | { type: 'CLEAR_ERROR' };
+
+/**
+ * Camera state reducer for centralized state management
+ */
+function cameraReducer(state: CameraStream, action: CameraAction): CameraStream {
+  switch (action.type) {
+    case 'INIT_START':
+      return {
+        ...state,
+        isInitializing: true,
+        error: undefined,
+      };
+
+    case 'INIT_SUCCESS':
+      return {
+        ...state,
+        isInitializing: false,
+        permission: action.permission,
+        error: undefined,
+      };
+
+    case 'INIT_ERROR':
+      return {
+        ...state,
+        isInitializing: false,
+        error: action.error,
+      };
+
+    case 'PERMISSION_PENDING':
+      return {
+        ...state,
+        permission: { ...state.permission, pending: true },
+        error: undefined,
+      };
+
+    case 'PERMISSION_UPDATE':
+      return {
+        ...state,
+        permission: action.permission,
+      };
+
+    case 'STREAM_START':
+      return {
+        ...state,
+        isInitializing: true,
+        error: undefined,
+      };
+
+    case 'STREAM_SUCCESS':
+      return {
+        ...state,
+        stream: action.stream,
+        isActive: true,
+        isInitializing: false,
+        error: undefined,
+      };
+
+    case 'STREAM_STOP':
+      return {
+        ...state,
+        stream: null,
+        isActive: false,
+        isInitializing: false,
+      };
+
+    case 'STREAM_ERROR':
+      return {
+        ...state,
+        isInitializing: false,
+        error: action.error,
+      };
+
+    case 'CONFIG_UPDATE':
+      return {
+        ...state,
+        config: { ...state.config, ...action.config },
+      };
+
+    case 'ERROR':
+      return {
+        ...state,
+        error: action.error,
+      };
+
+    case 'CLEAR_ERROR':
+      return {
+        ...state,
+        error: undefined,
+      };
+
+    default:
+      return state;
+  }
+}
+
+/**
+ * Device capability cache to avoid creating test streams repeatedly.
+ * Creating a test stream to check capabilities adds ~100-200ms overhead each time.
+ * By caching capabilities for 5 minutes, we significantly improve performance
+ * for operations like camera switching or configuration updates.
+ */
+interface CachedCapability {
+  capabilities: MediaTrackCapabilities;
+  timestamp: number;
+  deviceId: string;
+}
+
+// Module-level cache to persist across hook instances
+const capabilityCache = new Map<string, CachedCapability>();
+const CAPABILITY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes - capabilities rarely change
+
+/**
+ * Clear stale entries from the capability cache
+ */
+const cleanCapabilityCache = (): void => {
+  const now = Date.now();
+  for (const [key, cached] of capabilityCache.entries()) {
+    if (now - cached.timestamp > CAPABILITY_CACHE_TTL) {
+      capabilityCache.delete(key);
+    }
+  }
 };
 
 /**
- * Camera capability detection utilities
+ * Manually clear all cached capabilities
+ * Useful when switching cameras or after permission changes
+ */
+export const clearCapabilityCache = (): void => {
+  capabilityCache.clear();
+};
+
+/**
+ * Camera capability detection utilities with caching
  */
 const getCameraCapabilities = async (deviceId?: string): Promise<MediaTrackCapabilities | null> => {
   try {
+    // Clean stale cache entries periodically
+    cleanCapabilityCache();
+
     const devices = await navigator.mediaDevices.enumerateDevices();
     const videoDevices = devices.filter((device) => device.kind === 'videoinput');
 
@@ -63,6 +206,24 @@ const getCameraCapabilities = async (deviceId?: string): Promise<MediaTrackCapab
 
     if (!targetDevice) return null;
 
+    // Check cache first to avoid creating unnecessary test streams
+    const cacheKey = targetDevice.deviceId;
+    const cached = capabilityCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < CAPABILITY_CACHE_TTL) {
+      // Return cached capabilities, saving ~100-200ms
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.info('Using cached camera capabilities', {
+          deviceId: cacheKey,
+          cacheAge: Date.now() - cached.timestamp,
+          ttl: CAPABILITY_CACHE_TTL,
+        });
+      }
+      return cached.capabilities;
+    }
+
+    // No valid cache entry, need to create test stream
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { deviceId: targetDevice.deviceId },
     });
@@ -72,6 +233,15 @@ const getCameraCapabilities = async (deviceId?: string): Promise<MediaTrackCapab
 
     // Clean up test stream
     track.stop();
+
+    // Cache the capabilities for future use
+    if (capabilities) {
+      capabilityCache.set(cacheKey, {
+        capabilities,
+        timestamp: Date.now(),
+        deviceId: targetDevice.deviceId,
+      });
+    }
 
     return capabilities;
   } catch (error) {
@@ -92,7 +262,7 @@ const optimizeConstraints = (config: CameraConfig, capabilities?: MediaTrackCapa
   const constraints: MediaTrackConstraints = {
     width: { ideal: config.width },
     height: { ideal: config.height },
-    frameRate: { ideal: config.frameRate, min: 24 },
+    frameRate: { ideal: config.frameRate, min: Math.max(CAMERA_CONSTRAINTS.MIN_FRAME_RATE, 24) },
     facingMode: config.facingMode,
   };
 
@@ -100,7 +270,9 @@ const optimizeConstraints = (config: CameraConfig, capabilities?: MediaTrackCapa
   if (capabilities) {
     // Optimize frame rate based on device capabilities
     if (capabilities.frameRate) {
-      const maxFrameRate = Math.max(...(capabilities.frameRate.max ? [capabilities.frameRate.max] : [30]));
+      const maxFrameRate = Math.max(
+        ...(capabilities.frameRate.max ? [capabilities.frameRate.max] : [CAMERA_CONSTRAINTS.DEFAULT_FRAME_RATE]),
+      );
       constraints.frameRate = {
         ideal: Math.min(config.frameRate, maxFrameRate),
         min: Math.min(24, maxFrameRate),
@@ -109,8 +281,12 @@ const optimizeConstraints = (config: CameraConfig, capabilities?: MediaTrackCapa
 
     // Optimize resolution based on device capabilities
     if (capabilities.width && capabilities.height) {
-      const maxWidth = Math.max(...(capabilities.width.max ? [capabilities.width.max] : [1280]));
-      const maxHeight = Math.max(...(capabilities.height.max ? [capabilities.height.max] : [720]));
+      const maxWidth = Math.max(
+        ...(capabilities.width.max ? [capabilities.width.max] : [CAMERA_CONSTRAINTS.DEFAULT_WIDTH]),
+      );
+      const maxHeight = Math.max(
+        ...(capabilities.height.max ? [capabilities.height.max] : [CAMERA_CONSTRAINTS.DEFAULT_HEIGHT]),
+      );
 
       constraints.width = {
         ideal: Math.min(config.width, maxWidth),
@@ -155,15 +331,36 @@ const optimizeConstraints = (config: CameraConfig, capabilities?: MediaTrackCapa
 export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   const { autoStart = false, defaultConfig = {}, onEvents = {} } = options;
 
-  const [camera, setCamera] = useState<CameraStream>({
+  // Validate and stabilize config object to prevent unnecessary re-renders
+  const config = useMemo(() => {
+    // Validate the provided config and merge with defaults
+    const result = createSafeCameraConfig(defaultConfig);
+
+    // Log validation warnings if there were errors
+    if (result.errors && result.errors.length > 0) {
+      errorMonitor.reportError('Invalid camera configuration provided', 'custom', 'low', {
+        errors: result.errors,
+        providedConfig: defaultConfig,
+      });
+    }
+
+    return result.config;
+  }, [defaultConfig]);
+
+  // Use the dedicated permissions hook for cleaner separation of concerns
+  const {
+    permission: hookPermission,
+    checkPermissions: hookCheckPermissions,
+    requestPermissions: hookRequestPermissions,
+  } = useCameraPermissions();
+
+  // Initialize state with useReducer
+  const [camera, dispatch] = useReducer(cameraReducer, {
     stream: null,
     isActive: false,
     isInitializing: false,
-    config: { ...DEFAULT_CAMERA_CONFIG, ...defaultConfig },
-    permission: {
-      granted: false,
-      pending: false,
-    },
+    config,
+    permission: hookPermission, // Initialize with hook's permission state
     error: undefined,
   });
 
@@ -171,98 +368,42 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   const streamRef = useRef<MediaStream | null>(null);
   const capabilitiesRef = useRef<MediaTrackCapabilities | null>(null);
 
+  // Sync permission state from hook to reducer
+  useEffect(() => {
+    dispatch({ type: 'PERMISSION_UPDATE', permission: hookPermission });
+  }, [hookPermission]);
+
   /**
-   * Check current camera permissions without requesting
+   * Check current camera permissions without requesting.
+   * Wraps the hook's checkPermissions to maintain API compatibility.
    */
   const checkPermissions = useCallback(async (): Promise<CameraPermission> => {
-    if (!navigator.mediaDevices || !navigator.permissions) {
-      return {
-        granted: false,
-        pending: false,
-        error: 'Camera API not supported in this browser',
-      };
-    }
-
-    try {
-      const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
-
-      return {
-        granted: permission.state === 'granted',
-        pending: permission.state === 'prompt',
-        error: permission.state === 'denied' ? 'Camera permission denied' : undefined,
-      };
-    } catch {
-      // Fallback for browsers that don't support permissions query
-      return {
-        granted: false,
-        pending: true,
-        error: undefined,
-      };
-    }
-  }, []);
+    return hookCheckPermissions();
+  }, [hookCheckPermissions]);
 
   /**
-   * Request camera permissions
+   * Request camera permissions.
+   * Wraps the hook's requestPermissions to add event handling.
    */
   const requestPermissions = useCallback(async (): Promise<CameraPermission> => {
-    if (!navigator.mediaDevices) {
-      const error = 'Camera API not supported in this browser';
-      onEvents.permissionDenied?.(error);
-      return { granted: false, pending: false, error };
-    }
+    const result = await hookRequestPermissions(camera.config.facingMode);
 
-    setCamera((prev) => ({
-      ...prev,
-      permission: { ...prev.permission, pending: true },
-      error: undefined,
-    }));
-
-    try {
-      // Request basic camera access to check permissions
-      const testStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: camera.config.facingMode },
-      });
-
-      // Stop test stream immediately
-      testStream.getTracks().forEach((track) => track.stop());
-
-      const permission: CameraPermission = { granted: true, pending: false };
-
-      setCamera((prev) => ({
-        ...prev,
-        permission,
-      }));
-
+    // Trigger appropriate events based on result
+    if (result.granted) {
       onEvents.permissionGranted?.();
-      return permission;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Camera access denied';
-      const permission: CameraPermission = {
-        granted: false,
-        pending: false,
-        error: errorMessage,
-      };
-
-      setCamera((prev) => ({
-        ...prev,
-        permission,
-        error: errorMessage,
-      }));
-
-      onEvents.permissionDenied?.(errorMessage);
-      return permission;
+    } else if (result.error) {
+      onEvents.permissionDenied?.(result.error);
+      dispatch({ type: 'ERROR', error: result.error });
     }
-  }, [camera.config.facingMode, onEvents]);
+
+    return result;
+  }, [camera.config.facingMode, hookRequestPermissions, onEvents]);
 
   /**
    * Initialize camera with permissions check
    */
   const initialize = useCallback(async (): Promise<void> => {
-    setCamera((prev) => ({
-      ...prev,
-      isInitializing: true,
-      error: undefined,
-    }));
+    dispatch({ type: 'INIT_START' });
 
     try {
       // Check permissions first
@@ -281,21 +422,14 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       }
 
       // Get camera capabilities for optimization
+      // This uses caching to avoid the ~100-200ms overhead of creating a test stream
       capabilitiesRef.current = await getCameraCapabilities();
 
-      setCamera((prev) => ({
-        ...prev,
-        isInitializing: false,
-        permission: { granted: true, pending: false },
-      }));
+      dispatch({ type: 'INIT_SUCCESS', permission: { granted: true, pending: false } });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Camera initialization failed';
 
-      setCamera((prev) => ({
-        ...prev,
-        isInitializing: false,
-        error: errorMessage,
-      }));
+      dispatch({ type: 'INIT_ERROR', error: errorMessage });
 
       onEvents.error?.(errorMessage);
       throw error;
@@ -304,21 +438,25 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
 
   /**
    * Start camera stream with optimized constraints
+   * @returns The MediaStream that was started
    */
-  const start = useCallback(async (): Promise<void> => {
-    if (!camera.permission.granted) {
+  const start = useCallback(async (): Promise<MediaStream> => {
+    // Check current permission state to avoid stale closure issues
+    const currentPermission = await checkPermissions();
+    if (!currentPermission.granted) {
       throw new Error('Camera permission not granted');
     }
 
+    // Check if already active or initializing
     if (camera.isActive || camera.isInitializing) {
-      return;
+      // Return existing stream if already active
+      if (camera.stream) {
+        return camera.stream;
+      }
+      throw new Error('Camera is initializing');
     }
 
-    setCamera((prev) => ({
-      ...prev,
-      isInitializing: true,
-      error: undefined,
-    }));
+    dispatch({ type: 'STREAM_START' });
 
     try {
       // Stop any existing stream
@@ -326,7 +464,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
 
-      // Create optimized constraints
+      // Create optimized constraints using camera config from state
       const constraints = optimizeConstraints(camera.config, capabilitiesRef.current ?? undefined);
 
       // Start new stream with optimized settings
@@ -340,35 +478,32 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       const settings = videoTrack.getSettings();
 
       // Report camera settings for monitoring
-      errorMonitor.reportError('Camera stream started successfully', 'custom', 'low', {
-        requested: camera.config,
-        actual: settings,
-        type: 'camera_settings',
-      });
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.info('Camera stream started successfully', {
+          requested: camera.config,
+          actual: settings,
+          type: 'camera_settings',
+        });
+      }
 
       streamRef.current = stream;
 
-      setCamera((prev) => ({
-        ...prev,
-        stream,
-        isActive: true,
-        isInitializing: false,
-      }));
+      dispatch({ type: 'STREAM_SUCCESS', stream });
 
       onEvents.streamStarted?.(stream);
+
+      // Return the stream directly for immediate use
+      return stream;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to start camera';
 
-      setCamera((prev) => ({
-        ...prev,
-        isInitializing: false,
-        error: errorMessage,
-      }));
+      dispatch({ type: 'STREAM_ERROR', error: errorMessage });
 
       onEvents.error?.(errorMessage);
       throw error;
     }
-  }, [camera.permission.granted, camera.isActive, camera.isInitializing, camera.config, onEvents]);
+  }, [checkPermissions, camera.config, camera.isActive, camera.isInitializing, onEvents, camera.stream]);
 
   /**
    * Stop camera stream and clean up resources
@@ -379,12 +514,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       streamRef.current = null;
     }
 
-    setCamera((prev) => ({
-      ...prev,
-      stream: null,
-      isActive: false,
-      isInitializing: false,
-    }));
+    dispatch({ type: 'STREAM_STOP' });
 
     onEvents.streamStopped?.();
   }, [onEvents]);
@@ -393,45 +523,50 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
    * Switch between front and rear camera
    */
   const switchCamera = useCallback(async (): Promise<void> => {
-    if (!camera.isActive) {
-      // Just update config if camera is not active
-      setCamera((prev) => ({
-        ...prev,
-        config: {
-          ...prev.config,
-          facingMode: prev.config.facingMode === 'user' ? 'environment' : 'user',
-        },
-      }));
-      return;
-    }
-
     const newFacingMode = camera.config.facingMode === 'user' ? 'environment' : 'user';
 
-    // Update config
-    setCamera((prev) => ({
-      ...prev,
-      config: {
-        ...prev.config,
-        facingMode: newFacingMode,
-      },
-    }));
+    dispatch({
+      type: 'CONFIG_UPDATE',
+      config: { facingMode: newFacingMode },
+    });
 
-    // Restart stream with new facing mode
-    stop();
-    await start();
-  }, [camera.isActive, camera.config.facingMode, stop, start]);
+    // Restart stream with new facing mode if currently active
+    if (camera.isActive) {
+      stop();
+      await start();
+    }
+  }, [camera.config.facingMode, camera.isActive, stop, start]);
 
   /**
-   * Update camera configuration and restart stream if active
+   * Update camera configuration and restart stream if active.
+   * Validates the new configuration before applying it.
    */
   const updateConfig = useCallback(
     async (newConfig: Partial<CameraConfig>): Promise<void> => {
-      const updatedConfig = { ...camera.config, ...newConfig };
+      // Validate the new configuration using Zod directly
+      const validation = partialCameraConfigSchema.safeParse(newConfig);
 
-      setCamera((prev) => ({
-        ...prev,
-        config: updatedConfig,
-      }));
+      if (!validation.success) {
+        const errors = validation.error.errors.map((e) => ({
+          field: e.path.join('.'),
+          message: e.message,
+        }));
+
+        const errorMessage = errors.map((e) => `${e.field}: ${e.message}`).join(', ');
+
+        // Report validation error
+        errorMonitor.reportError(`Invalid camera configuration: ${errorMessage}`, 'custom', 'medium', {
+          providedConfig: newConfig,
+          errors,
+          type: 'config_validation_error',
+        });
+
+        // Throw error to prevent invalid config from being applied
+        throw new Error(errorMessage);
+      }
+
+      // Apply validated configuration
+      dispatch({ type: 'CONFIG_UPDATE', config: validation.data });
 
       // Restart stream with new configuration if currently active
       if (camera.isActive) {
@@ -439,7 +574,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
         await start();
       }
     },
-    [camera.config, camera.isActive, stop, start],
+    [camera.isActive, stop, start],
   );
 
   // Auto-start camera on mount if requested
@@ -489,14 +624,18 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [camera.isActive, stop]);
 
-  return {
-    camera,
-    initialize,
-    start,
-    stop,
-    switchCamera,
-    updateConfig,
-    checkPermissions,
-    requestPermissions,
-  };
+  // Memoize return object to prevent infinite re-renders in dependent hooks
+  return useMemo(
+    () => ({
+      camera,
+      initialize,
+      start,
+      stop,
+      switchCamera,
+      updateConfig,
+      checkPermissions,
+      requestPermissions,
+    }),
+    [camera, initialize, start, stop, switchCamera, updateConfig, checkPermissions, requestPermissions],
+  );
 }

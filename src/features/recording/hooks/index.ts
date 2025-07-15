@@ -6,7 +6,9 @@
  */
 
 export type { UseCameraOptions, UseCameraReturn } from './useCamera';
-export { useCamera } from './useCamera';
+export { clearCapabilityCache, useCamera } from './useCamera';
+export type { UseCameraPermissionsReturn } from './useCameraPermissions';
+export { useCameraPermissions } from './useCameraPermissions';
 export {
   useAutoFrameCapture,
   useFrameCapture,

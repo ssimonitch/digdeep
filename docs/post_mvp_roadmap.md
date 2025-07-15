@@ -130,6 +130,25 @@ interface ExercisePlugin {
 - Parallel processing capability
 - Better performance scaling
 
+#### Frame Processing Optimization:
+
+**Current State**: The system attempts to process every frame at target FPS without skip logic. When processing falls behind (>33ms for 30 FPS), frames queue up causing progressive delay.
+
+**Risk Assessment**:
+
+- Works well for 90% of use cases on modern hardware
+- Progressive delay accumulation on slower devices
+- No automatic recovery when processing falls behind
+
+**Future Optimization Options**:
+
+- [ ] Add performance monitoring to track real-world frame processing times
+- [ ] Implement adaptive frame rate based on device capabilities
+- [ ] Consider quality-based frame skipping (skip when minimal movement detected)
+- [ ] Add circuit breaker for extreme performance degradation (>100ms/frame)
+
+**Decision**: Ship MVP without frame skipping. Gather performance metrics from real users before adding complexity. The current optimizations (state batching, React.memo) provide sufficient performance for most scenarios.
+
 ## Phase 2: Core Features
 
 ### 2.1 Recording & Playback System
@@ -403,43 +422,6 @@ interface ExercisePlugin {
 2. Gamification
 3. Multi-Modal Feedback
 4. Advanced Integrations
-
-## Success Metrics
-
-### Technical:
-
-- Maintain 30+ FPS with all features
-- < 200ms response time for all interactions
-- 99.9% uptime
-- < 0.1% error rate
-
-### User Experience:
-
-- 80% of users record workouts
-- 60% weekly active users
-- 4.5+ app store rating
-- < 2% support ticket rate
-
-### Business:
-
-- 10k MAU within 6 months
-- 20% paid conversion rate
-- $10 ARPU
-- 6-month retention > 40%
-
-## Risk Mitigation
-
-### Technical Risks:
-
-- **Performance degradation**: Regular benchmarking, performance budget
-- **Scope creep**: Strict MVP focus, user feedback validation
-- **Technical debt**: Regular refactoring sprints, code reviews
-
-### Market Risks:
-
-- **Competition**: Unique features, superior UX
-- **User adoption**: Free tier, viral features
-- **Monetization**: Value-based pricing, freemium model
 
 ## Conclusion
 
