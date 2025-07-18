@@ -43,7 +43,7 @@ pnpm test
 pnpm test:watch
 
 # Type checking
-pnpm tsc --noEmit
+pnpm run typecheck
 ```
 
 ## Architecture Overview

@@ -1,4 +1,3 @@
-export type { BasePoseAnalysis, LandmarkName, MediaPipePoseLandmark } from './base-pose.types';
 export type {
   BaseExerciseMetrics,
   ExerciseAnalyzer,

@@ -2,7 +2,7 @@ echo "🔍 Running pre-commit checks..."
 
 # Run TypeScript type checking
 echo "📝 Checking TypeScript types..."
-pnpm tsc --noEmit
+pnpm run typecheck
 if [ $? -ne 0 ]; then
   echo "❌ TypeScript type check failed. Please fix the errors before committing."
   exit 1

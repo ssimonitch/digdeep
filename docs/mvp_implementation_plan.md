@@ -141,19 +141,19 @@ Essential landmarks for squat analysis:
 
 ### Phase 2: Active Analysis Screen & UI
 
-#### Step 2.1: Active Analysis Screen
+#### Step 2.1: Active Analysis Screen ✅
 
-- [ ] Create `ActiveAnalysisScreen` component
-- [ ] Integrate camera feed display
-- [ ] Add pose landmark overlay visualization
-- [ ] Implement navigation from Home screen
+- [x] Create `ActiveAnalysisScreen` component
+- [x] Integrate camera feed display
+- [x] Add pose landmark overlay visualization
+- [x] Implement navigation from Home screen
 
 #### Step 2.2: Analysis Controls
 
-- [ ] Add Start/Stop analysis button
-- [ ] Create analysis state management (idle, analyzing, paused)
-- [ ] Implement rep counter display
-- [ ] Add pose confidence indicator
+- [x] Add Start/Stop analysis button
+- [x] Create analysis state management (idle, analyzing, paused)
+- [x] Implement rep counter display
+- [x] Add pose confidence indicator
 
 #### Step 2.3: Real-Time Feedback Components
 

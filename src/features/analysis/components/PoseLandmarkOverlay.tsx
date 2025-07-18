@@ -4,9 +4,9 @@ import { memo, useMemo } from 'react';
 export interface PoseLandmarkOverlayProps {
   /** MediaPipe pose landmarks to visualize */
   landmarks?: NormalizedLandmark[];
-  /** Width of the video/canvas for coordinate conversion */
+  /** Width of the video display element for coordinate conversion */
   width: number;
-  /** Height of the video/canvas for coordinate conversion */
+  /** Height of the video display element for coordinate conversion */
   height: number;
   /** Whether pose is currently valid/detected */
   isValidPose: boolean;
@@ -80,13 +80,8 @@ const landmarkToPixel = (landmark: NormalizedLandmark, width: number, height: nu
  * - Color calculations are memoized based on confidence
  * - Landmark transformations are memoized
  */
-const PoseLandmarkOverlayComponent = ({
-  landmarks,
-  width,
-  height,
-  isValidPose,
-  confidence,
-}: PoseLandmarkOverlayProps) => {
+const PoseLandmarkOverlayComponent = (props: PoseLandmarkOverlayProps) => {
+  const { landmarks, width, height, confidence } = props;
   // Memoize color scheme based on confidence to avoid recalculation
   const colors = useMemo(() => {
     if (confidence >= 0.8) {
@@ -180,7 +175,7 @@ const PoseLandmarkOverlayComponent = ({
   }, [landmarks, width, height, colors.landmark, colors.highlight]);
 
   // Early return check after all hooks
-  if (!landmarks || landmarks.length === 0 || !isValidPose) {
+  if (!landmarks || landmarks.length === 0) {
     return null;
   }
 
@@ -190,13 +185,22 @@ const PoseLandmarkOverlayComponent = ({
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
-      style={{ transform: 'scaleX(-1)' }} // Mirror to match camera feed
+      style={{
+        width: `${width}px`,
+        height: `${height}px`,
+      }}
     >
       {/* Render connections first (behind landmarks) */}
       {connectionsElements}
 
       {/* Render key landmarks */}
       {landmarkElements}
+
+      {/* Debug indicator - visible corner marker */}
+      <circle cx="10" cy="10" r="5" fill="red" opacity="0.8" />
+      <text x="20" y="15" fill="red" fontSize="10">
+        Overlay Active
+      </text>
 
       {/* Confidence indicator */}
       <g transform={`translate(${width - 120}, 20)`}>
@@ -228,8 +232,8 @@ const arePropsEqual = (prevProps: PoseLandmarkOverlayProps, nextProps: PoseLandm
     return false;
   }
 
-  // If not valid pose, no need to check further
-  if (!prevProps.isValidPose && !nextProps.isValidPose) {
+  // If both poses are invalid and no landmarks, skip landmark comparison
+  if (!prevProps.isValidPose && !nextProps.isValidPose && !prevProps.landmarks && !nextProps.landmarks) {
     return true;
   }
 

@@ -148,6 +148,12 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
   // Lateral shift history tracking
   private lateralShiftHistory: number[] = [];
   private maxLateralShift = 0;
+
+  // Dynamic baseline tracking for depth calculation
+  private standingHipY: number | null = null;
+  private standingKneeY: number | null = null;
+  private calibrationFrames = 0;
+  private readonly CALIBRATION_FRAMES_NEEDED = 10;
   private maxShiftDepth: number | null = null;
 
   // Bar path tracking
@@ -549,15 +555,33 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     // Hip-knee ratio (higher values indicate deeper squat)
     const hipKneeRatio = hipMidpoint.y / kneeMidpoint.y;
 
-    // Calculate depth percentage (0-100% scale)
-    // 0% = standing (typical standing has hips at ~0.5, knees at ~0.7)
-    // 100% = hip Y equals knee Y (parallel)
-    // >100% = hip below knee
+    // Dynamic baseline calibration
+    // If we haven't calibrated yet, track standing position
+    if (
+      this.standingHipY === null ||
+      this.standingKneeY === null ||
+      this.calibrationFrames < this.CALIBRATION_FRAMES_NEEDED
+    ) {
+      // Look for standing position (hips above knees with reasonable ratio)
+      if (hipKneeRatio < 0.8) {
+        // Standing position typically has hip/knee ratio < 0.8
+        if (this.standingHipY === null || this.standingKneeY === null) {
+          this.standingHipY = hipMidpoint.y;
+          this.standingKneeY = kneeMidpoint.y;
+        } else {
+          // Average over calibration frames for stability
+          this.standingHipY =
+            (this.standingHipY * this.calibrationFrames + hipMidpoint.y) / (this.calibrationFrames + 1);
+          this.standingKneeY =
+            (this.standingKneeY * this.calibrationFrames + kneeMidpoint.y) / (this.calibrationFrames + 1);
+        }
+        this.calibrationFrames++;
+      }
+    }
 
-    // For normalized coordinates, we need to track the starting position
-    // For MVP, we'll use typical standing position values
-    const standingHipY = 0.5;
-    const standingKneeY = 0.7;
+    // Use dynamic baseline if available, otherwise use reasonable defaults
+    const standingHipY = this.standingHipY ?? 0.5;
+    const standingKneeY = this.standingKneeY ?? 0.7;
 
     // Calculate the range from standing to parallel
     const totalRange = standingKneeY - standingHipY;
@@ -947,6 +971,11 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     this.completedReps = [];
     this.repCount = 0;
     this.resetBarPathTracking();
+
+    // Reset dynamic baseline calibration
+    this.standingHipY = null;
+    this.standingKneeY = null;
+    this.calibrationFrames = 0;
   }
 }
 

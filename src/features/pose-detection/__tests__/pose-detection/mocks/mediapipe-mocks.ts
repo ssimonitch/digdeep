@@ -272,6 +272,22 @@ export class MockHTMLVideoElement {
   removeEventListener(_event: string, _handler: EventListener): void {
     // Mock implementation
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setAttribute(_name: string, _value: string): void {
+    // Mock implementation
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getAttribute(_name: string): string | null {
+    return null;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  dispatchEvent(_event: Event): boolean {
+    // Mock implementation
+    return true;
+  }
 }
 
 /**

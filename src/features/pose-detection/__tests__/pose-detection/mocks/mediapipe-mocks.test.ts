@@ -44,7 +44,7 @@ describe('MediaPipe Mocks', () => {
       const vision = await MockFilesetResolver.forVisionTasks('path');
       const options = {
         baseOptions: { modelAssetPath: 'model.task' },
-        runningMode: 'VIDEO',
+        runningMode: 'VIDEO' as const,
         numPoses: 1,
       };
 

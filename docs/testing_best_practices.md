@@ -4,24 +4,29 @@ This document defines testing standards and best practices for the DigDeep proje
 
 ## Core Testing Philosophy
 
-### Guiding Principles
+### Test-Driven Development (TDD) Cycle
 
-1. **Test User Behavior, Not Implementation**: Follow React Testing Library's principle - "The more your tests resemble the way your software is used, the more confidence they can give you."
+1. Red: Write a failing test for the next small piece of functionality
+2. Green: Write the minimum code to make the test pass
+3. Refactor: Clean up the code while keeping tests green
+
+### Testing Principles
+
+1. **Test User Behavior, Not Implementation**: Focus on what the code does, not how.
 2. **No Implementation Details**: Never test hooks in isolation, internal state, or component methods.
-3. **Performance-Critical Testing**: Every ML/pose detection feature must include performance benchmarks.
-4. **Type Safety First**: Zero tolerance for `any` types in tests.
+3. **Performance-Critical Testing**: What part of our untested codebase would lead to poor UX if broke? Focus on testing that.
+4. **One assertion per test**: Keep tests focused and easy to debug.
+5. **Type Safety First**: Zero tolerance for `any` types in tests.
 
-### Testing Pyramid
+### Important References
 
-```
-         /\
-        /E2E\         10% - Critical user flows
-       /------\
-      /  Integ \      20% - Feature workflows
-     /----------\
-    /    Unit    \    70% - Business logic & utilities
-   /--------------\
-```
+Use context7 to browse documentation as needed.
+
+- [Vitest Documentation](https://vitest.dev/)
+- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
+- [Testing Library Queries](https://testing-library.com/docs/queries/about)
+- [React Testing Library Philosophy](https://testing-library.com/docs/guiding-principles/)
+
 
 ## Project Structure & Organization
 
@@ -427,33 +432,6 @@ await waitFor(() => {
 });
 ```
 
-## Project-Specific Considerations
-
-### MediaPipe Testing
-
-- Always mock MediaPipe in tests (heavy WASM library)
-- Use consistent landmark fixtures for reproducible tests
-- Test confidence thresholds specific to each exercise
-- Verify GPU/CPU fallback behavior
-
-### Performance Monitoring
-
-- Every pose analysis test should verify < 33ms processing
-- Test performance degradation detection and reporting
-- Verify frame drop detection and recovery
-
-### Real-Time Requirements
-
-- Test state batching for 30+ FPS maintenance
-- Verify cleanup prevents memory leaks
-- Test graceful degradation under load
-
-### Gym Environment Testing
-
-- Test with various lighting condition mocks
-- Verify large UI elements remain accessible
-- Test error recovery for camera interruptions
-
 ## Continuous Improvement
 
 1. **Run tests before committing**: `pnpm test`
@@ -462,9 +440,23 @@ await waitFor(() => {
 4. **Update fixtures**: Keep landmark data realistic
 5. **Performance benchmarks**: Run regularly to catch regressions
 
-## References
+## Common Pitfalls to Avoid
 
-- [Vitest Documentation](https://vitest.dev/)
-- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
-- [Testing Library Queries](https://testing-library.com/docs/queries/about)
-- [React Testing Library Philosophy](https://testing-library.com/docs/guiding-principles/)
+1. **Over-mocking**: Don't mock your own code, only external dependencies
+2. **Testing too much**: Each test should verify one behavior
+3. **Ignoring async behavior**: Always handle promises and timing properly
+4. **Skipping error cases**: Test both success and failure paths
+5. **Writing tests after code**: This defeats the purpose of TDD
+
+### Test Checklist
+
+- [ ] Test covers one specific behavior
+- [ ] Test name clearly describes what and when
+- [ ] External dependencies are mocked
+- [ ] Async operations are properly handled
+- [ ] Both success and error cases tested
+- [ ] No implementation details tested
+- [ ] Test fails before implementation
+- [ ] Minimal code written to pass test
+
+Remember: The goal is to build exactly what's needed, guided by tests. Each test should push the implementation forward incrementally.
