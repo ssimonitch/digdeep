@@ -12,6 +12,8 @@ export interface PoseLandmarkOverlayProps {
   isValidPose: boolean;
   /** Confidence level of pose detection */
   confidence: number;
+  /** Detection state for smooth transitions */
+  detectionState?: 'invalid' | 'detecting' | 'valid';
 }
 
 /**
@@ -81,9 +83,43 @@ const landmarkToPixel = (landmark: NormalizedLandmark, width: number, height: nu
  * - Landmark transformations are memoized
  */
 const PoseLandmarkOverlayComponent = (props: PoseLandmarkOverlayProps) => {
-  const { landmarks, width, height, confidence } = props;
-  // Memoize color scheme based on confidence to avoid recalculation
+  const { landmarks, width, height, confidence, detectionState, isValidPose } = props;
+
+  // Determine the effective detection state (backward compatibility)
+  const effectiveState = useMemo(() => {
+    if (detectionState) {
+      return detectionState;
+    }
+    // Fallback to binary isValidPose for backward compatibility
+    return isValidPose ? 'valid' : 'invalid';
+  }, [detectionState, isValidPose]);
+
+  // Calculate opacity based on detection state
+  const overlayOpacity = useMemo(() => {
+    switch (effectiveState) {
+      case 'valid':
+        return 1.0;
+      case 'detecting':
+        return 0.6;
+      case 'invalid':
+        return 0.3;
+      default:
+        return 1.0;
+    }
+  }, [effectiveState]);
+
+  // Memoize color scheme based on detection state and confidence
   const colors = useMemo(() => {
+    // For detecting state, always use yellow
+    if (effectiveState === 'detecting') {
+      return {
+        landmark: '#eab308', // yellow-500
+        connection: '#eab308',
+        highlight: '#ca8a04', // yellow-600
+      };
+    }
+
+    // For valid/invalid states, use confidence-based colors
     if (confidence >= 0.8) {
       return {
         landmark: '#22c55e', // green-500
@@ -103,7 +139,7 @@ const PoseLandmarkOverlayComponent = (props: PoseLandmarkOverlayProps) => {
         highlight: '#dc2626', // red-600
       };
     }
-  }, [confidence]);
+  }, [confidence, effectiveState]);
 
   // Memoize the connections rendering to avoid recalculating pixel coordinates
   const connectionsElements = useMemo(() => {
@@ -181,7 +217,7 @@ const PoseLandmarkOverlayComponent = (props: PoseLandmarkOverlayProps) => {
 
   return (
     <svg
-      className="pointer-events-none absolute inset-0"
+      className="pointer-events-none absolute inset-0 transition-opacity duration-200"
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
@@ -190,19 +226,22 @@ const PoseLandmarkOverlayComponent = (props: PoseLandmarkOverlayProps) => {
         height: `${height}px`,
       }}
     >
-      {/* Render connections first (behind landmarks) */}
-      {connectionsElements}
+      {/* Main content group with opacity based on detection state */}
+      <g opacity={overlayOpacity} style={{ transition: 'opacity 200ms ease-in-out' }}>
+        {/* Render connections first (behind landmarks) */}
+        {connectionsElements}
 
-      {/* Render key landmarks */}
-      {landmarkElements}
+        {/* Render key landmarks */}
+        {landmarkElements}
+      </g>
 
-      {/* Debug indicator - visible corner marker */}
+      {/* Debug indicator - visible corner marker (not affected by detection state) */}
       <circle cx="10" cy="10" r="5" fill="red" opacity="0.8" />
       <text x="20" y="15" fill="red" fontSize="10">
         Overlay Active
       </text>
 
-      {/* Confidence indicator */}
+      {/* Confidence indicator (not affected by detection state opacity) */}
       <g transform={`translate(${width - 120}, 20)`}>
         <rect x="0" y="0" width="100" height="20" rx="10" fill="rgba(0, 0, 0, 0.6)" />
         <rect x="2" y="2" width={96 * confidence} height="16" rx="8" fill={colors.landmark} />
@@ -229,6 +268,11 @@ const arePropsEqual = (prevProps: PoseLandmarkOverlayProps, nextProps: PoseLandm
   }
 
   if (prevProps.isValidPose !== nextProps.isValidPose) {
+    return false;
+  }
+
+  // Check detection state changes
+  if (prevProps.detectionState !== nextProps.detectionState) {
     return false;
   }
 

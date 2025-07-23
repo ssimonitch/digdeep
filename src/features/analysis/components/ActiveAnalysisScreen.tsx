@@ -4,6 +4,7 @@ import { useSquatAnalysis } from '@/features/pose-detection/hooks/useSquatAnalys
 import { ModeToggle } from '@/shared/components/layout/ModeToggle';
 import { Button } from '@/shared/components/ui/button';
 
+import { PoseGuidanceOverlay } from './PoseGuidanceOverlay';
 import { PoseLandmarkOverlay } from './PoseLandmarkOverlay';
 
 export interface ActiveAnalysisScreenProps {
@@ -57,13 +58,17 @@ export function ActiveAnalysisScreen({ onBack }: ActiveAnalysisScreenProps) {
     if (!video || !camera.stream) return;
 
     video.srcObject = camera.stream;
+    let resizeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const handleLoadedMetadata = () => {
       void video.play();
     };
 
     const handleVideoResize = () => {
-      const rect = video.getBoundingClientRect();
+      // Guard clause to prevent state updates if video is no longer available
+      if (!videoRef.current) return;
+
+      const rect = videoRef.current.getBoundingClientRect();
       setDisplayDimensions({
         width: rect.width,
         height: rect.height,
@@ -75,12 +80,20 @@ export function ActiveAnalysisScreen({ onBack }: ActiveAnalysisScreenProps) {
 
     // Get initial display dimensions after metadata is loaded
     const handleInitialResize = () => {
-      setTimeout(handleVideoResize, 100); // Small delay to ensure video is rendered
+      // Clear any existing timeout before setting a new one
+      if (resizeTimeoutId) {
+        clearTimeout(resizeTimeoutId);
+      }
+      resizeTimeoutId = setTimeout(handleVideoResize, 100); // Small delay to ensure video is rendered
     };
 
     video.addEventListener('loadedmetadata', handleInitialResize);
 
     return () => {
+      // Clear the timeout if it's still pending
+      if (resizeTimeoutId) {
+        clearTimeout(resizeTimeoutId);
+      }
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('resize', handleVideoResize);
       video.removeEventListener('loadedmetadata', handleInitialResize);
@@ -149,7 +162,7 @@ export function ActiveAnalysisScreen({ onBack }: ActiveAnalysisScreenProps) {
             </div>
           )}
 
-          {/* Pose Landmark Overlay */}
+          {/* Pose Landmark Overlay - Always show when analyzing */}
           {isAnalyzing &&
             analysis?.landmarks?.landmarks &&
             analysis.landmarks.landmarks.length > 0 &&
@@ -171,47 +184,18 @@ export function ActiveAnalysisScreen({ onBack }: ActiveAnalysisScreenProps) {
                   height={displayDimensions.height}
                   isValidPose={metrics.isValidPose}
                   confidence={metrics.confidence}
+                  detectionState={metrics.isValidPose ? 'valid' : metrics.confidence > 0.5 ? 'detecting' : 'invalid'}
                 />
               </>
             )}
 
-          {/* Pose Validity UI */}
+          {/* Enhanced Pose Guidance Overlay */}
           {isAnalyzing && (
-            <div className="pointer-events-none absolute inset-0">
-              {/* Invalid Pose Message */}
-              {!metrics.isValidPose && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="rounded-lg bg-black/75 p-6 text-center">
-                    <p className="text-xl font-semibold text-white">Position yourself in frame</p>
-                    <p className="mt-2 text-gray-300">
-                      {/* Check for specific missing landmarks */}
-                      {analysis?.squatMetrics?.keyLandmarkVisibility?.hips &&
-                      analysis.squatMetrics.keyLandmarkVisibility.hips < 0.5
-                        ? 'Hips not visible - step back from camera'
-                        : analysis?.squatMetrics?.keyLandmarkVisibility?.knees &&
-                            analysis.squatMetrics.keyLandmarkVisibility.knees < 0.5
-                          ? 'Knees not visible - ensure full body is in frame'
-                          : analysis?.squatMetrics?.keyLandmarkVisibility?.ankles &&
-                              analysis.squatMetrics.keyLandmarkVisibility.ankles < 0.5
-                            ? 'Ankles not visible - step back from camera'
-                            : 'Make sure your full body is visible'}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Pose Detected Indicator */}
-              {metrics.isValidPose && (
-                <div className="absolute top-4 right-4">
-                  <div
-                    data-testid="pose-validity-indicator"
-                    className="valid rounded-lg bg-green-600 px-4 py-2 font-semibold text-white"
-                  >
-                    Pose Detected
-                  </div>
-                </div>
-              )}
-            </div>
+            <PoseGuidanceOverlay
+              detectionState={metrics.isValidPose ? 'valid' : metrics.confidence > 0.5 ? 'detecting' : 'invalid'}
+              confidence={metrics.confidence}
+              keyLandmarkVisibility={analysis?.squatMetrics?.keyLandmarkVisibility}
+            />
           )}
         </div>
 

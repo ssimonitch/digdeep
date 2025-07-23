@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSquatAnalysis } from '@/features/pose-detection/hooks/useSquatAnalysis';
+import { setupMediaStreamMock, setupResizeObserverMock, setupVideoElementMock } from '@/test-utils/mocks';
 
 import { ActiveAnalysisScreen } from '../ActiveAnalysisScreen';
 import {
@@ -14,12 +15,14 @@ import {
   mockLowConfidencePose,
   mockPermissionPending,
 } from './mocks/analysis-screen.mocks';
-import { setupVideoElementMock } from './setup';
 
 // Mock the hook
 vi.mock('@/features/pose-detection/hooks/useSquatAnalysis');
 
-// Setup video element mock for jsdom compatibility
+// Setup mocks for jsdom compatibility
+setupMediaStreamMock();
+setupResizeObserverMock();
+
 let cleanupVideoMock: (() => void) | undefined;
 
 beforeAll(() => {
@@ -77,13 +80,21 @@ describe('ActiveAnalysisScreen', () => {
       expect(mockData.metrics.isValidPose).toBe(true);
     });
 
-    it('should not render overlay when pose is invalid', () => {
+    it('should render overlay with reduced opacity when pose is invalid', async () => {
       vi.mocked(useSquatAnalysis).mockReturnValue(mockLowConfidencePose());
 
       const { container } = render(<ActiveAnalysisScreen onBack={mockOnBack} />);
-      // Even though we're analyzing, low confidence means invalid pose
+
+      // Wait for video element setup
+      await screen.findByTestId('camera-feed');
+
+      // Overlay should be present even with invalid pose
       const overlaySvg = container.querySelector('svg.pointer-events-none');
-      expect(overlaySvg).not.toBeInTheDocument();
+      expect(overlaySvg).toBeInTheDocument();
+
+      // Check that it has reduced opacity (0.3 for invalid state)
+      const mainContentGroup = overlaySvg?.querySelector('g[opacity]');
+      expect(mainContentGroup?.getAttribute('opacity')).toBe('0.3');
     });
 
     // Skip test due to jsdom limitations with video element
@@ -102,13 +113,16 @@ describe('ActiveAnalysisScreen', () => {
       expect(screen.getByText(/Camera Ready/i)).toBeInTheDocument();
     });
 
-    it('should show placeholder when camera ready but no stream (test limitation)', () => {
-      // Note: In tests we use null stream to avoid jsdom issues
-      // In real app, stream would be present and video would show
+    it('should show video element when camera ready with stream', async () => {
+      // Updated test: Now that we mock MediaStream, video element should be present
       vi.mocked(useSquatAnalysis).mockReturnValue(mockCameraReadyNotAnalyzing());
 
       render(<ActiveAnalysisScreen onBack={mockOnBack} />);
-      expect(screen.getByText(/Camera Ready/i)).toBeInTheDocument();
+
+      // Should show video element, not placeholder
+      const videoElement = await screen.findByTestId('camera-feed');
+      expect(videoElement).toBeInTheDocument();
+      expect(videoElement.tagName).toBe('VIDEO');
     });
 
     it('should show error message when camera fails', () => {
@@ -287,11 +301,13 @@ describe('ActiveAnalysisScreen', () => {
 
       render(<ActiveAnalysisScreen onBack={mockOnBack} />);
 
-      // When pose is invalid, metrics should still be displayed but may be unreliable
-      // This tests the current behavior - we'll update this after implementing the fix
+      // When pose is invalid, metrics should show placeholder values
       expect(screen.getByText('Reps')).toBeInTheDocument();
       expect(screen.getByText('Depth')).toBeInTheDocument();
       expect(screen.getByText('Balance')).toBeInTheDocument();
+
+      // Depth and Balance should show '--' when pose is invalid
+      expect(screen.getAllByText('--').length).toBeGreaterThanOrEqual(2);
     });
 
     it('should show pose validity status to user', () => {
@@ -344,6 +360,171 @@ describe('ActiveAnalysisScreen', () => {
       // Confidence is displayed in the SVG overlay which requires a video element
       // with dimensions. Since we use null stream in tests for jsdom compatibility,
       // this test is skipped.
+    });
+  });
+
+  describe('Detection State Integration', () => {
+    it('should always show pose overlay when analyzing', async () => {
+      // Test with invalid pose - overlay should still be visible
+      const mockHook = mockAnalysisWithDirectLandmarks();
+      mockHook.metrics.isValidPose = false;
+      vi.mocked(useSquatAnalysis).mockReturnValue(mockHook);
+
+      const { container } = render(<ActiveAnalysisScreen onBack={mockOnBack} />);
+
+      // Wait for the video element to be set up and dimensions to update
+      await screen.findByTestId('camera-feed');
+
+      // Check that overlay SVG is present even with invalid pose
+      const overlaySvg = container.querySelector('svg.pointer-events-none');
+      expect(overlaySvg).toBeInTheDocument();
+
+      // Verify it has the transition class for smooth opacity changes
+      expect(overlaySvg).toHaveClass('transition-opacity');
+    });
+
+    it('should show guidance message without hiding landmarks', async () => {
+      // Setup invalid pose with low visibility
+      const mockHook = mockAnalysisWithDirectLandmarks();
+      mockHook.metrics.isValidPose = false;
+      mockHook.metrics.confidence = 0.3; // Low confidence for invalid state
+      if (mockHook.analysis) {
+        mockHook.analysis.squatMetrics.keyLandmarkVisibility = {
+          shoulders: 0.8,
+          hips: 0.3, // Low visibility
+          knees: 0.8,
+          ankles: 0.8,
+        };
+      }
+      vi.mocked(useSquatAnalysis).mockReturnValue(mockHook);
+
+      const { container } = render(<ActiveAnalysisScreen onBack={mockOnBack} />);
+
+      // Wait for the video element to be set up and dimensions to update
+      await screen.findByTestId('camera-feed');
+
+      // Both overlay and guidance should be present
+      const overlaySvg = container.querySelector('svg.pointer-events-none');
+      expect(overlaySvg).toBeInTheDocument();
+
+      // Guidance message should be shown
+      expect(screen.getByText('Position yourself in frame')).toBeInTheDocument();
+      expect(screen.getByText('Hips not visible - step back from camera')).toBeInTheDocument();
+    });
+
+    it('should transition smoothly between detection states', async () => {
+      const mockHook = mockAnalysisWithDirectLandmarks();
+      const { rerender, container } = render(<ActiveAnalysisScreen onBack={mockOnBack} />);
+
+      // Wait for initial setup
+      await screen.findByTestId('camera-feed');
+
+      // Start with valid pose
+      mockHook.metrics.isValidPose = true;
+      vi.mocked(useSquatAnalysis).mockReturnValue(mockHook);
+      rerender(<ActiveAnalysisScreen onBack={mockOnBack} />);
+
+      expect(screen.getByText('Pose Detected')).toBeInTheDocument();
+
+      // Transition to invalid pose
+      mockHook.metrics.isValidPose = false;
+      mockHook.metrics.confidence = 0.3; // Low confidence for invalid state
+      vi.mocked(useSquatAnalysis).mockReturnValue(mockHook);
+      rerender(<ActiveAnalysisScreen onBack={mockOnBack} />);
+
+      expect(screen.getByText('Position yourself in frame')).toBeInTheDocument();
+
+      // The overlay should remain visible throughout
+      const overlaySvg = container.querySelector('svg.pointer-events-none');
+      expect(overlaySvg).toBeInTheDocument();
+    });
+
+    it('should show specific body part guidance based on visibility', async () => {
+      const mockHook = mockAnalysisWithDirectLandmarks();
+      mockHook.metrics.isValidPose = false;
+      mockHook.metrics.confidence = 0.3; // Low confidence for invalid state
+
+      // Test different visibility scenarios
+      const visibilityScenarios = [
+        {
+          visibility: { shoulders: 0.8, hips: 0.3, knees: 0.8, ankles: 0.8 },
+          expectedMessage: 'Hips not visible - step back from camera',
+        },
+        {
+          visibility: { shoulders: 0.8, hips: 0.8, knees: 0.3, ankles: 0.8 },
+          expectedMessage: 'Knees not visible - ensure full body is in frame',
+        },
+        {
+          visibility: { shoulders: 0.8, hips: 0.8, knees: 0.8, ankles: 0.3 },
+          expectedMessage: 'Ankles not visible - step back from camera',
+        },
+        {
+          visibility: { shoulders: 0.6, hips: 0.6, knees: 0.6, ankles: 0.6 },
+          expectedMessage: 'Make sure your full body is visible',
+        },
+      ];
+
+      for (const { visibility, expectedMessage } of visibilityScenarios) {
+        // Create a fresh mock for each iteration
+        const iterationMock = { ...mockHook };
+        if (iterationMock.analysis) {
+          iterationMock.analysis.squatMetrics.keyLandmarkVisibility = visibility;
+        }
+        vi.mocked(useSquatAnalysis).mockReturnValue(iterationMock);
+
+        const { unmount } = render(<ActiveAnalysisScreen onBack={mockOnBack} />);
+
+        // Wait for video element setup
+        await screen.findByTestId('camera-feed');
+
+        // Verify the expected message is shown
+        expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+
+        // Clean up for next iteration
+        unmount();
+      }
+    });
+
+    it('should not flicker during rapid state changes', async () => {
+      const mockHook = mockAnalysisWithDirectLandmarks();
+
+      // Start analyzing
+      vi.mocked(useSquatAnalysis).mockReturnValue(mockHook);
+      const { rerender, container } = render(<ActiveAnalysisScreen onBack={mockOnBack} />);
+
+      // Wait for initial setup
+      await screen.findByTestId('camera-feed');
+
+      // Simulate rapid pose validity changes
+      const states = [true, false, true, false, true];
+
+      for (const isValid of states) {
+        // Create a new mock object for each iteration to avoid mutation issues
+        const updatedMock = {
+          ...mockHook,
+          metrics: {
+            ...mockHook.metrics,
+            isValidPose: isValid,
+            confidence: isValid ? 0.9 : 0.3, // High confidence when valid, low when invalid
+          },
+        };
+
+        await act(async () => {
+          vi.mocked(useSquatAnalysis).mockReturnValue(updatedMock);
+          rerender(<ActiveAnalysisScreen onBack={mockOnBack} />);
+
+          // Wait for any state updates to complete
+          await waitFor(() => {
+            const overlaySvg = container.querySelector('svg.pointer-events-none');
+            expect(overlaySvg).toBeInTheDocument();
+          });
+        });
+      }
+
+      // Verify final state - use waitFor to ensure all updates are complete
+      await waitFor(() => {
+        expect(screen.getByText('Pose Detected')).toBeInTheDocument();
+      });
     });
   });
 });

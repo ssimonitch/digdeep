@@ -7,6 +7,7 @@ import { LandmarkCalculator } from '../utils/landmark-calculator.util';
 import { LandmarkValidator } from '../utils/landmark-validator';
 import type { PoseDetectorConfig } from './base-pose-detector';
 import { BasePoseDetector } from './base-pose-detector';
+import { PoseValidityStabilizer } from './pose-validity-stabilizer';
 
 /**
  * MediaPipe Pose Landmark indices for squat analysis
@@ -144,6 +145,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
   private readonly maxHistorySize = 30;
   private readonly landmarkValidator = new LandmarkValidator();
   private readonly depthThreshold: number;
+  private readonly poseValidityStabilizer = new PoseValidityStabilizer();
 
   // Lateral shift history tracking
   private lateralShiftHistory: number[] = [];
@@ -222,14 +224,29 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
 
     // If the base detection was throttled or failed, return empty squat analysis
     if (!baseResult.landmarks) {
-      return this.createEmptyAnalysis(baseResult.timestamp, baseResult.processingTime);
+      // Update stabilizer with zero confidence for failed detection
+      this.poseValidityStabilizer.update(0, baseResult.timestamp);
+
+      const emptyAnalysis = this.createEmptyAnalysis(baseResult.timestamp, baseResult.processingTime);
+      // Update isValid based on stabilized state
+      const stabilizedState = this.poseValidityStabilizer.getState();
+      emptyAnalysis.isValid = stabilizedState === 'valid';
+
+      return emptyAnalysis;
     }
 
     const startAnalysisTime = performance.now();
 
     // Analyze squat-specific metrics
     const squatMetrics = this.analyzeSquatMetrics(baseResult.landmarks, baseResult.timestamp);
-    const isValid = baseResult.confidence > 0.5 && squatMetrics.hasValidSquatPose;
+
+    // Update pose validity stabilizer with combined confidence
+    const combinedConfidence = baseResult.confidence * (squatMetrics.hasValidSquatPose ? 1.0 : 0.0);
+    this.poseValidityStabilizer.update(combinedConfidence, baseResult.timestamp);
+
+    // Use stabilized validity instead of direct checks
+    const stabilizedState = this.poseValidityStabilizer.getState();
+    const isValid = stabilizedState === 'valid';
 
     // Track squat-specific metrics
     if (isValid) {
@@ -895,6 +912,9 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     this.completedReps = [];
     this.repCount = 0;
 
+    // Reset pose validity stabilizer
+    this.resetPoseValidityStabilizer();
+
     // Call parent cleanup
     super.cleanup();
 
@@ -976,6 +996,16 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     this.standingHipY = null;
     this.standingKneeY = null;
     this.calibrationFrames = 0;
+  }
+
+  /**
+   * Reset pose validity stabilizer (for testing or session reset)
+   */
+  private resetPoseValidityStabilizer(): void {
+    // Use a type assertion to bypass readonly restriction for reset
+    // This is safe as it's only used for cleanup/reset scenarios
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+    (this as any).poseValidityStabilizer = new PoseValidityStabilizer();
   }
 }
 

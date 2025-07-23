@@ -3,23 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSquatAnalysis } from '@/features/pose-detection/hooks/useSquatAnalysis';
 import { findLandmarkByPosition } from '@/test-utils/helpers/dom-queries';
-import { mockResizeObserver } from '@/test-utils/mocks';
+import { MinimalMediaStream, mockResizeObserver } from '@/test-utils/mocks';
 
 import { ActiveAnalysisScreen } from '../ActiveAnalysisScreen';
 import { createMockWithKnownCoordinates } from './mocks/coordinate-transform.mocks';
 
 // Mock the hook before importing component
 vi.mock('@/features/pose-detection/hooks/useSquatAnalysis');
-
-// Helper function to create a mock MediaStream
-function createMockMediaStream(): MediaStream {
-  return {
-    getTracks: () => [],
-    getAudioTracks: () => [],
-    getVideoTracks: () => [],
-    active: true,
-  } as unknown as MediaStream;
-}
 
 // Helper function to trigger ResizeObserver callback
 function triggerResizeObserver(videoElement: HTMLVideoElement, dimensions: { width: number; height: number }): void {
@@ -70,7 +60,7 @@ describe('Pose Landmark Coordinate System Integration', () => {
     // This test verifies coordinate transformation between camera and display dimensions
     // Camera resolution: 1280x720, Display dimensions: 640x360 (50% scaling)
 
-    const mockStream = createMockMediaStream();
+    const mockStream = new MinimalMediaStream();
     const mockAnalysis = createMockWithKnownCoordinates({
       shoulderX: 0.5, // Should appear at display center (320px)
       shoulderY: 0.5, // Should appear at display center (180px)
@@ -133,7 +123,7 @@ describe('Pose Landmark Coordinate System Integration', () => {
   it('should update overlay when video element dimensions change', async () => {
     // This test verifies the overlay updates when video element is resized
 
-    const mockStream = createMockMediaStream();
+    const mockStream = new MinimalMediaStream();
     const mockAnalysis = createMockWithKnownCoordinates({
       shoulderX: 0.5,
       shoulderY: 0.5,
@@ -204,7 +194,7 @@ describe('Pose Landmark Coordinate System Integration', () => {
   it('should scale landmark positions based on display/camera ratio', async () => {
     // This test verifies the scaling calculation is correct
 
-    const mockStream = createMockMediaStream();
+    const mockStream = new MinimalMediaStream();
     const mockAnalysis = createMockWithKnownCoordinates({
       shoulderX: 0.25, // 25% from left
       shoulderY: 0.75, // 75% from top

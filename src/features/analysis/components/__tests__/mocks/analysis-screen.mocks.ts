@@ -119,8 +119,8 @@ export const createMockUseSquatAnalysis = (
 // Preset: Analysis with valid landmarks (direct array structure)
 export const mockAnalysisWithDirectLandmarks = () => {
   const landmarks = createDefaultLandmarks();
-  // Set to null for jsdom compatibility - testing behavior not video rendering
-  const mockStream = null;
+  // Create a mock MediaStream for testing
+  const mockStream = new MediaStream();
 
   return createMockUseSquatAnalysis({
     isAnalyzing: true,
@@ -164,8 +164,8 @@ export const mockAnalysisWithDirectLandmarks = () => {
 // Preset: Analysis with nested landmarks structure
 export const mockAnalysisWithNestedLandmarks = () => {
   const landmarks = createDefaultLandmarks();
-  // Set to null for jsdom compatibility - testing behavior not video rendering
-  const mockStream = null;
+  // Create a mock MediaStream for testing
+  const mockStream = new MediaStream();
 
   return createMockUseSquatAnalysis({
     isAnalyzing: true,
@@ -208,8 +208,8 @@ export const mockAnalysisWithNestedLandmarks = () => {
 
 // Preset: Camera ready but not analyzing
 export const mockCameraReadyNotAnalyzing = () => {
-  // Set to null for jsdom compatibility - testing behavior not video rendering
-  const mockStream = null;
+  // Create a mock MediaStream for testing
+  const mockStream = new MediaStream();
 
   return createMockUseSquatAnalysis({
     isAnalyzing: false,
@@ -276,8 +276,8 @@ export const mockLowConfidencePose = () => {
   landmarks[LANDMARK_INDICES.RIGHT_HIP].visibility = 0.4;
   landmarks[LANDMARK_INDICES.LEFT_KNEE].visibility = 0.2;
 
-  // Set to null for jsdom compatibility - testing behavior not video rendering
-  const mockStream = null;
+  // Create a mock MediaStream for testing
+  const mockStream = new MediaStream();
 
   return createMockUseSquatAnalysis({
     isAnalyzing: true,

@@ -218,6 +218,107 @@ describe('PoseLandmarkOverlay', () => {
     });
   });
 
+  describe('Detection State Visibility', () => {
+    it('should maintain backward compatibility when detectionState is not provided', () => {
+      // When detectionState is not provided, component should use isValidPose
+      const { container } = render(<PoseLandmarkOverlay {...defaultProps} isValidPose={true} />);
+
+      // Should render normally without errors
+      const svg = container.querySelector('svg');
+      expect(svg).toBeInTheDocument();
+
+      // Should use default behavior based on confidence
+      const progressBar = container.querySelector('rect[fill="#22c55e"]');
+      expect(progressBar).toBeInTheDocument(); // High confidence = green
+    });
+
+    it('should render landmarks with full opacity when pose is valid', () => {
+      const { container } = render(<PoseLandmarkOverlay {...defaultProps} detectionState="valid" />);
+
+      const landmarkCircles = container.querySelectorAll('circle[opacity="0.9"]');
+      expect(landmarkCircles.length).toBeGreaterThan(0);
+
+      // Connection lines should also have full visibility
+      const connectionLines = container.querySelectorAll('line');
+      connectionLines.forEach((line) => {
+        expect(line.getAttribute('opacity')).toBe('0.7');
+      });
+    });
+
+    it('should render landmarks with reduced opacity when pose is invalid', () => {
+      const { container } = render(<PoseLandmarkOverlay {...defaultProps} detectionState="invalid" />);
+
+      // Find the main content group that contains landmarks and connections
+      const svg = container.querySelector('svg');
+      const mainContentGroup = svg?.querySelector('g[opacity]');
+
+      // The main group should have reduced opacity
+      expect(mainContentGroup?.getAttribute('opacity')).toBe('0.3');
+
+      // Verify landmarks and connections are inside this group
+      const landmarksInGroup = mainContentGroup?.querySelectorAll('circle');
+      const connectionsInGroup = mainContentGroup?.querySelectorAll('line');
+
+      expect(landmarksInGroup?.length).toBeGreaterThan(0);
+      expect(connectionsInGroup?.length).toBeGreaterThan(0);
+    });
+
+    it('should render landmarks with medium opacity in detecting state', () => {
+      const { container } = render(<PoseLandmarkOverlay {...defaultProps} detectionState="detecting" />);
+
+      // Find the main content group that contains landmarks and connections
+      const svg = container.querySelector('svg');
+      const mainContentGroup = svg?.querySelector('g[opacity]');
+
+      // The main group should have medium opacity
+      expect(mainContentGroup?.getAttribute('opacity')).toBe('0.6');
+
+      // Verify landmarks and connections are inside this group
+      const landmarksInGroup = mainContentGroup?.querySelectorAll('circle');
+      const connectionsInGroup = mainContentGroup?.querySelectorAll('line');
+
+      expect(landmarksInGroup?.length).toBeGreaterThan(0);
+      expect(connectionsInGroup?.length).toBeGreaterThan(0);
+    });
+
+    it('should use appropriate colors for each detection state', () => {
+      // Test valid state - green colors
+      const { container: validContainer } = render(
+        <PoseLandmarkOverlay {...defaultProps} detectionState="valid" confidence={0.9} />,
+      );
+      const validProgressBar = validContainer.querySelector('rect[fill="#22c55e"]');
+      expect(validProgressBar).toBeInTheDocument();
+
+      // Test detecting state - yellow colors
+      const { container: detectingContainer } = render(
+        <PoseLandmarkOverlay {...defaultProps} detectionState="detecting" confidence={0.6} />,
+      );
+      const detectingProgressBar = detectingContainer.querySelector('rect[fill="#eab308"]');
+      expect(detectingProgressBar).toBeInTheDocument();
+
+      // Test invalid state - red colors
+      const { container: invalidContainer } = render(
+        <PoseLandmarkOverlay {...defaultProps} detectionState="invalid" confidence={0.4} />,
+      );
+      const invalidProgressBar = invalidContainer.querySelector('rect[fill="#ef4444"]');
+      expect(invalidProgressBar).toBeInTheDocument();
+    });
+
+    it('should smoothly transition between states', () => {
+      const { container } = render(<PoseLandmarkOverlay {...defaultProps} detectionState="valid" />);
+
+      // Check that the SVG container has appropriate class for transitions
+      const svg = container.querySelector('svg');
+      expect(svg).toBeInTheDocument();
+
+      // The transition behavior will be tested by checking that opacity values change
+      // when detectionState changes (this is more of an integration test)
+      // For unit testing, we just verify the structure is in place
+      const landmarkGroups = container.querySelectorAll('g');
+      expect(landmarkGroups.length).toBeGreaterThan(0);
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle landmarks with low visibility', () => {
       const landmarks = createDefaultLandmarks();

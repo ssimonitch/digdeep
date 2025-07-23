@@ -93,6 +93,9 @@ src/
    - Lateral imbalance detection (especially "in the hole")
    - Joint angle measurements
    - Tempo tracking
+   - **Stabilized pose detection** with three-state feedback system (invalid → detecting → valid)
+   - **Smart guidance messages** prioritizing most critical missing body parts
+   - **Smooth UI transitions** preventing flickering during borderline detection
 
 2. **Design Constraints**:
 
@@ -164,6 +167,36 @@ const analysisWorker = new Worker('./analysis-calculation.worker.ts');
 // Keep main thread free for UI responsiveness
 // Process ML in parallel with UI updates
 ```
+
+### Pose Detection Stability System
+
+The application uses a three-state detection system with hysteresis and debouncing to prevent UI flickering:
+
+```typescript
+// Detection states
+type DetectionState = 'invalid' | 'detecting' | 'valid';
+
+// Example usage in components
+const detectionState = metrics.isValidPose
+  ? 'valid'
+  : metrics.confidence > 0.5
+    ? 'detecting'
+    : 'invalid';
+
+// PoseGuidanceOverlay provides smart feedback based on state
+<PoseGuidanceOverlay
+  detectionState={detectionState}
+  confidence={metrics.confidence}
+  keyLandmarkVisibility={analysis?.squatMetrics?.keyLandmarkVisibility}
+/>
+```
+
+**Key Features**:
+
+- **Hysteresis thresholds**: Enter at 70% confidence, exit at 50% (prevents rapid switching)
+- **Asymmetric debouncing**: Immediate positive feedback, 200ms stability for negative
+- **Visual feedback**: Red (invalid) → Yellow (detecting) → Green (valid) with smooth transitions
+- **Smart guidance**: Prioritizes missing body parts (hips > knees > ankles > shoulders)
 
 ## Code Standards
 
