@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { DEFAULT_EXERCISE_CONFIG } from '@/shared/exercise-config';
+
 import { PoseValidityStabilizer } from '../pose-validity-stabilizer';
 
 describe('PoseValidityStabilizer', () => {
@@ -161,9 +163,9 @@ describe('PoseValidityStabilizer', () => {
   describe('Configuration', () => {
     it('should accept custom thresholds', () => {
       const customStabilizer = new PoseValidityStabilizer({
+        ...DEFAULT_EXERCISE_CONFIG,
         upperThreshold: 0.9,
         lowerThreshold: 0.3,
-        exitDebounceTime: 500,
       });
 
       // Below upper threshold
@@ -189,6 +191,7 @@ describe('PoseValidityStabilizer', () => {
 
     it('should accept custom exit debounce time', () => {
       const customStabilizer = new PoseValidityStabilizer({
+        ...DEFAULT_EXERCISE_CONFIG,
         exitDebounceTime: 1000, // 1 second
       });
 

@@ -142,18 +142,34 @@ export const PoseGuidanceOverlay: FC<PoseGuidanceOverlayProps> = ({
   return (
     <div
       className={`absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-lg p-4 shadow-lg transition-all duration-300 ${getBackgroundClass()}`}
+      data-testid="pose-guidance-overlay"
+      data-detection-state={detectionState}
+      data-confidence={confidencePercentage}
+      role="status"
+      aria-label={`Pose detection: ${getHeadingText()}`}
     >
       {/* Main heading */}
-      <h3 className="mb-2 text-lg font-bold text-white">{getHeadingText()}</h3>
+      <h3
+        className="mb-2 text-lg font-bold text-white"
+        data-testid="pose-guidance-heading"
+        role="heading"
+        aria-level={2}
+      >
+        {getHeadingText()}
+      </h3>
 
       {/* Subtitle/guidance */}
-      <p className="mb-3 text-sm text-gray-200">{getSubtitleText()}</p>
+      <p className="mb-3 text-sm text-gray-200" data-testid="pose-guidance-subtitle">
+        {getSubtitleText()}
+      </p>
 
       {/* Confidence display */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-200">Confidence:</span>
-          <span className="font-semibold text-white">{confidencePercentage}%</span>
+          <span className="font-semibold text-white" data-testid="pose-confidence-percentage">
+            {confidencePercentage}%
+          </span>
         </div>
 
         {/* Progress bar */}
@@ -163,6 +179,8 @@ export const PoseGuidanceOverlay: FC<PoseGuidanceOverlayProps> = ({
             aria-valuenow={confidencePercentage}
             aria-valuemin={0}
             aria-valuemax={100}
+            aria-label={`Pose detection confidence: ${confidencePercentage}%`}
+            data-testid="pose-confidence-progressbar"
             className="h-full bg-white/70 transition-all duration-300"
             style={{ width: `${confidencePercentage}%` }}
           />

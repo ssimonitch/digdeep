@@ -8,12 +8,10 @@ export interface PoseLandmarkOverlayProps {
   width: number;
   /** Height of the video display element for coordinate conversion */
   height: number;
-  /** Whether pose is currently valid/detected */
-  isValidPose: boolean;
   /** Confidence level of pose detection */
   confidence: number;
   /** Detection state for smooth transitions */
-  detectionState?: 'invalid' | 'detecting' | 'valid';
+  detectionState: 'invalid' | 'detecting' | 'valid';
 }
 
 /**
@@ -83,20 +81,11 @@ const landmarkToPixel = (landmark: NormalizedLandmark, width: number, height: nu
  * - Landmark transformations are memoized
  */
 const PoseLandmarkOverlayComponent = (props: PoseLandmarkOverlayProps) => {
-  const { landmarks, width, height, confidence, detectionState, isValidPose } = props;
-
-  // Determine the effective detection state (backward compatibility)
-  const effectiveState = useMemo(() => {
-    if (detectionState) {
-      return detectionState;
-    }
-    // Fallback to binary isValidPose for backward compatibility
-    return isValidPose ? 'valid' : 'invalid';
-  }, [detectionState, isValidPose]);
+  const { landmarks, width, height, confidence, detectionState } = props;
 
   // Calculate opacity based on detection state
   const overlayOpacity = useMemo(() => {
-    switch (effectiveState) {
+    switch (detectionState) {
       case 'valid':
         return 1.0;
       case 'detecting':
@@ -106,12 +95,12 @@ const PoseLandmarkOverlayComponent = (props: PoseLandmarkOverlayProps) => {
       default:
         return 1.0;
     }
-  }, [effectiveState]);
+  }, [detectionState]);
 
   // Memoize color scheme based on detection state and confidence
   const colors = useMemo(() => {
     // For detecting state, always use yellow
-    if (effectiveState === 'detecting') {
+    if (detectionState === 'detecting') {
       return {
         landmark: '#eab308', // yellow-500
         connection: '#eab308',
@@ -139,7 +128,7 @@ const PoseLandmarkOverlayComponent = (props: PoseLandmarkOverlayProps) => {
         highlight: '#dc2626', // red-600
       };
     }
-  }, [confidence, effectiveState]);
+  }, [confidence, detectionState]);
 
   // Memoize the connections rendering to avoid recalculating pixel coordinates
   const connectionsElements = useMemo(() => {
@@ -267,17 +256,18 @@ const arePropsEqual = (prevProps: PoseLandmarkOverlayProps, nextProps: PoseLandm
     return false;
   }
 
-  if (prevProps.isValidPose !== nextProps.isValidPose) {
-    return false;
-  }
-
   // Check detection state changes
   if (prevProps.detectionState !== nextProps.detectionState) {
     return false;
   }
 
   // If both poses are invalid and no landmarks, skip landmark comparison
-  if (!prevProps.isValidPose && !nextProps.isValidPose && !prevProps.landmarks && !nextProps.landmarks) {
+  if (
+    prevProps.detectionState === 'invalid' &&
+    nextProps.detectionState === 'invalid' &&
+    !prevProps.landmarks &&
+    !nextProps.landmarks
+  ) {
     return true;
   }
 

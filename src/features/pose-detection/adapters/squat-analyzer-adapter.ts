@@ -1,9 +1,7 @@
-import type {
-  RepPhase,
-  SquatPoseAnalysis,
-  SquatPoseAnalyzer,
-  SquatPoseAnalyzerConfig,
-} from '../services/squat-pose-analyzer.service';
+import type { SquatExerciseConfig } from '@/shared/exercise-config/squat';
+import { SQUAT_EXERCISE_CONFIG } from '@/shared/exercise-config/squat';
+
+import type { RepPhase, SquatPoseAnalysis, SquatPoseAnalyzer } from '../services/squat-pose-analyzer.service';
 import { getSquatPoseAnalyzer } from '../services/squat-pose-analyzer.service';
 import type { ExerciseAnalyzer } from '../types/exercise-analyzer.types';
 
@@ -47,19 +45,16 @@ export const EMPTY_SQUAT_METRICS: SquatAnalysisMetrics = {
 };
 
 /**
- * Adapter that wraps the existing SquatPoseAnalyzer to implement the generic ExerciseAnalyzer interface
- *
- * This adapter enables the squat analyzer to work with the generic exercise analysis infrastructure
- * while maintaining all existing functionality and backward compatibility.
+ * Adapter that wraps the existing SquatPoseAnalyzer to implement the generic ExerciseAnalyzer interface.
  */
 export class SquatAnalyzerAdapter
-  implements ExerciseAnalyzer<SquatPoseAnalysis, SquatAnalysisMetrics, SquatPoseAnalyzerConfig>
+  implements ExerciseAnalyzer<SquatPoseAnalysis, SquatAnalysisMetrics, SquatExerciseConfig>
 {
   private analyzer: SquatPoseAnalyzer;
-  private config: SquatPoseAnalyzerConfig;
+  private config: SquatExerciseConfig;
 
-  constructor(config?: SquatPoseAnalyzerConfig) {
-    this.config = config ?? {};
+  constructor(config?: SquatExerciseConfig) {
+    this.config = config ?? SQUAT_EXERCISE_CONFIG;
     this.analyzer = getSquatPoseAnalyzer(this.config);
   }
 
@@ -123,14 +118,14 @@ export class SquatAnalyzerAdapter
   /**
    * Get the current configuration
    */
-  getConfig(): SquatPoseAnalyzerConfig {
+  getConfig(): SquatExerciseConfig {
     return { ...this.config };
   }
 
   /**
    * Update the analyzer configuration
    */
-  updateConfig(config: Partial<SquatPoseAnalyzerConfig>): void {
+  updateConfig(config: Partial<SquatExerciseConfig>): void {
     this.config = { ...this.config, ...config };
     // Note: This doesn't recreate the analyzer instance as that would require re-initialization
     // The existing analyzer will continue with its current config until recreated

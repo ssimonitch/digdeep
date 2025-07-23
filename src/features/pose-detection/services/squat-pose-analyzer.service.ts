@@ -1,11 +1,12 @@
 import type { NormalizedLandmark, PoseLandmarkerResult } from '@mediapipe/tasks-vision';
 
+import type { SquatAnalysisConfig, SquatExerciseConfig } from '@/shared/exercise-config/squat';
+import { SQUAT_EXERCISE_CONFIG, validateSquatAnalysisConfig } from '@/shared/exercise-config/squat';
 import { errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
 import { LandmarkCalculator } from '../utils/landmark-calculator.util';
 import { LandmarkValidator } from '../utils/landmark-validator';
-import type { PoseDetectorConfig } from './base-pose-detector';
 import { BasePoseDetector } from './base-pose-detector';
 import { PoseValidityStabilizer } from './pose-validity-stabilizer';
 
@@ -33,15 +34,6 @@ export const SQUAT_LANDMARKS = {
   LEFT_FOOT_INDEX: 31,
   RIGHT_FOOT_INDEX: 32,
 } as const;
-
-/**
- * Configuration optimized for squat form analysis
- * Extends the base configuration with squat-specific defaults
- */
-export interface SquatPoseAnalyzerConfig extends PoseDetectorConfig {
-  /** Depth achievement threshold (0-1, default 0.9 = 90%) */
-  depthThreshold?: number;
-}
 
 /**
  * Bar path tracking data point
@@ -144,8 +136,8 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
   private confidenceScores: number[] = [];
   private readonly maxHistorySize = 30;
   private readonly landmarkValidator = new LandmarkValidator();
-  private readonly depthThreshold: number;
-  private readonly poseValidityStabilizer = new PoseValidityStabilizer();
+  private readonly analysisConfig: SquatAnalysisConfig;
+  private readonly poseValidityStabilizer: PoseValidityStabilizer;
 
   // Lateral shift history tracking
   private lateralShiftHistory: number[] = [];
@@ -169,30 +161,38 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
   private completedReps: RepData[] = [];
   private repCount = 0;
 
-  constructor(config: SquatPoseAnalyzerConfig = {}) {
-    // Validate depth threshold if provided
-    if (config.depthThreshold !== undefined) {
-      if (config.depthThreshold < 0 || config.depthThreshold > 1) {
-        throw new Error('Depth threshold must be between 0 and 1');
-      }
+  constructor(config: SquatExerciseConfig = SQUAT_EXERCISE_CONFIG) {
+    // Validate the analysis configuration
+    const validation = validateSquatAnalysisConfig(config.analysis);
+    if (!validation.isValid) {
+      throw new Error(`Invalid squat analysis configuration: ${validation.errors.join(', ')}`);
     }
 
-    // Call parent constructor with squat-specific defaults
+    // Log warnings if any
+    if (validation.warnings.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('SquatPoseAnalyzer configuration warnings:', validation.warnings.join(', '));
+    }
+
+    // Call parent constructor with MediaPipe configuration from exercise config
     super({
       ...config,
-      minPoseDetectionConfidence: config.minPoseDetectionConfidence ?? 0.7, // Higher for squat analysis
-      minPosePresenceConfidence: config.minPosePresenceConfidence ?? 0.7,
-      minTrackingConfidence: config.minTrackingConfidence ?? 0.7,
+      minPoseDetectionConfidence: config.analysis.mediaPipe.minPoseDetectionConfidence,
+      minPosePresenceConfidence: config.analysis.mediaPipe.minPosePresenceConfidence,
+      minTrackingConfidence: config.analysis.mediaPipe.minTrackingConfidence,
     });
 
-    // Set depth threshold with default of 0.9 (90%)
-    this.depthThreshold = config.depthThreshold ?? 0.9;
+    // Store analysis configuration
+    this.analysisConfig = config.analysis;
+
+    // Initialize pose validity stabilizer with detection config
+    this.poseValidityStabilizer = new PoseValidityStabilizer(config);
   }
 
   /**
    * Get the singleton instance of SquatPoseAnalyzer
    */
-  public static getInstance(config?: SquatPoseAnalyzerConfig): SquatPoseAnalyzer {
+  public static getInstance(config?: SquatExerciseConfig): SquatPoseAnalyzer {
     SquatPoseAnalyzer.instance ??= new SquatPoseAnalyzer(config);
     return SquatPoseAnalyzer.instance;
   }
@@ -476,7 +476,9 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     // Check if both shoulders have good visibility for valid bar position
     const leftShoulder = landmarks[SQUAT_LANDMARKS.LEFT_SHOULDER];
     const rightShoulder = landmarks[SQUAT_LANDMARKS.RIGHT_SHOULDER];
-    const isValidBarPosition = (leftShoulder?.visibility ?? 0) > 0.7 && (rightShoulder?.visibility ?? 0) > 0.7;
+    const isValidBarPosition =
+      (leftShoulder?.visibility ?? 0) > this.analysisConfig.visibility.barPositionVisibility &&
+      (rightShoulder?.visibility ?? 0) > this.analysisConfig.visibility.barPositionVisibility;
 
     return {
       shoulderMidpoint,
@@ -523,7 +525,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     }
 
     const hipWidth = Math.abs(leftHip.x - rightHip.x);
-    const isBalanced = lateralDeviation < hipWidth * 0.05;
+    const isBalanced = lateralDeviation < hipWidth * this.analysisConfig.balance.maxLateralDeviationRatio;
 
     // Track lateral shift history
     if (lateralDeviation !== null) {
@@ -565,7 +567,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
         hipKneeRatio: null,
         hasAchievedDepth: false,
         depthPercentage: null,
-        depthThreshold: this.depthThreshold,
+        depthThreshold: this.analysisConfig.depth.depthThreshold,
       };
     }
 
@@ -580,7 +582,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
       this.calibrationFrames < this.CALIBRATION_FRAMES_NEEDED
     ) {
       // Look for standing position (hips above knees with reasonable ratio)
-      if (hipKneeRatio < 0.8) {
+      if (hipKneeRatio < this.analysisConfig.balance.standingPositionRatio) {
         // Standing position typically has hip/knee ratio < 0.8
         if (this.standingHipY === null || this.standingKneeY === null) {
           this.standingHipY = hipMidpoint.y;
@@ -617,13 +619,13 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
 
     // Check if depth threshold is achieved
     // Use a small epsilon for floating-point comparison
-    const hasAchievedDepth = depthPercentage >= this.depthThreshold * 100 - 0.01;
+    const hasAchievedDepth = depthPercentage >= this.analysisConfig.depth.depthThreshold * 100 - 0.01;
 
     return {
       hipKneeRatio,
       hasAchievedDepth,
       depthPercentage,
-      depthThreshold: this.depthThreshold,
+      depthThreshold: this.analysisConfig.depth.depthThreshold,
     };
   }
 
@@ -688,8 +690,8 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     // State machine transitions
     switch (this.currentRepPhase) {
       case 'standing':
-        // Start rep when moving down (depth > 10%)
-        if (depthPercentage > 10) {
+        // Start rep when moving down (depth > startRepThreshold)
+        if (depthPercentage > this.analysisConfig.depth.startRepThreshold) {
           this.currentRepPhase = 'descending';
           this.currentRep = {
             phase: 'descending',
@@ -711,7 +713,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
         }
 
         // Transition to bottom when depth achieved or depth stops increasing
-        if (depth.hasAchievedDepth || depthPercentage > 80) {
+        if (depth.hasAchievedDepth || depthPercentage > this.analysisConfig.depth.bottomPhaseThreshold) {
           this.currentRepPhase = 'bottom';
           if (this.currentRep) {
             this.currentRep.phase = 'bottom';
@@ -728,7 +730,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
         }
 
         // Start ascending when depth decreases significantly
-        if (depthPercentage < 70) {
+        if (depthPercentage < this.analysisConfig.depth.ascendingThreshold) {
           this.currentRepPhase = 'ascending';
           if (this.currentRep) {
             this.currentRep.phase = 'ascending';
@@ -737,8 +739,8 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
         break;
 
       case 'ascending':
-        // Complete rep when returning to standing (depth < 20%)
-        if (depthPercentage < 20) {
+        // Complete rep when returning to standing (depth < completeRepThreshold)
+        if (depthPercentage < this.analysisConfig.depth.completeRepThreshold) {
           this.currentRepPhase = 'completed';
           if (this.currentRep) {
             this.currentRep.phase = 'completed';
@@ -777,15 +779,15 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
    */
   private validateRep(rep: RepData): boolean {
     // Rep is valid if:
-    // 1. Achieved minimum depth (80% or configured threshold)
-    const minDepthThreshold = this.depthThreshold * 100;
+    // 1. Achieved minimum depth (configured threshold)
+    const minDepthThreshold = this.analysisConfig.depth.depthThreshold * 100;
     const achievedDepth = rep.maxDepth >= minDepthThreshold;
 
-    // 2. Maintained reasonable balance (lateral shift < 15% of total movement)
-    const reasonableBalance = rep.maxLateralShift < 0.15;
+    // 2. Maintained reasonable balance (lateral shift within configured limit)
+    const reasonableBalance = rep.maxLateralShift < this.analysisConfig.validation.maxLateralShift;
 
-    // 3. Bar path deviation is reasonable (< 20% of vertical movement)
-    const reasonableBarPath = rep.barPathDeviation < 0.2;
+    // 3. Bar path deviation is reasonable (within configured limit)
+    const reasonableBarPath = rep.barPathDeviation < this.analysisConfig.validation.maxBarPathDeviation;
 
     return achievedDepth && reasonableBalance && reasonableBarPath;
   }
@@ -807,14 +809,16 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     jointAngles: { averageKneeAngle: number | null },
   ): boolean {
     // Require good visibility of key landmarks
-    const minVisibility = 0.7;
+    const minVisibility = this.analysisConfig.visibility.minLandmarkVisibility;
     const hasGoodVisibility =
       keyLandmarkVisibility.hips > minVisibility &&
       keyLandmarkVisibility.knees > minVisibility &&
       keyLandmarkVisibility.ankles > minVisibility;
 
     // Require reasonable knee angle (squat position)
-    const hasValidKneeAngle = jointAngles.averageKneeAngle !== null && jointAngles.averageKneeAngle < 140;
+    const hasValidKneeAngle =
+      jointAngles.averageKneeAngle !== null &&
+      jointAngles.averageKneeAngle < this.analysisConfig.validation.maxValidKneeAngle;
 
     return hasGoodVisibility && hasValidKneeAngle;
   }
@@ -859,7 +863,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
           hipKneeRatio: null,
           hasAchievedDepth: false,
           depthPercentage: null,
-          depthThreshold: this.depthThreshold,
+          depthThreshold: this.analysisConfig.depth.depthThreshold,
         },
         barPath: {
           currentPosition: null,
@@ -1010,6 +1014,6 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
 }
 
 // Export singleton getter function following established patterns
-export const getSquatPoseAnalyzer = (config?: SquatPoseAnalyzerConfig): SquatPoseAnalyzer => {
+export const getSquatPoseAnalyzer = (config?: SquatExerciseConfig): SquatPoseAnalyzer => {
   return SquatPoseAnalyzer.getInstance(config);
 };

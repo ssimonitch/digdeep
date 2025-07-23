@@ -182,7 +182,6 @@ export function ActiveAnalysisScreen({ onBack }: ActiveAnalysisScreenProps) {
                   landmarks={analysis.landmarks.landmarks[0]}
                   width={displayDimensions.width}
                   height={displayDimensions.height}
-                  isValidPose={metrics.isValidPose}
                   confidence={metrics.confidence}
                   detectionState={metrics.isValidPose ? 'valid' : metrics.confidence > 0.5 ? 'detecting' : 'invalid'}
                 />

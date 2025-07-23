@@ -6,31 +6,11 @@
  * - 'detecting': Transitioning between states (debouncing period)
  * - 'valid': Pose detected with confidence above upper threshold
  */
-export type DetectionState = 'invalid' | 'detecting' | 'valid';
+import { DEFAULT_EXERCISE_CONFIG } from '@/shared/exercise-config';
+import type { ExerciseDetectionConfig } from '@/shared/exercise-config/base';
+import { validateExerciseDetectionConfig } from '@/shared/exercise-config/base';
 
-/**
- * Configuration options for pose validity stabilization
- *
- * @example
- * ```typescript
- * const config: PoseValidityStabilizerConfig = {
- *   upperThreshold: 0.7,    // Enter valid state at 70% confidence
- *   lowerThreshold: 0.5,    // Exit valid state at 50% confidence
- *   enterDebounceTime: 0,   // Immediate positive feedback
- *   exitDebounceTime: 200   // 200ms stability before marking invalid
- * };
- * ```
- */
-export interface PoseValidityStabilizerConfig {
-  /** Upper threshold for entering valid state (default: 0.7) */
-  upperThreshold?: number;
-  /** Lower threshold for exiting valid state (default: 0.5) */
-  lowerThreshold?: number;
-  /** Minimum time in ms before entering valid state (default: 0 for immediate feedback) */
-  enterDebounceTime?: number;
-  /** Minimum time in ms before exiting valid state (default: 200 for stability) */
-  exitDebounceTime?: number;
-}
+export type DetectionState = 'invalid' | 'detecting' | 'valid';
 
 /**
  * Detailed state information returned by the stabilizer
@@ -56,36 +36,45 @@ export interface StateInfo {
  * - 'valid': Pose is valid
  *
  * Asymmetric behavior:
- * - Enter valid: Immediate when confidence ≥ upperThreshold (0.7)
- * - Exit valid: Debounced when confidence < lowerThreshold (0.5) for exitDebounceTime (200ms)
+ * - Enter valid: Immediate when confidence ≥ upperThreshold
+ * - Exit valid: Debounced when confidence < lowerThreshold for exitDebounceTime
  * - Detecting state: Only used when leaving valid state (gives time to recover)
  *
  * This prevents flickering while providing instant positive feedback.
+ *
+ * Now uses centralized exercise configuration from @/shared/exercise-config
+ * to ensure consistency across the application.
  */
 export class PoseValidityStabilizer {
-  private readonly config: Required<PoseValidityStabilizerConfig>;
+  private readonly config: Required<ExerciseDetectionConfig>;
   private currentState: DetectionState = 'invalid';
   private lastConfidence = 0;
   private transitionStartTime: number | null = null;
   private stateStartTime = 0;
 
-  constructor(config: PoseValidityStabilizerConfig = {}) {
+  /**
+   * Create a new PoseValidityStabilizer instance
+   *
+   * @param config Exercise detection configuration (defaults to DEFAULT_EXERCISE_CONFIG)
+   */
+  constructor(config: ExerciseDetectionConfig = DEFAULT_EXERCISE_CONFIG) {
     this.config = {
-      upperThreshold: config.upperThreshold ?? 0.7,
-      lowerThreshold: config.lowerThreshold ?? 0.5,
-      enterDebounceTime: config.enterDebounceTime ?? 0,
-      exitDebounceTime: config.exitDebounceTime ?? 200,
+      upperThreshold: config.upperThreshold ?? DEFAULT_EXERCISE_CONFIG.upperThreshold,
+      lowerThreshold: config.lowerThreshold ?? DEFAULT_EXERCISE_CONFIG.lowerThreshold,
+      enterDebounceTime: config.enterDebounceTime ?? DEFAULT_EXERCISE_CONFIG.enterDebounceTime,
+      exitDebounceTime: config.exitDebounceTime ?? DEFAULT_EXERCISE_CONFIG.exitDebounceTime,
     };
 
-    // Validate configuration
-    if (this.config.upperThreshold <= this.config.lowerThreshold) {
-      throw new Error('upperThreshold must be greater than lowerThreshold');
+    // Validate configuration using shared validation logic
+    const validation = validateExerciseDetectionConfig(this.config);
+    if (!validation.isValid) {
+      throw new Error(`Invalid pose validity configuration: ${validation.errors.join(', ')}`);
     }
-    if (this.config.enterDebounceTime < 0) {
-      throw new Error('enterDebounceTime must be non-negative');
-    }
-    if (this.config.exitDebounceTime < 0) {
-      throw new Error('exitDebounceTime must be non-negative');
+
+    // Log warnings if any
+    if (validation.warnings.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('PoseValidityStabilizer configuration warnings:', validation.warnings.join(', '));
     }
   }
 

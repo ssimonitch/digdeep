@@ -1,3 +1,4 @@
+import type { SquatExerciseConfig } from '@/shared/exercise-config/squat';
 import { useExerciseAnalysis } from '@/shared/hooks/useExerciseAnalysis';
 
 import {
@@ -5,7 +6,7 @@ import {
   type SquatAnalysisMetrics,
   SquatAnalyzerAdapter,
 } from '../adapters/squat-analyzer-adapter';
-import type { SquatPoseAnalysis, SquatPoseAnalyzerConfig } from '../services/squat-pose-analyzer.service';
+import type { SquatPoseAnalysis } from '../services/squat-pose-analyzer.service';
 
 /**
  * Configuration options for useSquatAnalysis hook
@@ -14,7 +15,7 @@ export interface UseSquatAnalysisOptions {
   /** Whether to auto-start analysis when camera is ready */
   autoStart?: boolean;
   /** Configuration for the squat pose analyzer */
-  config?: SquatPoseAnalyzerConfig;
+  config?: SquatExerciseConfig;
   /** Callback fired on each analysis frame */
   onAnalysis?: (analysis: SquatPoseAnalysis) => void;
   /** Target frame rate for analysis (default: 30 FPS) */
@@ -22,7 +23,7 @@ export interface UseSquatAnalysisOptions {
 }
 
 /**
- * Hook return interface - maintains backward compatibility
+ * Hook return interface
  */
 export interface UseSquatAnalysisReturn {
   // Analysis data
@@ -50,8 +51,7 @@ export interface UseSquatAnalysisReturn {
 /**
  * React hook for real-time squat analysis combining camera management and pose detection
  *
- * This hook is now a thin wrapper around the generic useExerciseAnalysis hook,
- * maintaining backward compatibility while leveraging the new modular architecture.
+ * This hook is a thin wrapper around the generic useExerciseAnalysis hook.
  *
  * @param options Configuration options for analysis behavior
  * @returns Analysis state, metrics, and control functions
@@ -75,13 +75,9 @@ export interface UseSquatAnalysisReturn {
  */
 export function useSquatAnalysis(options: UseSquatAnalysisOptions = {}): UseSquatAnalysisReturn {
   // Use the generic exercise analysis hook with squat-specific configuration
-  return useExerciseAnalysis<SquatPoseAnalysis, SquatAnalysisMetrics, SquatPoseAnalyzerConfig>({
+  return useExerciseAnalysis<SquatPoseAnalysis, SquatAnalysisMetrics, SquatExerciseConfig>({
     analyzerFactory: (config) => new SquatAnalyzerAdapter(config),
     emptyMetrics: EMPTY_SQUAT_METRICS,
     ...options,
   });
 }
-
-// Re-export the metrics interface and type for backward compatibility
-export type { SquatAnalysisMetrics } from '../adapters/squat-analyzer-adapter';
-export { EMPTY_SQUAT_METRICS } from '../adapters/squat-analyzer-adapter';

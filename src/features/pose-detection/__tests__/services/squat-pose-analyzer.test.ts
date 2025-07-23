@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SQUAT_EXERCISE_CONFIG } from '@/shared/exercise-config/squat';
 import { type ErrorContext, errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
@@ -70,9 +71,15 @@ describe('SquatPoseAnalyzer', () => {
 
     it('should use custom configuration when provided', async () => {
       const customConfig = {
-        minPoseDetectionConfidence: 0.8,
-        minPosePresenceConfidence: 0.8,
-        minTrackingConfidence: 0.8,
+        ...SQUAT_EXERCISE_CONFIG,
+        analysis: {
+          ...SQUAT_EXERCISE_CONFIG.analysis,
+          mediaPipe: {
+            minPoseDetectionConfidence: 0.8,
+            minPosePresenceConfidence: 0.8,
+            minTrackingConfidence: 0.8,
+          },
+        },
       };
 
       analyzer = new SquatPoseAnalyzer(customConfig);
@@ -770,7 +777,14 @@ describe('SquatPoseAnalyzer', () => {
       it('should respect custom depth threshold configuration', async () => {
         // Create analyzer with custom 80% threshold
         const customAnalyzer = new SquatPoseAnalyzer({
-          depthThreshold: 0.8, // 80%
+          ...SQUAT_EXERCISE_CONFIG,
+          analysis: {
+            ...SQUAT_EXERCISE_CONFIG.analysis,
+            depth: {
+              ...SQUAT_EXERCISE_CONFIG.analysis.depth,
+              depthThreshold: 0.8, // 80%
+            },
+          },
         });
         await customAnalyzer.initialize();
 
@@ -799,7 +813,14 @@ describe('SquatPoseAnalyzer', () => {
       it('should handle threshold at exactly the depth percentage', async () => {
         // Create analyzer with 70% threshold
         const customAnalyzer = new SquatPoseAnalyzer({
-          depthThreshold: 0.7, // 70%
+          ...SQUAT_EXERCISE_CONFIG,
+          analysis: {
+            ...SQUAT_EXERCISE_CONFIG.analysis,
+            depth: {
+              ...SQUAT_EXERCISE_CONFIG.analysis.depth,
+              depthThreshold: 0.7, // 70%
+            },
+          },
         });
         await customAnalyzer.initialize();
 
@@ -829,7 +850,14 @@ describe('SquatPoseAnalyzer', () => {
       it('should allow 100% threshold for full depth requirement', async () => {
         // Create analyzer requiring full parallel
         const strictAnalyzer = new SquatPoseAnalyzer({
-          depthThreshold: 1.0, // 100%
+          ...SQUAT_EXERCISE_CONFIG,
+          analysis: {
+            ...SQUAT_EXERCISE_CONFIG.analysis,
+            depth: {
+              ...SQUAT_EXERCISE_CONFIG.analysis.depth,
+              depthThreshold: 1.0, // 100%
+            },
+          },
         });
         await strictAnalyzer.initialize();
 
@@ -873,17 +901,42 @@ describe('SquatPoseAnalyzer', () => {
       it('should validate threshold is between 0 and 1', () => {
         // Test invalid thresholds
         expect(() => {
-          new SquatPoseAnalyzer({ depthThreshold: -0.1 });
-        }).toThrow('Depth threshold must be between 0 and 1');
+          new SquatPoseAnalyzer({
+            ...SQUAT_EXERCISE_CONFIG,
+            analysis: {
+              ...SQUAT_EXERCISE_CONFIG.analysis,
+              depth: {
+                ...SQUAT_EXERCISE_CONFIG.analysis.depth,
+                depthThreshold: -0.1,
+              },
+            },
+          });
+        }).toThrow('Invalid squat analysis configuration: depth.depthThreshold must be between 0 and 1');
 
         expect(() => {
-          new SquatPoseAnalyzer({ depthThreshold: 1.5 });
-        }).toThrow('Depth threshold must be between 0 and 1');
+          new SquatPoseAnalyzer({
+            ...SQUAT_EXERCISE_CONFIG,
+            analysis: {
+              ...SQUAT_EXERCISE_CONFIG.analysis,
+              depth: {
+                ...SQUAT_EXERCISE_CONFIG.analysis.depth,
+                depthThreshold: 1.5,
+              },
+            },
+          });
+        }).toThrow('Invalid squat analysis configuration: depth.depthThreshold must be between 0 and 1');
       });
 
       it('should include threshold in depth metrics', async () => {
         const customAnalyzer = new SquatPoseAnalyzer({
-          depthThreshold: 0.85,
+          ...SQUAT_EXERCISE_CONFIG,
+          analysis: {
+            ...SQUAT_EXERCISE_CONFIG.analysis,
+            depth: {
+              ...SQUAT_EXERCISE_CONFIG.analysis.depth,
+              depthThreshold: 0.85,
+            },
+          },
         });
         await customAnalyzer.initialize();
 
@@ -1050,26 +1103,6 @@ describe('SquatPoseAnalyzer', () => {
       vi.advanceTimersByTime(40);
       const finalResult = analyzer.analyzeSquatPose(mockVideoElement);
       expect(finalResult.isValid).toBe(false);
-    });
-
-    it('should maintain backward compatibility with existing API', () => {
-      // Verify that existing result structure is maintained
-      setMockMediaPipeConfig({
-        customResult: SQUAT_FIXTURES.properDepth,
-      });
-
-      const result = analyzer.analyzeSquatPose(mockVideoElement);
-
-      // All existing properties should still be present
-      expect(result).toHaveProperty('landmarks');
-      expect(result).toHaveProperty('confidence');
-      expect(result).toHaveProperty('isValid');
-      expect(result).toHaveProperty('squatMetrics');
-      expect(result).toHaveProperty('processingTime');
-
-      // Squat metrics should include hasValidSquatPose
-      expect(result.squatMetrics).toHaveProperty('hasValidSquatPose');
-      expect(typeof result.squatMetrics.hasValidSquatPose).toBe('boolean');
     });
 
     it('should handle rapid confidence fluctuations smoothly', () => {

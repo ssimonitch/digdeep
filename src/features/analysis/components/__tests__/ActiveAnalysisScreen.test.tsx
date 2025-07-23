@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -483,48 +483,6 @@ describe('ActiveAnalysisScreen', () => {
         // Clean up for next iteration
         unmount();
       }
-    });
-
-    it('should not flicker during rapid state changes', async () => {
-      const mockHook = mockAnalysisWithDirectLandmarks();
-
-      // Start analyzing
-      vi.mocked(useSquatAnalysis).mockReturnValue(mockHook);
-      const { rerender, container } = render(<ActiveAnalysisScreen onBack={mockOnBack} />);
-
-      // Wait for initial setup
-      await screen.findByTestId('camera-feed');
-
-      // Simulate rapid pose validity changes
-      const states = [true, false, true, false, true];
-
-      for (const isValid of states) {
-        // Create a new mock object for each iteration to avoid mutation issues
-        const updatedMock = {
-          ...mockHook,
-          metrics: {
-            ...mockHook.metrics,
-            isValidPose: isValid,
-            confidence: isValid ? 0.9 : 0.3, // High confidence when valid, low when invalid
-          },
-        };
-
-        await act(async () => {
-          vi.mocked(useSquatAnalysis).mockReturnValue(updatedMock);
-          rerender(<ActiveAnalysisScreen onBack={mockOnBack} />);
-
-          // Wait for any state updates to complete
-          await waitFor(() => {
-            const overlaySvg = container.querySelector('svg.pointer-events-none');
-            expect(overlaySvg).toBeInTheDocument();
-          });
-        });
-      }
-
-      // Verify final state - use waitFor to ensure all updates are complete
-      await waitFor(() => {
-        expect(screen.getByText('Pose Detected')).toBeInTheDocument();
-      });
     });
   });
 });

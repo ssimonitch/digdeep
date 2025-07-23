@@ -9,8 +9,8 @@ describe('PoseLandmarkOverlay', () => {
     landmarks: createDefaultLandmarks(),
     width: 640,
     height: 480,
-    isValidPose: true,
     confidence: 0.9,
+    detectionState: 'valid' as const,
   };
 
   describe('Rendering Conditions', () => {
@@ -24,8 +24,8 @@ describe('PoseLandmarkOverlay', () => {
       expect(container.querySelector('svg')).not.toBeInTheDocument();
     });
 
-    it('should render when isValidPose is false (landmarks still visible)', () => {
-      const { container } = render(<PoseLandmarkOverlay {...defaultProps} isValidPose={false} />);
+    it('should render when detectionState is invalid (landmarks still visible)', () => {
+      const { container } = render(<PoseLandmarkOverlay {...defaultProps} detectionState="invalid" />);
       expect(container.querySelector('svg')).toBeInTheDocument();
     });
 
@@ -219,19 +219,6 @@ describe('PoseLandmarkOverlay', () => {
   });
 
   describe('Detection State Visibility', () => {
-    it('should maintain backward compatibility when detectionState is not provided', () => {
-      // When detectionState is not provided, component should use isValidPose
-      const { container } = render(<PoseLandmarkOverlay {...defaultProps} isValidPose={true} />);
-
-      // Should render normally without errors
-      const svg = container.querySelector('svg');
-      expect(svg).toBeInTheDocument();
-
-      // Should use default behavior based on confidence
-      const progressBar = container.querySelector('rect[fill="#22c55e"]');
-      expect(progressBar).toBeInTheDocument(); // High confidence = green
-    });
-
     it('should render landmarks with full opacity when pose is valid', () => {
       const { container } = render(<PoseLandmarkOverlay {...defaultProps} detectionState="valid" />);
 

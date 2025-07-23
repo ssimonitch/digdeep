@@ -11,7 +11,7 @@ import { WorkoutCard } from './WorkoutCard';
 type HomeScreenView = 'home' | 'squat-analysis' | 'mediapipe-poc';
 
 export function HomePage() {
-  const [currentView, setCurrentView] = useState<HomeScreenView>('home');
+  const [currentView, setCurrentView] = useState<HomeScreenView>('squat-analysis');
 
   const handleStartSquatSession = () => {
     setCurrentView('squat-analysis');
