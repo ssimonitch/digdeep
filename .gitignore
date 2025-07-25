@@ -54,3 +54,6 @@ lerna-debug.log*
 
 # temporary files
 .tmp
+
+# Claude
+.claude/*
