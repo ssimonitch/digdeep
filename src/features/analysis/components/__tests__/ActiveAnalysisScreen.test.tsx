@@ -388,6 +388,7 @@ describe('ActiveAnalysisScreen', () => {
       const mockHook = mockAnalysisWithDirectLandmarks();
       mockHook.metrics.isValidPose = false;
       mockHook.metrics.confidence = 0.3; // Low confidence for invalid state
+      mockHook.metrics.detectionState = 'invalid'; // Update detection state to match
       if (mockHook.analysis) {
         mockHook.analysis.squatMetrics.keyLandmarkVisibility = {
           shoulders: 0.8,
@@ -429,6 +430,7 @@ describe('ActiveAnalysisScreen', () => {
       // Transition to invalid pose
       mockHook.metrics.isValidPose = false;
       mockHook.metrics.confidence = 0.3; // Low confidence for invalid state
+      mockHook.metrics.detectionState = 'invalid'; // Update detection state to match
       vi.mocked(useSquatAnalysis).mockReturnValue(mockHook);
       rerender(<ActiveAnalysisScreen onBack={mockOnBack} />);
 
@@ -443,6 +445,7 @@ describe('ActiveAnalysisScreen', () => {
       const mockHook = mockAnalysisWithDirectLandmarks();
       mockHook.metrics.isValidPose = false;
       mockHook.metrics.confidence = 0.3; // Low confidence for invalid state
+      mockHook.metrics.detectionState = 'invalid'; // Update detection state to match
 
       // Test different visibility scenarios
       const visibilityScenarios = [

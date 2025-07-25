@@ -92,6 +92,7 @@ export const createMockUseSquatAnalysis = (
     repPhase: 'standing',
     confidence: 0,
     isValidPose: false,
+    detectionState: 'invalid',
   },
   isAnalyzing: false,
   isInitialized: false,
@@ -129,6 +130,7 @@ export const mockAnalysisWithDirectLandmarks = () => {
       landmarks: createMockPoseResult(landmarks), // Proper PoseLandmarkerResult
       confidence: 0.9,
       isValid: true,
+      detectionState: 'valid',
       timestamp: Date.now(),
       processingTime: 25,
       squatMetrics: createMockSquatMetrics(),
@@ -143,6 +145,7 @@ export const mockAnalysisWithDirectLandmarks = () => {
       repPhase: 'descending',
       confidence: 0.9,
       isValidPose: true,
+      detectionState: 'valid',
     },
     fps: 30,
     processingTime: 25,
@@ -174,6 +177,7 @@ export const mockAnalysisWithNestedLandmarks = () => {
       landmarks: createMockPoseResult(landmarks), // Same structure, properly typed
       confidence: 0.9,
       isValid: true,
+      detectionState: 'valid',
       timestamp: Date.now(),
       processingTime: 25,
       squatMetrics: createMockSquatMetrics(),
@@ -188,6 +192,7 @@ export const mockAnalysisWithNestedLandmarks = () => {
       repPhase: 'descending',
       confidence: 0.9,
       isValidPose: true,
+      detectionState: 'valid',
     },
     fps: 30,
     processingTime: 25,
@@ -286,6 +291,7 @@ export const mockLowConfidencePose = () => {
       landmarks: createMockPoseResult(landmarks), // Proper PoseLandmarkerResult
       confidence: 0.4,
       isValid: false,
+      detectionState: 'invalid',
       timestamp: Date.now(),
       processingTime: 30,
       squatMetrics: {
@@ -309,6 +315,7 @@ export const mockLowConfidencePose = () => {
       repPhase: 'standing',
       confidence: 0.4,
       isValidPose: false,
+      detectionState: 'invalid',
     },
     fps: 28,
     processingTime: 30,

@@ -8,6 +8,7 @@ import { performanceMonitor } from '@/shared/services/performance-monitor.servic
 import { LandmarkCalculator } from '../utils/landmark-calculator.util';
 import { LandmarkValidator } from '../utils/landmark-validator';
 import { BasePoseDetector } from './base-pose-detector';
+import type { DetectionState } from './pose-validity-stabilizer';
 import { PoseValidityStabilizer } from './pose-validity-stabilizer';
 
 /**
@@ -117,6 +118,7 @@ export interface SquatPoseAnalysis {
   confidence: number;
   processingTime: number;
   isValid: boolean;
+  detectionState: DetectionState;
   squatMetrics: SquatMetrics;
 }
 
@@ -227,10 +229,10 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
       // Update stabilizer with zero confidence for failed detection
       this.poseValidityStabilizer.update(0, baseResult.timestamp);
 
-      const emptyAnalysis = this.createEmptyAnalysis(baseResult.timestamp, baseResult.processingTime);
-      // Update isValid based on stabilized state
       const stabilizedState = this.poseValidityStabilizer.getState();
+      const emptyAnalysis = this.createEmptyAnalysis(baseResult.timestamp, baseResult.processingTime);
       emptyAnalysis.isValid = stabilizedState === 'valid';
+      emptyAnalysis.detectionState = stabilizedState;
 
       return emptyAnalysis;
     }
@@ -275,6 +277,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
       confidence: baseResult.confidence,
       processingTime: totalProcessingTime,
       isValid,
+      detectionState: stabilizedState,
       squatMetrics,
     };
   }
@@ -833,6 +836,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
       confidence: 0,
       processingTime,
       isValid: false,
+      detectionState: 'invalid',
       squatMetrics: {
         hasValidSquatPose: false,
         keyLandmarkVisibility: {

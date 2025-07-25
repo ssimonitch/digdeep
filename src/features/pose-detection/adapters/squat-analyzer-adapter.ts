@@ -3,6 +3,7 @@ import { SQUAT_EXERCISE_CONFIG } from '@/shared/exercise-config/squat';
 
 import type { RepPhase, SquatPoseAnalysis, SquatPoseAnalyzer } from '../services/squat-pose-analyzer.service';
 import { getSquatPoseAnalyzer } from '../services/squat-pose-analyzer.service';
+import type { DetectionState } from '../services/pose-validity-stabilizer';
 import type { ExerciseAnalyzer } from '../types/exercise-analyzer.types';
 
 /**
@@ -27,6 +28,7 @@ export interface SquatAnalysisMetrics {
   // Overall quality
   confidence: number;
   isValidPose: boolean;
+  detectionState: DetectionState;
 }
 
 /**
@@ -42,6 +44,7 @@ export const EMPTY_SQUAT_METRICS: SquatAnalysisMetrics = {
   repPhase: 'standing',
   confidence: 0,
   isValidPose: false,
+  detectionState: 'invalid',
 };
 
 /**
@@ -76,7 +79,7 @@ export class SquatAnalyzerAdapter
    * Extract simplified metrics from the full analysis for UI consumption
    */
   extractMetrics(analysis: SquatPoseAnalysis): SquatAnalysisMetrics {
-    const { squatMetrics, confidence, isValid } = analysis;
+    const { squatMetrics, confidence, isValid, detectionState } = analysis;
 
     return {
       // Depth metrics
@@ -97,6 +100,7 @@ export class SquatAnalyzerAdapter
       // Overall quality
       confidence,
       isValidPose: isValid,
+      detectionState,
     };
   }
 

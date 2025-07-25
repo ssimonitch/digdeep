@@ -183,7 +183,7 @@ export function ActiveAnalysisScreen({ onBack }: ActiveAnalysisScreenProps) {
                   width={displayDimensions.width}
                   height={displayDimensions.height}
                   confidence={metrics.confidence}
-                  detectionState={metrics.isValidPose ? 'valid' : metrics.confidence > 0.5 ? 'detecting' : 'invalid'}
+                  detectionState={metrics.detectionState}
                 />
               </>
             )}
@@ -191,7 +191,7 @@ export function ActiveAnalysisScreen({ onBack }: ActiveAnalysisScreenProps) {
           {/* Enhanced Pose Guidance Overlay */}
           {isAnalyzing && (
             <PoseGuidanceOverlay
-              detectionState={metrics.isValidPose ? 'valid' : metrics.confidence > 0.5 ? 'detecting' : 'invalid'}
+              detectionState={metrics.detectionState}
               confidence={metrics.confidence}
               keyLandmarkVisibility={analysis?.squatMetrics?.keyLandmarkVisibility}
             />

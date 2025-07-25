@@ -43,6 +43,7 @@ export const createMockWithKnownCoordinates = (params: {
       landmarks: createMockPoseResult(landmarks),
       confidence: 0.9,
       isValid: true,
+      detectionState: 'valid',
       timestamp: Date.now(),
       processingTime: 25,
       squatMetrics: {} as SquatMetrics, // Not relevant for coordinate tests
@@ -57,6 +58,7 @@ export const createMockWithKnownCoordinates = (params: {
       repPhase: 'descending',
       confidence: 0.9,
       isValidPose: true, // This is important for rendering
+      detectionState: 'valid',
     },
     camera: {
       stream: null,
@@ -120,6 +122,7 @@ export const createMockAnalysisWithInvalidPose = (params: {
           landmarks: createMockPoseResult(params.landmarks),
           confidence: params.confidence ?? 0.3,
           isValid: params.isValidPose,
+          detectionState: params.isValidPose ? 'valid' : 'invalid',
           timestamp: Date.now(),
           processingTime: 25,
           squatMetrics: {
@@ -143,6 +146,7 @@ export const createMockAnalysisWithInvalidPose = (params: {
       repPhase: 'standing',
       confidence: params.confidence ?? 0.3,
       isValidPose: params.isValidPose,
+      detectionState: params.isValidPose ? 'valid' : 'invalid',
     },
     fps: 30,
     processingTime: 25,

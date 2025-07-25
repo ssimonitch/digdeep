@@ -51,8 +51,18 @@ export function validateSquatAnalysisConfig(config: SquatAnalysisConfig): Config
   if (depth.ascendingThreshold >= depth.bottomPhaseThreshold) {
     warnings.push('depth.ascendingThreshold should typically be less than depth.bottomPhaseThreshold');
   }
-  if (depth.completeRepThreshold >= depth.startRepThreshold) {
-    warnings.push('depth.completeRepThreshold should typically be less than depth.startRepThreshold');
+  // Validate hysteresis band for rep counting
+  // completeRepThreshold should be greater than startRepThreshold to provide hysteresis
+  // This prevents state bouncing when hovering around the threshold
+  if (depth.completeRepThreshold <= depth.startRepThreshold) {
+    warnings.push(
+      'depth.completeRepThreshold should typically be greater than depth.startRepThreshold to provide hysteresis',
+    );
+  }
+  // Warn if hysteresis band is too small
+  const hysteresisBand = depth.completeRepThreshold - depth.startRepThreshold;
+  if (hysteresisBand > 0 && hysteresisBand < 5) {
+    warnings.push(`Hysteresis band of ${hysteresisBand}% between start and complete thresholds may be too small`);
   }
 
   // Validate visibility thresholds (0-1)
