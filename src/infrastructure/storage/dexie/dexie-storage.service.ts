@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
 
-import type { Exercise, Set, SquatAnalysis, UserProfile, WorkoutSession } from '@/types/workout.types';
+import type { Exercise, Set, SquatAnalysis, UserProfile, WorkoutSession } from '@/infrastructure/types/workout.types';
 
 export class DigDeepDatabase extends Dexie {
   sessions!: EntityTable<WorkoutSession, 'id'>;

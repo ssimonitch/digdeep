@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useCallback } from 'react';
 
 import { getDexieStorage } from '@/infrastructure/storage/dexie/dexie-storage.service';
-import type { Exercise, Set, SquatAnalysis, UserProfile, WorkoutSession } from '@/types/workout.types';
+import type { Exercise, Set, SquatAnalysis, UserProfile, WorkoutSession } from '@/infrastructure/types/workout.types';
 
 // Live query hooks for reactive data
 export function useWorkoutSessions(userId: string, limit?: number) {

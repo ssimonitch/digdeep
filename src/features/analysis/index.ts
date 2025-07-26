@@ -1,2 +1,1 @@
-export { ActiveAnalysisScreen } from './ActiveAnalysisScreen';
-export { PoseLandmarkOverlay } from './components';
+export { ActiveAnalysisScreen, PoseLandmarkOverlay } from './components';

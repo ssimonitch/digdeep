@@ -1,4 +1,4 @@
-import type { Exercise, Set, SquatAnalysis, UserProfile, WorkoutSession } from '@/types/workout.types';
+import type { Exercise, Set, SquatAnalysis, UserProfile, WorkoutSession } from '@/infrastructure/types/workout.types';
 
 export const createMockWorkoutSession = (overrides: Partial<WorkoutSession> = {}): WorkoutSession => ({
   id: 'session-1',

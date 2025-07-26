@@ -4,7 +4,7 @@ import { useSquatAnalysis } from '@/features/pose-detection/hooks/useSquatAnalys
 import { ModeToggle } from '@/shared/components/layout/ModeToggle';
 import { Button } from '@/shared/components/ui/button';
 
-import { AnalysisStatus, ControlsSection, StatsGrid, VideoFeedSection } from './components';
+import { AnalysisStatus, ControlsSection, StatsGrid, VideoFeedSection } from './';
 
 export interface ActiveAnalysisScreenProps {
   /** Callback when user wants to go back to home */

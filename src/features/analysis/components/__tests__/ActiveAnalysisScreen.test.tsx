@@ -5,7 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { useSquatAnalysis } from '@/features/pose-detection/hooks/useSquatAnalysis';
 import { setupMediaStreamMock, setupResizeObserverMock, setupVideoElementMock } from '@/test/mocks';
 
-import { ActiveAnalysisScreen } from '../../ActiveAnalysisScreen';
+import { ActiveAnalysisScreen } from '../ActiveAnalysisScreen';
 import {
   createMockUseSquatAnalysis,
   mockAnalysisError,
