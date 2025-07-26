@@ -389,6 +389,12 @@ describe('ActiveAnalysisScreen', () => {
       mockHook.metrics.isValidPose = false;
       mockHook.metrics.confidence = 0.3; // Low confidence for invalid state
       mockHook.metrics.detectionState = 'invalid'; // Update detection state to match
+      mockHook.metrics.visibilityFlags = {
+        shoulders: true,
+        hips: false, // Low visibility - not visible
+        knees: true,
+        ankles: true,
+      };
       if (mockHook.analysis) {
         mockHook.analysis.squatMetrics.keyLandmarkVisibility = {
           shoulders: 0.8,
@@ -451,25 +457,30 @@ describe('ActiveAnalysisScreen', () => {
       const visibilityScenarios = [
         {
           visibility: { shoulders: 0.8, hips: 0.3, knees: 0.8, ankles: 0.8 },
+          visibilityFlags: { shoulders: true, hips: false, knees: true, ankles: true },
           expectedMessage: 'Hips not visible - step back from camera',
         },
         {
           visibility: { shoulders: 0.8, hips: 0.8, knees: 0.3, ankles: 0.8 },
+          visibilityFlags: { shoulders: true, hips: true, knees: false, ankles: true },
           expectedMessage: 'Knees not visible - ensure full body is in frame',
         },
         {
           visibility: { shoulders: 0.8, hips: 0.8, knees: 0.8, ankles: 0.3 },
+          visibilityFlags: { shoulders: true, hips: true, knees: true, ankles: false },
           expectedMessage: 'Ankles not visible - step back from camera',
         },
         {
           visibility: { shoulders: 0.6, hips: 0.6, knees: 0.6, ankles: 0.6 },
+          visibilityFlags: { shoulders: true, hips: true, knees: true, ankles: true },
           expectedMessage: 'Make sure your full body is visible',
         },
       ];
 
-      for (const { visibility, expectedMessage } of visibilityScenarios) {
+      for (const { visibility, visibilityFlags, expectedMessage } of visibilityScenarios) {
         // Create a fresh mock for each iteration
         const iterationMock = { ...mockHook };
+        iterationMock.metrics.visibilityFlags = visibilityFlags;
         if (iterationMock.analysis) {
           iterationMock.analysis.squatMetrics.keyLandmarkVisibility = visibility;
         }

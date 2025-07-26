@@ -3,4 +3,4 @@ export type {
   ExerciseAnalyzer,
   UseExerciseAnalysisOptions,
   UseExerciseAnalysisReturn,
-} from './exercise-analyzer.types';
+} from '../services/analyzers/types';

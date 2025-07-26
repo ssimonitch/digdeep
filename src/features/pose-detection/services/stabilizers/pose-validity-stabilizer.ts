@@ -1,16 +1,10 @@
-/**
- * Detection states for pose validity
- *
- * @description Three-state system for smooth pose detection feedback:
- * - 'invalid': Pose not detected or confidence below lower threshold
- * - 'detecting': Transitioning between states (debouncing period)
- * - 'valid': Pose detected with confidence above upper threshold
- */
 import { DEFAULT_EXERCISE_CONFIG } from '@/shared/exercise-config';
 import type { ExerciseDetectionConfig } from '@/shared/exercise-config/base';
 import { validateExerciseDetectionConfig } from '@/shared/exercise-config/base';
 
-export type DetectionState = 'invalid' | 'detecting' | 'valid';
+import type { DetectionState } from '../core/types';
+import type { StabilizationStrategy } from './hysteresis-stabilizer';
+import { HysteresisStabilizer } from './hysteresis-stabilizer';
 
 /**
  * Detailed state information returned by the stabilizer
@@ -24,6 +18,32 @@ export interface StateInfo {
   timeInState: number;
   /** Whether currently transitioning between states */
   isTransitioning: boolean;
+}
+
+/**
+ * Input type for pose validity stabilization
+ */
+interface PoseValidityInput {
+  confidence: number;
+}
+
+/**
+ * Strategy for pose validity stabilization
+ */
+class PoseValidityStrategy implements StabilizationStrategy<PoseValidityInput> {
+  getConfidence(input: PoseValidityInput): number {
+    return input.confidence;
+  }
+
+  createOutput(input: PoseValidityInput): PoseValidityInput {
+    // The output maintains the same confidence value
+    // State mapping is handled in the PoseValidityStabilizer wrapper
+    return input;
+  }
+
+  getInitialValue(): PoseValidityInput {
+    return { confidence: 0 };
+  }
 }
 
 /**
@@ -46,10 +66,9 @@ export interface StateInfo {
  * to ensure consistency across the application.
  */
 export class PoseValidityStabilizer {
-  private readonly config: Required<ExerciseDetectionConfig>;
+  private readonly stabilizer: HysteresisStabilizer<PoseValidityInput>;
   private currentState: DetectionState = 'invalid';
   private lastConfidence = 0;
-  private transitionStartTime: number | null = null;
   private stateStartTime = 0;
 
   /**
@@ -58,7 +77,7 @@ export class PoseValidityStabilizer {
    * @param config Exercise detection configuration (defaults to DEFAULT_EXERCISE_CONFIG)
    */
   constructor(config: ExerciseDetectionConfig = DEFAULT_EXERCISE_CONFIG) {
-    this.config = {
+    const fullConfig = {
       upperThreshold: config.upperThreshold ?? DEFAULT_EXERCISE_CONFIG.upperThreshold,
       lowerThreshold: config.lowerThreshold ?? DEFAULT_EXERCISE_CONFIG.lowerThreshold,
       enterDebounceTime: config.enterDebounceTime ?? DEFAULT_EXERCISE_CONFIG.enterDebounceTime,
@@ -66,7 +85,7 @@ export class PoseValidityStabilizer {
     };
 
     // Validate configuration using shared validation logic
-    const validation = validateExerciseDetectionConfig(this.config);
+    const validation = validateExerciseDetectionConfig(fullConfig);
     if (!validation.isValid) {
       throw new Error(`Invalid pose validity configuration: ${validation.errors.join(', ')}`);
     }
@@ -76,6 +95,17 @@ export class PoseValidityStabilizer {
       // eslint-disable-next-line no-console
       console.warn('PoseValidityStabilizer configuration warnings:', validation.warnings.join(', '));
     }
+
+    // Create the generic stabilizer with immediate enter (enterDebounceTime = 0)
+    this.stabilizer = new HysteresisStabilizer<PoseValidityInput>(
+      {
+        upperThreshold: fullConfig.upperThreshold,
+        lowerThreshold: fullConfig.lowerThreshold,
+        exitDebounceTime: fullConfig.exitDebounceTime,
+        enterDebounceTime: 0, // Immediate positive feedback for gym UX
+      },
+      new PoseValidityStrategy(),
+    );
   }
 
   /**
@@ -92,41 +122,18 @@ export class PoseValidityStabilizer {
       this.stateStartTime = timestamp;
     }
 
-    // Handle backwards time (ignore the update)
-    if (this.transitionStartTime !== null && timestamp < this.transitionStartTime) {
-      return;
-    }
+    // Use the generic stabilizer
+    const result = this.stabilizer.update({ confidence }, timestamp);
 
-    // Determine desired state based on current state and confidence
-    const desiredState = this.determineDesiredState(confidence);
+    // Map the binary on/off state to our three-state system
+    // When transitioning from on to off, we're in detecting state
+    const newState: DetectionState =
+      result.isOn && !result.isTransitioning ? 'valid' : result.isTransitioning ? 'detecting' : 'invalid';
 
-    if (desiredState === this.currentState) {
-      // No change needed, clear any pending transition
-      this.transitionStartTime = null;
-      return;
-    }
-
-    // Handle state transitions
-    if (desiredState === 'valid' && this.currentState !== 'valid') {
-      // Entering valid state - immediate transition (gym UX optimization)
-      this.setState('valid', timestamp);
-    } else if (desiredState === 'invalid' && (this.currentState === 'valid' || this.currentState === 'detecting')) {
-      // Exiting valid state or continuing exit transition - use debouncing for stability
-      if (this.transitionStartTime === null) {
-        // Start exit transition
-        this.transitionStartTime = timestamp;
-        this.setState('detecting', timestamp);
-      } else {
-        // Check if enough time has passed to complete exit
-        const timeInTransition = timestamp - this.transitionStartTime;
-        if (timeInTransition >= this.config.exitDebounceTime) {
-          this.setState('invalid', timestamp);
-        }
-        // Otherwise stay in 'detecting' state
-      }
-    } else if (this.currentState === 'detecting' && desiredState === 'valid') {
-      // Recovery during exit transition - immediately return to valid
-      this.setState('valid', timestamp);
+    // Update state if changed
+    if (newState !== this.currentState) {
+      this.currentState = newState;
+      this.stateStartTime = timestamp;
     }
   }
 
@@ -150,31 +157,12 @@ export class PoseValidityStabilizer {
   }
 
   /**
-   * Determine the desired state based on confidence and hysteresis
+   * Reset the stabilizer to initial state
    */
-  private determineDesiredState(confidence: number): DetectionState {
-    // Use hysteresis to prevent rapid switching
-    if (this.currentState === 'valid' || this.currentState === 'detecting') {
-      // When valid or detecting, need to drop below lower threshold to want invalid
-      return confidence >= this.config.lowerThreshold ? 'valid' : 'invalid';
-    } else {
-      // When invalid, need to exceed upper threshold to want valid
-      return confidence >= this.config.upperThreshold ? 'valid' : 'invalid';
-    }
-  }
-
-  /**
-   * Set the current state and update timing
-   */
-  private setState(state: DetectionState, timestamp: number): void {
-    if (state !== this.currentState) {
-      this.currentState = state;
-      this.stateStartTime = timestamp;
-
-      // Clear transition when reaching final states (valid or invalid)
-      if (state === 'valid' || state === 'invalid') {
-        this.transitionStartTime = null;
-      }
-    }
+  reset(): void {
+    this.stabilizer.reset();
+    this.currentState = 'invalid';
+    this.lastConfidence = 0;
+    this.stateStartTime = 0;
   }
 }

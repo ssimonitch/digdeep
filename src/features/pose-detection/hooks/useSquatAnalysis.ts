@@ -1,12 +1,8 @@
+import { useExerciseAnalysis } from '@/features/pose-detection/hooks/useExerciseAnalysis';
 import type { SquatExerciseConfig } from '@/shared/exercise-config/squat';
-import { useExerciseAnalysis } from '@/shared/hooks/useExerciseAnalysis';
 
-import {
-  EMPTY_SQUAT_METRICS,
-  type SquatAnalysisMetrics,
-  SquatAnalyzerAdapter,
-} from '../adapters/squat-analyzer-adapter';
-import type { SquatPoseAnalysis } from '../services/squat-pose-analyzer.service';
+import { type SquatAnalysisMetrics, SquatAnalyzerAdapter } from '../adapters/squat/squat-analyzer-adapter';
+import type { SquatPoseAnalysis } from '../services/analyzers/squat/squat-pose-analyzer';
 
 /**
  * Configuration options for useSquatAnalysis hook
@@ -77,7 +73,6 @@ export function useSquatAnalysis(options: UseSquatAnalysisOptions = {}): UseSqua
   // Use the generic exercise analysis hook with squat-specific configuration
   return useExerciseAnalysis<SquatPoseAnalysis, SquatAnalysisMetrics, SquatExerciseConfig>({
     analyzerFactory: (config) => new SquatAnalyzerAdapter(config),
-    emptyMetrics: EMPTY_SQUAT_METRICS,
     ...options,
   });
 }

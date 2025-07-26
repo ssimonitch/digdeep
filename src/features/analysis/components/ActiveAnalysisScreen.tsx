@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useSquatAnalysis } from '@/features/pose-detection/hooks/useSquatAnalysis';
 import { ModeToggle } from '@/shared/components/layout/ModeToggle';
 import { Button } from '@/shared/components/ui/button';
 
-import { PoseGuidanceOverlay } from './PoseGuidanceOverlay';
-import { PoseLandmarkOverlay } from './PoseLandmarkOverlay';
+import { AnalysisStatus } from './AnalysisStatus';
+import { ControlsSection } from './ControlsSection';
+import { StatsGrid } from './StatsGrid';
+import { VideoFeedSection } from './VideoFeedSection';
 
 export interface ActiveAnalysisScreenProps {
   /** Callback when user wants to go back to home */
@@ -36,21 +38,21 @@ export function ActiveAnalysisScreen({ onBack }: ActiveAnalysisScreenProps) {
     },
   });
 
-  const handleStartSession = async () => {
+  const handleStartSession = useCallback(async () => {
     try {
       await startAnalysis();
     } catch {
       // Error handling managed by useSquatAnalysis hook
     }
-  };
+  }, [startAnalysis]);
 
-  const handleStopSession = () => {
+  const handleStopSession = useCallback(() => {
     stopAnalysis();
-  };
+  }, [stopAnalysis]);
 
-  const handleResetSession = () => {
+  const handleResetSession = useCallback(() => {
     resetSession();
-  };
+  }, [resetSession]);
 
   // Handle video element setup with proper event listener cleanup
   useEffect(() => {
@@ -138,93 +140,26 @@ export function ActiveAnalysisScreen({ onBack }: ActiveAnalysisScreenProps) {
       {/* Main Content */}
       <main className="mx-auto max-w-4xl px-4 py-6">
         {/* Camera Feed Section */}
-        <div className="relative mb-6 aspect-video overflow-hidden rounded-lg bg-gray-900">
-          {camera.stream && (
-            <video
-              ref={videoRef}
-              data-testid="camera-feed"
-              className="h-full w-full object-cover"
-              playsInline
-              muted
-              autoPlay
-            />
-          )}
-
-          {!camera.stream && (
-            <div className="flex h-full items-center justify-center text-center">
-              <div className="space-y-4">
-                <div className="text-6xl">📹</div>
-                <div>
-                  <p className="text-xl font-semibold">Camera Ready</p>
-                  <p className="text-muted-foreground">Start your session to begin analysis</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Pose Landmark Overlay - Always show when analyzing */}
-          {isAnalyzing &&
-            analysis?.landmarks?.landmarks &&
-            analysis.landmarks.landmarks.length > 0 &&
-            analysis.landmarks.landmarks[0] &&
-            displayDimensions.width > 0 &&
-            displayDimensions.height > 0 && (
-              <>
-                {/* Debug info for development */}
-                {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
-                  <div className="bg-opacity-50 absolute top-2 left-2 rounded bg-black p-2 text-xs text-white">
-                    Debug: Display {Math.round(displayDimensions.width)}x{Math.round(displayDimensions.height)} |
-                    Landmarks: {analysis.landmarks.landmarks[0]?.length || 0} | Valid:{' '}
-                    {metrics.isValidPose ? 'Yes' : 'No'}
-                  </div>
-                )}
-                <PoseLandmarkOverlay
-                  landmarks={analysis.landmarks.landmarks[0]}
-                  width={displayDimensions.width}
-                  height={displayDimensions.height}
-                  confidence={metrics.confidence}
-                  detectionState={metrics.detectionState}
-                />
-              </>
-            )}
-
-          {/* Enhanced Pose Guidance Overlay */}
-          {isAnalyzing && (
-            <PoseGuidanceOverlay
-              detectionState={metrics.detectionState}
-              confidence={metrics.confidence}
-              keyLandmarkVisibility={analysis?.squatMetrics?.keyLandmarkVisibility}
-            />
-          )}
-        </div>
+        <VideoFeedSection
+          videoRef={videoRef}
+          cameraStream={camera.stream}
+          isAnalyzing={isAnalyzing}
+          landmarks={analysis?.landmarks?.landmarks?.[0] ?? null}
+          displayDimensions={displayDimensions}
+          confidence={metrics.confidence}
+          detectionState={metrics.detectionState}
+          isValidPose={metrics.isValidPose}
+          visibilityFlags={metrics.visibilityFlags}
+        />
 
         {/* Controls Section */}
-        <div className="mb-6 flex flex-wrap justify-center gap-4">
-          {!isAnalyzing ? (
-            <Button
-              onClick={() => void handleStartSession()}
-              size="lg"
-              className="bg-primary hover:bg-primary/90 h-14 px-8 text-lg font-bold"
-              disabled={camera.permission.pending}
-            >
-              {camera.permission.pending ? 'Requesting Camera...' : 'START ANALYSIS'}
-            </Button>
-          ) : (
-            <>
-              <Button
-                onClick={handleStopSession}
-                variant="destructive"
-                size="lg"
-                className="h-14 px-8 text-lg font-bold"
-              >
-                STOP ANALYSIS
-              </Button>
-              <Button onClick={handleResetSession} variant="outline" size="lg" className="h-14 px-8 text-lg font-bold">
-                RESET SESSION
-              </Button>
-            </>
-          )}
-        </div>
+        <ControlsSection
+          isAnalyzing={isAnalyzing}
+          isCameraPermissionPending={camera.permission.pending}
+          onStartAnalysis={() => void handleStartSession()}
+          onStopAnalysis={handleStopSession}
+          onResetSession={handleResetSession}
+        />
 
         {/* Error Display */}
         {error && (
@@ -235,96 +170,29 @@ export function ActiveAnalysisScreen({ onBack }: ActiveAnalysisScreenProps) {
         )}
 
         {/* Quick Stats */}
-        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div className="bg-card rounded-lg border p-4 text-center">
-            <div className="text-2xl font-bold">{metrics.currentRep}</div>
-            <div className="text-muted-foreground text-sm">Reps</div>
-          </div>
-          {metrics.isValidPose ? (
-            <div className="bg-card rounded-lg border p-4 text-center" data-testid="depth-indicator">
-              <div className="text-2xl font-bold">{`${Math.round(metrics.depthPercentage)}%`}</div>
-              <div className="text-muted-foreground text-sm">Depth</div>
-            </div>
-          ) : (
-            <div className="bg-card rounded-lg border p-4 text-center">
-              <div className="text-2xl font-bold">--</div>
-              <div className="text-muted-foreground text-sm">Depth</div>
-            </div>
-          )}
-          <div className="bg-card rounded-lg border p-4 text-center">
-            <div className="text-2xl font-bold">{fps}</div>
-            <div className="text-muted-foreground text-sm">FPS</div>
-          </div>
-          {metrics.isValidPose ? (
-            <div className="bg-card rounded-lg border p-4 text-center" data-testid="balance-meter">
-              <div className={`text-2xl font-bold ${metrics.isBalanced ? 'text-green-600' : 'text-red-600'}`}>
-                {metrics.isBalanced ? '✓' : '⚠️'}
-              </div>
-              <div className="text-muted-foreground text-sm">Balance</div>
-            </div>
-          ) : (
-            <div className="bg-card rounded-lg border p-4 text-center">
-              <div className="text-2xl font-bold text-gray-400">--</div>
-              <div className="text-muted-foreground text-sm">Balance</div>
-            </div>
-          )}
-        </div>
+        <StatsGrid
+          currentRep={metrics.currentRep}
+          depthPercentage={metrics.depthPercentage}
+          isValidPose={metrics.isValidPose}
+          isBalanced={metrics.isBalanced}
+          fps={fps}
+        />
 
         {/* Analysis Status */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Session Status</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="bg-card rounded-lg border p-4">
-              <h3 className="mb-2 font-semibold">Camera</h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>Status:</span>
-                  <span className={camera.isActive ? 'text-green-600' : 'text-gray-600'}>
-                    {camera.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Permission:</span>
-                  <span className={camera.permission.granted ? 'text-green-600' : 'text-red-600'}>
-                    {camera.permission.granted ? 'Granted' : 'Not Granted'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Resolution:</span>
-                  <span>
-                    {camera.config.width}x{camera.config.height}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card rounded-lg border p-4">
-              <h3 className="mb-2 font-semibold">Analysis</h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>Status:</span>
-                  <span className={isAnalyzing ? 'text-green-600' : 'text-gray-600'}>
-                    {isAnalyzing ? 'Analyzing' : 'Stopped'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Initialized:</span>
-                  <span className={isInitialized ? 'text-green-600' : 'text-gray-600'}>
-                    {isInitialized ? 'Yes' : 'No'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Processing Time:</span>
-                  <span>{processingTime.toFixed(1)}ms</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Rep Phase:</span>
-                  <span className="capitalize">{metrics.repPhase}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AnalysisStatus
+          camera={{
+            isActive: camera.isActive,
+            permissionGranted: camera.permission.granted,
+            width: camera.config.width,
+            height: camera.config.height,
+          }}
+          analysis={{
+            isAnalyzing,
+            isInitialized,
+            processingTime,
+            repPhase: metrics.repPhase,
+          }}
+        />
       </main>
     </div>
   );

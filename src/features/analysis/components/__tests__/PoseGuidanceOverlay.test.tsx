@@ -10,11 +10,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.65}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.8,
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -28,11 +28,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="detecting"
           confidence={0.65}
-          keyLandmarkVisibility={{
-            shoulders: 0.7,
-            hips: 0.7,
-            knees: 0.7,
-            ankles: 0.7,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -46,11 +46,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="valid"
           confidence={0.85}
-          keyLandmarkVisibility={{
-            shoulders: 0.9,
-            hips: 0.9,
-            knees: 0.9,
-            ankles: 0.9,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -67,11 +67,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.45}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.3, // Low visibility
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: false, // Not visible
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -85,11 +85,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.45}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.8,
-            knees: 0.3, // Low visibility
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: false, // Not visible
+            ankles: true,
           }}
         />,
       );
@@ -102,11 +102,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.35}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.4, // Low
-            knees: 0.4, // Low
-            ankles: 0.3, // Low
+          visibilityFlags={{
+            shoulders: true,
+            hips: false, // Not visible
+            knees: false, // Not visible
+            ankles: false, // Not visible
           }}
         />,
       );
@@ -124,11 +124,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.45}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.3, // Low
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: false, // Not visible
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -140,11 +140,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.45}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.8, // Now visible
-            knees: 0.3, // Now low
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true, // Now visible
+            knees: false, // Now not visible
+            ankles: true,
           }}
         />,
       );
@@ -158,11 +158,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.45}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.3, // Low
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: false, // Not visible
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -174,11 +174,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="valid"
           confidence={0.85}
-          keyLandmarkVisibility={{
-            shoulders: 0.9,
-            hips: 0.9,
-            knees: 0.9,
-            ankles: 0.9,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -194,11 +194,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.45}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.8,
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -212,11 +212,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="detecting"
           confidence={0.65}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.8,
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -227,11 +227,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="valid"
           confidence={0.92}
-          keyLandmarkVisibility={{
-            shoulders: 0.9,
-            hips: 0.9,
-            knees: 0.9,
-            ankles: 0.9,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -244,11 +244,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="detecting"
           confidence={0.75}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.8,
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -267,11 +267,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.45}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.8,
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -285,11 +285,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="detecting"
           confidence={0.65}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.8,
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -302,11 +302,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="valid"
           confidence={0.85}
-          keyLandmarkVisibility={{
-            shoulders: 0.9,
-            hips: 0.9,
-            knees: 0.9,
-            ankles: 0.9,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -320,11 +320,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.45}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.3,
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: false,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -344,11 +344,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.45}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.8,
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -363,11 +363,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.45}
-          keyLandmarkVisibility={{
-            shoulders: 0.8,
-            hips: 0.3,
-            knees: 0.8,
-            ankles: 0.8,
+          visibilityFlags={{
+            shoulders: true,
+            hips: false,
+            knees: true,
+            ankles: true,
           }}
         />,
       );
@@ -382,23 +382,16 @@ describe('PoseGuidanceOverlay', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle undefined visibility gracefully', () => {
-      render(<PoseGuidanceOverlay detectionState="invalid" confidence={0.45} keyLandmarkVisibility={undefined} />);
-
-      expect(screen.getByText('Position yourself in frame')).toBeInTheDocument();
-      expect(screen.getByText('Make sure your full body is visible')).toBeInTheDocument();
-    });
-
     it('should handle all landmarks with low visibility', () => {
       render(
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0.25}
-          keyLandmarkVisibility={{
-            shoulders: 0.3,
-            hips: 0.3,
-            knees: 0.3,
-            ankles: 0.3,
+          visibilityFlags={{
+            shoulders: false,
+            hips: false,
+            knees: false,
+            ankles: false,
           }}
         />,
       );
@@ -412,11 +405,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="invalid"
           confidence={0}
-          keyLandmarkVisibility={{
-            shoulders: 0.1,
-            hips: 0.1,
-            knees: 0.1,
-            ankles: 0.1,
+          visibilityFlags={{
+            shoulders: false,
+            hips: false,
+            knees: false,
+            ankles: false,
           }}
         />,
       );
@@ -429,11 +422,11 @@ describe('PoseGuidanceOverlay', () => {
         <PoseGuidanceOverlay
           detectionState="valid"
           confidence={1}
-          keyLandmarkVisibility={{
-            shoulders: 1,
-            hips: 1,
-            knees: 1,
-            ankles: 1,
+          visibilityFlags={{
+            shoulders: true,
+            hips: true,
+            knees: true,
+            ankles: true,
           }}
         />,
       );

@@ -3,12 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   UseExerciseAnalysisOptions,
   UseExerciseAnalysisReturn,
-} from '@/features/pose-detection/types/exercise-analyzer.types';
+} from '@/features/pose-detection/services/analyzers/types';
 import { useCamera } from '@/features/recording/hooks/useCamera';
 import { errorMonitor } from '@/shared/services/error-monitor.service';
 
-import { useAnimationLoopWithMetrics } from './useAnimationLoop';
-import { useVideoElement } from './useVideoElement';
+import { useAnimationLoopWithMetrics } from '../../../hooks/useAnimationLoop';
+import { useVideoElement } from '../../../hooks/useVideoElement';
 
 /**
  * Generic hook for real-time exercise analysis combining camera management and pose detection
@@ -28,7 +28,6 @@ import { useVideoElement } from './useVideoElement';
  * ```typescript
  * const { metrics, isAnalyzing, startAnalysis } = useExerciseAnalysis({
  *   analyzerFactory: (config) => new SquatAnalyzerAdapter(config),
- *   emptyMetrics: EMPTY_SQUAT_METRICS,
  *   targetFPS: 30,
  *   onAnalysis: (analysis) => console.log('Analysis:', analysis)
  * });
@@ -37,10 +36,14 @@ import { useVideoElement } from './useVideoElement';
 export function useExerciseAnalysis<TAnalysis, TMetrics, TConfig>(
   options: UseExerciseAnalysisOptions<TAnalysis, TMetrics, TConfig>,
 ): UseExerciseAnalysisReturn<TAnalysis, TMetrics> {
-  const { analyzerFactory, emptyMetrics, autoStart = false, config, onAnalysis, targetFPS = 30 } = options;
+  const { analyzerFactory, autoStart = false, config, onAnalysis, targetFPS = 30 } = options;
 
   // Create analyzer instance using ref for stability
   const analyzerRef = useRef<ReturnType<typeof analyzerFactory>>(analyzerFactory(config));
+
+  // Control states - independent lifecycle
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Update analyzer config
   const isFirstMount = useRef(true);
@@ -53,8 +56,16 @@ export function useExerciseAnalysis<TAnalysis, TMetrics, TConfig>(
 
     if (analyzerRef.current && config) {
       analyzerRef.current.updateConfig(config);
+
+      // Update metrics if not actively analyzing to reflect new config
+      if (!isAnalyzing) {
+        setAnalysisData((prev) => ({
+          ...prev,
+          metrics: analyzerRef.current.getEmptyMetrics(),
+        }));
+      }
     }
-  }, [config]);
+  }, [config, isAnalyzing]);
 
   // Camera integration
   // IMPORTANT: We intentionally pass autoStart: false to useCamera regardless of the
@@ -77,7 +88,7 @@ export function useExerciseAnalysis<TAnalysis, TMetrics, TConfig>(
     metrics: TMetrics;
   }>({
     analysis: null,
-    metrics: emptyMetrics,
+    metrics: analyzerRef.current.getEmptyMetrics(),
   });
 
   // Performance state - updates at different frequency than analysis
@@ -85,10 +96,6 @@ export function useExerciseAnalysis<TAnalysis, TMetrics, TConfig>(
     fps: 0,
     processingTime: 0,
   });
-
-  // Control states - independent lifecycle
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Error state - kept separate for error boundary compatibility
   const [error, setError] = useState<string | undefined>();
@@ -247,7 +254,7 @@ export function useExerciseAnalysis<TAnalysis, TMetrics, TConfig>(
     // Reset local state
     setAnalysisData({
       analysis: null,
-      metrics: emptyMetrics,
+      metrics: analyzerRef.current.getEmptyMetrics(),
     });
     setPerformanceData((prev) => ({
       ...prev,
@@ -258,7 +265,7 @@ export function useExerciseAnalysis<TAnalysis, TMetrics, TConfig>(
     errorMonitor.reportError('Exercise analysis session reset', 'custom', 'low', {
       analyzer: analyzerRef.current.constructor.name,
     });
-  }, [emptyMetrics]);
+  }, []);
 
   // Config changes are now handled by analyzer.updateConfig()
   // No need to reset initialization state

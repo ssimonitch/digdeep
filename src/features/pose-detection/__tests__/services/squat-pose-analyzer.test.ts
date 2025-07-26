@@ -1,30 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SQUAT_EXERCISE_CONFIG } from '@/shared/exercise-config/squat';
-import { type ErrorContext, errorMonitor } from '@/shared/services/error-monitor.service';
+import { errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
 import {
   getSquatPoseAnalyzer,
   type SquatPoseAnalysis,
   SquatPoseAnalyzer,
-} from '../../services/squat-pose-analyzer.service';
+} from '../../services/analyzers/squat/squat-pose-analyzer';
 import {
   createDefaultLandmarks,
   createMockPoseResult,
   LANDMARK_INDICES,
   SQUAT_FIXTURES,
-} from '../pose-detection/fixtures/landmark-fixtures';
+} from '../fixtures/landmark-fixtures';
 import {
   createMockVideoElement,
   MockPoseLandmarker,
   resetMockMediaPipeConfig,
   setMockMediaPipeConfig,
-} from '../pose-detection/mocks/mediapipe-mocks';
+} from '../mocks/mediapipe-mocks';
 
 // Mock the MediaPipe imports first (before other imports to avoid hoisting issues)
 vi.mock('@mediapipe/tasks-vision', async () => {
-  const mocks = await import('../pose-detection/mocks/mediapipe-mocks');
+  const mocks = await import('../mocks/mediapipe-mocks');
   return {
     FilesetResolver: mocks.MockFilesetResolver,
     PoseLandmarker: mocks.MockPoseLandmarker,
@@ -1247,22 +1247,10 @@ describe('SquatPoseAnalyzer', () => {
         vi.advanceTimersByTime(40); // Advance time to avoid throttling
       });
 
-      // Cleanup should report final metrics
+      // Cleanup should report completion
       analyzer.cleanup();
 
-      expect(errorMonitor.reportError).toHaveBeenCalledWith(
-        'SquatPoseAnalyzer cleanup completed',
-        'custom',
-        'low',
-        expect.objectContaining<ErrorContext>({
-          finalMetrics: expect.objectContaining({
-            averageConfidence: expect.any(Number) as number,
-            totalFrames: expect.any(Number) as number,
-            validSquatPoses: expect.any(Number) as number,
-            successRate: expect.any(Number) as number,
-          }),
-        }),
-      );
+      expect(errorMonitor.reportError).toHaveBeenCalledWith('SquatPoseAnalyzer cleanup completed', 'custom', 'low', {});
 
       vi.useRealTimers();
     });
@@ -1547,9 +1535,9 @@ describe('SquatPoseAnalyzer', () => {
         }
       }
 
-      // The sequence should end in ascending phase since standing fixture may not be < 20% depth
+      // The sequence should end in ascending or standing phase
       // Just verify that rep counting is working (transitions happened)
-      expect(['ascending', 'completed', 'standing']).toContain(lastResult?.squatMetrics.repCounting.phase);
+      expect(['ascending', 'standing']).toContain(lastResult?.squatMetrics.repCounting.phase);
 
       vi.useRealTimers();
     });

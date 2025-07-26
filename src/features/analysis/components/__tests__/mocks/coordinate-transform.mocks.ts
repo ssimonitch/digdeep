@@ -4,7 +4,7 @@ import type { SquatMetrics } from '@/features/pose-detection';
 import {
   createMockLandmark,
   createMockPoseResult,
-} from '@/features/pose-detection/__tests__/pose-detection/fixtures/landmark-fixtures';
+} from '@/features/pose-detection/__tests__/fixtures/landmark-fixtures';
 import type { UseSquatAnalysisReturn } from '@/features/pose-detection/hooks/useSquatAnalysis';
 
 import { createMockUseSquatAnalysis } from './analysis-screen.mocks';
@@ -59,6 +59,12 @@ export const createMockWithKnownCoordinates = (params: {
       confidence: 0.9,
       isValidPose: true, // This is important for rendering
       detectionState: 'valid',
+      visibilityFlags: {
+        shoulders: true,
+        hips: true,
+        knees: true,
+        ankles: true,
+      },
     },
     camera: {
       stream: null,
@@ -113,6 +119,12 @@ export const createMockAnalysisWithInvalidPose = (params: {
   landmarks: NormalizedLandmark[] | null;
   depthPercentage: number;
   confidence?: number;
+  visibilityFlags?: {
+    shoulders: boolean;
+    hips: boolean;
+    knees: boolean;
+    ankles: boolean;
+  };
 }): UseSquatAnalysisReturn => {
   return createMockUseSquatAnalysis({
     isAnalyzing: true,
@@ -147,6 +159,12 @@ export const createMockAnalysisWithInvalidPose = (params: {
       confidence: params.confidence ?? 0.3,
       isValidPose: params.isValidPose,
       detectionState: params.isValidPose ? 'valid' : 'invalid',
+      visibilityFlags: params.visibilityFlags ?? {
+        shoulders: false,
+        hips: false,
+        knees: false,
+        ankles: false,
+      },
     },
     fps: 30,
     processingTime: 25,

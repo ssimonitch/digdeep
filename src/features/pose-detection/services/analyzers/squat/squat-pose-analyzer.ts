@@ -5,11 +5,17 @@ import { SQUAT_EXERCISE_CONFIG, validateSquatAnalysisConfig } from '@/shared/exe
 import { errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
-import { LandmarkCalculator } from '../utils/landmark-calculator.util';
-import { LandmarkValidator } from '../utils/landmark-validator';
-import { BasePoseDetector } from './base-pose-detector';
-import type { DetectionState } from './pose-validity-stabilizer';
-import { PoseValidityStabilizer } from './pose-validity-stabilizer';
+import { LandmarkCalculator } from '../../../utils/landmark-calculator.util';
+import { LandmarkValidator } from '../../../utils/landmark-validator';
+import { BasePoseDetector } from '../../core/base-pose-detector';
+import type { DetectionState } from '../../core/types';
+import { PoseValidityStabilizer } from '../../stabilizers/pose-validity-stabilizer';
+import type { LandmarkGroupVisibility } from '../../stabilizers/visibility-stabilizer';
+import { VisibilityStabilizer } from '../../stabilizers/visibility-stabilizer';
+import type { BarPathPoint } from './squat-metrics-tracker';
+import { MetricsTracker } from './squat-metrics-tracker';
+import type { RepCountingMetrics, RepData, RepPhase } from './squat-rep-counter';
+import { RepCounter } from './squat-rep-counter';
 
 /**
  * MediaPipe Pose Landmark indices for squat analysis
@@ -36,31 +42,9 @@ export const SQUAT_LANDMARKS = {
   RIGHT_FOOT_INDEX: 32,
 } as const;
 
-/**
- * Bar path tracking data point
- */
-export interface BarPathPoint {
-  position: { x: number; y: number; z: number };
-  timestamp: number;
-  deviation: number;
-}
-
-/**
- * Rep counting state
- */
-export type RepPhase = 'standing' | 'descending' | 'bottom' | 'ascending' | 'completed';
-
-/**
- * Rep tracking data
- */
-export interface RepData {
-  phase: RepPhase;
-  startTime: number;
-  maxDepth: number;
-  maxLateralShift: number;
-  barPathDeviation: number;
-  isValid: boolean;
-}
+// Re-export types from the extracted classes
+export type { BarPathPoint } from './squat-metrics-tracker';
+export type { RepData, RepPhase } from './squat-rep-counter';
 
 export interface SquatMetrics {
   hasValidSquatPose: boolean;
@@ -70,6 +54,7 @@ export interface SquatMetrics {
     ankles: number;
     shoulders: number;
   };
+  stabilizedVisibility?: LandmarkGroupVisibility;
   jointAngles: {
     leftKneeAngle: number | null;
     rightKneeAngle: number | null;
@@ -134,34 +119,28 @@ export interface SquatPoseAnalysis {
  */
 export class SquatPoseAnalyzer extends BasePoseDetector {
   private static instance: SquatPoseAnalyzer | null = null;
-  private validSquatPoses = 0;
   private confidenceScores: number[] = [];
   private readonly maxHistorySize = 30;
   private readonly landmarkValidator = new LandmarkValidator();
   private readonly analysisConfig: SquatAnalysisConfig;
-  private readonly poseValidityStabilizer: PoseValidityStabilizer;
+  private readonly exerciseConfig: SquatExerciseConfig;
+  private poseValidityStabilizer: PoseValidityStabilizer;
+  private readonly visibilityStabilizer: VisibilityStabilizer;
 
-  // Lateral shift history tracking
-  private lateralShiftHistory: number[] = [];
-  private maxLateralShift = 0;
+  // Noise floor threshold to filter out spurious low-confidence detections
+  // MediaPipe may report very low visibility values (0.01-0.1) for landmarks
+  // that aren't actually present, causing UI flickering
+  private readonly NOISE_FLOOR_THRESHOLD = 0.1;
+
+  // Metrics tracking
+  private readonly metricsTracker: MetricsTracker;
+  private readonly repCounter: RepCounter;
 
   // Dynamic baseline tracking for depth calculation
   private standingHipY: number | null = null;
   private standingKneeY: number | null = null;
   private calibrationFrames = 0;
   private readonly CALIBRATION_FRAMES_NEEDED = 10;
-  private maxShiftDepth: number | null = null;
-
-  // Bar path tracking
-  private barPathHistory: BarPathPoint[] = [];
-  private maxBarPathDeviation = 0;
-  private startingBarPosition: { x: number; y: number; z: number } | null = null;
-
-  // Rep counting state
-  private currentRepPhase: RepPhase = 'standing';
-  private currentRep: RepData | null = null;
-  private completedReps: RepData[] = [];
-  private repCount = 0;
 
   constructor(config: SquatExerciseConfig = SQUAT_EXERCISE_CONFIG) {
     // Validate the analysis configuration
@@ -184,11 +163,21 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
       minTrackingConfidence: config.analysis.mediaPipe.minTrackingConfidence,
     });
 
-    // Store analysis configuration
+    // Store both the full exercise config and analysis config
+    this.exerciseConfig = config;
     this.analysisConfig = config.analysis;
 
     // Initialize pose validity stabilizer with detection config
     this.poseValidityStabilizer = new PoseValidityStabilizer(config);
+
+    // Initialize visibility stabilizer with its own thresholds
+    // Using default values (enter at 0.7, exit at 0.5, 200ms debounce)
+    // These are specifically for landmark visibility, not pose validity
+    this.visibilityStabilizer = new VisibilityStabilizer();
+
+    // Initialize metrics tracker and rep counter
+    this.metricsTracker = new MetricsTracker(this.maxHistorySize);
+    this.repCounter = new RepCounter(this.analysisConfig);
   }
 
   /**
@@ -229,10 +218,20 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
       // Update stabilizer with zero confidence for failed detection
       this.poseValidityStabilizer.update(0, baseResult.timestamp);
 
+      // Update visibility stabilizer with zero values for all landmarks
+      const zeroVisibility = {
+        hips: 0,
+        knees: 0,
+        ankles: 0,
+        shoulders: 0,
+      };
+      const stabilizedVisibility = this.visibilityStabilizer.update(zeroVisibility, baseResult.timestamp);
+
       const stabilizedState = this.poseValidityStabilizer.getState();
       const emptyAnalysis = this.createEmptyAnalysis(baseResult.timestamp, baseResult.processingTime);
       emptyAnalysis.isValid = stabilizedState === 'valid';
       emptyAnalysis.detectionState = stabilizedState;
+      emptyAnalysis.squatMetrics.stabilizedVisibility = stabilizedVisibility;
 
       return emptyAnalysis;
     }
@@ -249,11 +248,6 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     // Use stabilized validity instead of direct checks
     const stabilizedState = this.poseValidityStabilizer.getState();
     const isValid = stabilizedState === 'valid';
-
-    // Track squat-specific metrics
-    if (isValid) {
-      this.validSquatPoses++;
-    }
 
     // Track confidence scores for squat analysis
     this.confidenceScores.push(baseResult.confidence);
@@ -308,13 +302,25 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
 
     let totalWeight = 0;
     let weightedVisibility = 0;
+    let anyLandmarkAboveThreshold = false;
 
     for (const { index, weight } of keyLandmarks) {
       const landmark = landmarks[index];
       if (landmark?.visibility !== undefined) {
-        totalWeight += weight;
-        weightedVisibility += landmark.visibility * weight;
+        // Apply noise floor threshold - treat very low visibility as 0
+        const visibility = landmark.visibility < this.NOISE_FLOOR_THRESHOLD ? 0 : landmark.visibility;
+
+        if (visibility > 0) {
+          anyLandmarkAboveThreshold = true;
+          totalWeight += weight;
+          weightedVisibility += visibility * weight;
+        }
       }
+    }
+
+    // If no landmarks are above the noise threshold, return 0
+    if (!anyLandmarkAboveThreshold) {
+      return 0;
     }
 
     return totalWeight > 0 ? weightedVisibility / totalWeight : 0;
@@ -324,63 +330,20 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
    * Analyze squat-specific metrics from pose landmarks
    */
   private analyzeSquatMetrics(result: PoseLandmarkerResult, timestamp: number): SquatMetrics {
-    const emptyMetrics: SquatMetrics = {
-      hasValidSquatPose: false,
-      keyLandmarkVisibility: {
-        hips: 0,
-        knees: 0,
-        ankles: 0,
-        shoulders: 0,
-      },
-      jointAngles: {
-        leftKneeAngle: null,
-        rightKneeAngle: null,
-        leftHipAngle: null,
-        rightHipAngle: null,
-        averageKneeAngle: null,
-      },
-      barPosition: {
-        shoulderMidpoint: null,
-        isValidBarPosition: false,
-      },
-      balance: {
-        lateralDeviation: null,
-        isBalanced: false,
-        shiftHistory: [...this.lateralShiftHistory],
-        maxLateralShift: this.maxLateralShift,
-        maxShiftDepth: this.maxShiftDepth,
-      },
-      depth: {
-        hipKneeRatio: null,
-        hasAchievedDepth: false,
-        depthPercentage: null,
-      },
-      barPath: {
-        currentPosition: null,
-        history: [],
-        verticalDeviation: null,
-        maxDeviation: 0,
-        startingPosition: null,
-      },
-      repCounting: {
-        currentRep: null,
-        repCount: 0,
-        phase: 'standing' as RepPhase,
-        completedReps: [],
-      },
-    };
-
     if (!result.landmarks || result.landmarks.length === 0) {
-      return emptyMetrics;
+      return this.createEmptySquatMetrics();
     }
 
     const landmarks = result.landmarks[0];
     if (!landmarks || landmarks.length < 33) {
-      return emptyMetrics;
+      return this.createEmptySquatMetrics();
     }
 
     // Calculate key landmark visibilities
     const keyLandmarkVisibility = this.calculateKeyLandmarkVisibility(landmarks);
+
+    // Get stabilized visibility values
+    const stabilizedVisibility = this.visibilityStabilizer.update(keyLandmarkVisibility, timestamp);
 
     // Calculate joint angles
     const jointAngles = this.calculateJointAngles(landmarks);
@@ -406,6 +369,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     return {
       hasValidSquatPose,
       keyLandmarkVisibility,
+      stabilizedVisibility,
       jointAngles,
       barPosition,
       balance,
@@ -429,7 +393,9 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
       const groupLandmarks = indices.map((i) => landmarks[i]).filter((l) => l !== undefined);
       if (groupLandmarks.length === 0) return 0;
       const result = this.landmarkValidator.validateVisibility(groupLandmarks, 0);
-      return result.averageVisibility;
+
+      // Apply noise floor threshold - return 0 if average visibility is below threshold
+      return result.averageVisibility < this.NOISE_FLOOR_THRESHOLD ? 0 : result.averageVisibility;
     };
 
     return {
@@ -501,12 +467,13 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     );
 
     if (!hipMidpoint || !kneeMidpoint) {
+      const lateralMetrics = this.metricsTracker.getLateralShiftMetrics();
       return {
         lateralDeviation: null,
         isBalanced: false,
-        shiftHistory: [...this.lateralShiftHistory],
-        maxLateralShift: this.maxLateralShift,
-        maxShiftDepth: this.maxShiftDepth,
+        shiftHistory: lateralMetrics.shiftHistory,
+        maxLateralShift: lateralMetrics.maxLateralShift,
+        maxShiftDepth: lateralMetrics.maxShiftDepth,
       };
     }
 
@@ -518,12 +485,13 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     const rightHip = landmarks[SQUAT_LANDMARKS.RIGHT_HIP];
 
     if (!leftHip || !rightHip) {
+      const lateralMetrics = this.metricsTracker.getLateralShiftMetrics();
       return {
         lateralDeviation,
         isBalanced: false,
-        shiftHistory: [...this.lateralShiftHistory],
-        maxLateralShift: this.maxLateralShift,
-        maxShiftDepth: this.maxShiftDepth,
+        shiftHistory: lateralMetrics.shiftHistory,
+        maxLateralShift: lateralMetrics.maxLateralShift,
+        maxShiftDepth: lateralMetrics.maxShiftDepth,
       };
     }
 
@@ -532,25 +500,16 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
 
     // Track lateral shift history
     if (lateralDeviation !== null) {
-      // Add to history (circular buffer)
-      this.lateralShiftHistory.push(lateralDeviation);
-      if (this.lateralShiftHistory.length > this.maxHistorySize) {
-        this.lateralShiftHistory.shift();
-      }
-
-      // Update max shift if current is greater
-      if (lateralDeviation > this.maxLateralShift) {
-        this.maxLateralShift = lateralDeviation;
-        this.maxShiftDepth = currentDepth;
-      }
+      this.metricsTracker.updateLateralShift(lateralDeviation, currentDepth);
     }
 
+    const lateralMetrics = this.metricsTracker.getLateralShiftMetrics();
     return {
       lateralDeviation,
       isBalanced,
-      shiftHistory: [...this.lateralShiftHistory],
-      maxLateralShift: this.maxLateralShift,
-      maxShiftDepth: this.maxShiftDepth,
+      shiftHistory: lateralMetrics.shiftHistory,
+      maxLateralShift: lateralMetrics.maxLateralShift,
+      maxShiftDepth: lateralMetrics.maxShiftDepth,
     };
   }
 
@@ -637,46 +596,17 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
    */
   private calculateBarPath(shoulderMidpoint: { x: number; y: number; z: number } | null, timestamp: number) {
     if (!shoulderMidpoint) {
+      const barPathMetrics = this.metricsTracker.getBarPathMetrics();
       return {
         currentPosition: null,
-        history: [...this.barPathHistory],
+        history: barPathMetrics.history,
         verticalDeviation: null,
-        maxDeviation: this.maxBarPathDeviation,
-        startingPosition: this.startingBarPosition,
+        maxDeviation: barPathMetrics.maxDeviation,
+        startingPosition: barPathMetrics.startingPosition,
       };
     }
 
-    // Set starting position if not already set
-    this.startingBarPosition ??= { ...shoulderMidpoint };
-
-    // Calculate vertical deviation from starting position
-    const verticalDeviation = Math.abs(shoulderMidpoint.y - this.startingBarPosition.y);
-
-    // Update max deviation
-    if (verticalDeviation > this.maxBarPathDeviation) {
-      this.maxBarPathDeviation = verticalDeviation;
-    }
-
-    // Create new bar path point
-    const barPathPoint: BarPathPoint = {
-      position: { ...shoulderMidpoint },
-      timestamp,
-      deviation: verticalDeviation,
-    };
-
-    // Add to history (bounded array)
-    this.barPathHistory.push(barPathPoint);
-    if (this.barPathHistory.length > this.maxHistorySize) {
-      this.barPathHistory.shift();
-    }
-
-    return {
-      currentPosition: shoulderMidpoint,
-      history: [...this.barPathHistory],
-      verticalDeviation,
-      maxDeviation: this.maxBarPathDeviation,
-      startingPosition: this.startingBarPosition,
-    };
+    return this.metricsTracker.updateBarPath(shoulderMidpoint, timestamp);
   }
 
   /**
@@ -688,120 +618,21 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
     barPath: { verticalDeviation: number | null; maxDeviation: number },
     timestamp: number,
   ) {
-    const depthPercentage = depth.depthPercentage ?? 0;
+    const metrics: RepCountingMetrics = {
+      depthPercentage: depth.depthPercentage ?? 0,
+      hasAchievedDepth: depth.hasAchievedDepth,
+      lateralShift: balance.maxLateralShift,
+      barPathDeviation: barPath.maxDeviation,
+    };
 
-    // State machine transitions
-    switch (this.currentRepPhase) {
-      case 'standing':
-        // Start rep when moving down (depth > startRepThreshold)
-        if (depthPercentage > this.analysisConfig.depth.startRepThreshold) {
-          this.currentRepPhase = 'descending';
-          this.currentRep = {
-            phase: 'descending',
-            startTime: timestamp,
-            maxDepth: depthPercentage,
-            maxLateralShift: balance.maxLateralShift,
-            barPathDeviation: barPath.maxDeviation,
-            isValid: true,
-          };
-        }
-        break;
+    const result = this.repCounter.update(metrics, timestamp);
 
-      case 'descending':
-        // Continue descending or reach bottom
-        if (this.currentRep) {
-          this.currentRep.maxDepth = Math.max(this.currentRep.maxDepth, depthPercentage);
-          this.currentRep.maxLateralShift = Math.max(this.currentRep.maxLateralShift, balance.maxLateralShift);
-          this.currentRep.barPathDeviation = Math.max(this.currentRep.barPathDeviation, barPath.maxDeviation);
-        }
-
-        // Transition to bottom when depth achieved or depth stops increasing
-        if (depth.hasAchievedDepth || depthPercentage > this.analysisConfig.depth.bottomPhaseThreshold) {
-          this.currentRepPhase = 'bottom';
-          if (this.currentRep) {
-            this.currentRep.phase = 'bottom';
-          }
-        }
-        break;
-
-      case 'bottom':
-        // Update max values while at bottom
-        if (this.currentRep) {
-          this.currentRep.maxDepth = Math.max(this.currentRep.maxDepth, depthPercentage);
-          this.currentRep.maxLateralShift = Math.max(this.currentRep.maxLateralShift, balance.maxLateralShift);
-          this.currentRep.barPathDeviation = Math.max(this.currentRep.barPathDeviation, barPath.maxDeviation);
-        }
-
-        // Start ascending when depth decreases significantly
-        if (depthPercentage < this.analysisConfig.depth.ascendingThreshold) {
-          this.currentRepPhase = 'ascending';
-          if (this.currentRep) {
-            this.currentRep.phase = 'ascending';
-          }
-        }
-        break;
-
-      case 'ascending':
-        // Complete rep when returning to standing (depth < completeRepThreshold)
-        if (depthPercentage < this.analysisConfig.depth.completeRepThreshold) {
-          this.currentRepPhase = 'completed';
-          if (this.currentRep) {
-            this.currentRep.phase = 'completed';
-
-            // Validate rep quality
-            this.currentRep.isValid = this.validateRep(this.currentRep);
-
-            // Add to completed reps and increment counter
-            this.completedReps.push(this.currentRep);
-            if (this.currentRep.isValid) {
-              this.repCount++;
-            }
-          }
-        }
-        break;
-
-      case 'completed':
-        // Return to standing and reset for next rep
-        this.currentRepPhase = 'standing';
-        this.currentRep = null;
-        // Reset bar path tracking for next rep
-        this.resetBarPathTracking();
-        break;
+    // Check if we completed a rep to reset bar path tracking
+    if (this.repCounter.getCurrentPhase() === 'standing' && result.phase === 'standing') {
+      this.metricsTracker.resetBarPath();
     }
 
-    return {
-      currentRep: this.currentRep,
-      repCount: this.repCount,
-      phase: this.currentRepPhase,
-      completedReps: [...this.completedReps],
-    };
-  }
-
-  /**
-   * Validate rep quality based on depth and balance thresholds
-   */
-  private validateRep(rep: RepData): boolean {
-    // Rep is valid if:
-    // 1. Achieved minimum depth (configured threshold)
-    const minDepthThreshold = this.analysisConfig.depth.depthThreshold * 100;
-    const achievedDepth = rep.maxDepth >= minDepthThreshold;
-
-    // 2. Maintained reasonable balance (lateral shift within configured limit)
-    const reasonableBalance = rep.maxLateralShift < this.analysisConfig.validation.maxLateralShift;
-
-    // 3. Bar path deviation is reasonable (within configured limit)
-    const reasonableBarPath = rep.barPathDeviation < this.analysisConfig.validation.maxBarPathDeviation;
-
-    return achievedDepth && reasonableBalance && reasonableBarPath;
-  }
-
-  /**
-   * Reset bar path tracking for new rep
-   */
-  private resetBarPathTracking(): void {
-    this.barPathHistory = [];
-    this.maxBarPathDeviation = 0;
-    this.startingBarPosition = null;
+    return result;
   }
 
   /**
@@ -827,6 +658,58 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
   }
 
   /**
+   * Create empty squat metrics
+   */
+  private createEmptySquatMetrics(): SquatMetrics {
+    const lateralMetrics = this.metricsTracker.getLateralShiftMetrics();
+    const barPathMetrics = this.metricsTracker.getBarPathMetrics();
+    const repCountingState = this.repCounter.getState();
+
+    return {
+      hasValidSquatPose: false,
+      keyLandmarkVisibility: {
+        hips: 0,
+        knees: 0,
+        ankles: 0,
+        shoulders: 0,
+      },
+      // stabilizedVisibility will be set by caller to ensure consistency
+      jointAngles: {
+        leftKneeAngle: null,
+        rightKneeAngle: null,
+        leftHipAngle: null,
+        rightHipAngle: null,
+        averageKneeAngle: null,
+      },
+      barPosition: {
+        shoulderMidpoint: null,
+        isValidBarPosition: false,
+      },
+      balance: {
+        lateralDeviation: null,
+        isBalanced: false,
+        shiftHistory: lateralMetrics.shiftHistory,
+        maxLateralShift: lateralMetrics.maxLateralShift,
+        maxShiftDepth: lateralMetrics.maxShiftDepth,
+      },
+      depth: {
+        hipKneeRatio: null,
+        hasAchievedDepth: false,
+        depthPercentage: null,
+        depthThreshold: this.analysisConfig.depth.depthThreshold,
+      },
+      barPath: {
+        currentPosition: null,
+        history: barPathMetrics.history,
+        verticalDeviation: null,
+        maxDeviation: barPathMetrics.maxDeviation,
+        startingPosition: barPathMetrics.startingPosition,
+      },
+      repCounting: repCountingState,
+    };
+  }
+
+  /**
    * Create empty analysis result
    */
   private createEmptyAnalysis(timestamp: number, processingTime = 0): SquatPoseAnalysis {
@@ -837,52 +720,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
       processingTime,
       isValid: false,
       detectionState: 'invalid',
-      squatMetrics: {
-        hasValidSquatPose: false,
-        keyLandmarkVisibility: {
-          hips: 0,
-          knees: 0,
-          ankles: 0,
-          shoulders: 0,
-        },
-        jointAngles: {
-          leftKneeAngle: null,
-          rightKneeAngle: null,
-          leftHipAngle: null,
-          rightHipAngle: null,
-          averageKneeAngle: null,
-        },
-        barPosition: {
-          shoulderMidpoint: null,
-          isValidBarPosition: false,
-        },
-        balance: {
-          lateralDeviation: null,
-          isBalanced: false,
-          shiftHistory: [...this.lateralShiftHistory],
-          maxLateralShift: this.maxLateralShift,
-          maxShiftDepth: this.maxShiftDepth,
-        },
-        depth: {
-          hipKneeRatio: null,
-          hasAchievedDepth: false,
-          depthPercentage: null,
-          depthThreshold: this.analysisConfig.depth.depthThreshold,
-        },
-        barPath: {
-          currentPosition: null,
-          history: [...this.barPathHistory],
-          verticalDeviation: null,
-          maxDeviation: this.maxBarPathDeviation,
-          startingPosition: this.startingBarPosition,
-        },
-        repCounting: {
-          currentRep: this.currentRep,
-          repCount: this.repCount,
-          phase: this.currentRepPhase,
-          completedReps: [...this.completedReps],
-        },
-      },
+      squatMetrics: this.createEmptySquatMetrics(),
     };
   }
 
@@ -891,44 +729,24 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
    * Overrides base class to handle squat-specific metrics
    */
   public cleanup(): void {
-    // Calculate squat-specific final metrics before cleanup
-    const averageConfidence =
-      this.confidenceScores.length > 0
-        ? this.confidenceScores.reduce((a, b) => a + b, 0) / this.confidenceScores.length
-        : 0;
-
-    const finalMetrics = {
-      totalFrames: this.totalFrames,
-      validSquatPoses: this.validSquatPoses,
-      successRate: this.totalFrames > 0 ? this.validSquatPoses / this.totalFrames : 0,
-      averageConfidence,
-    };
-
     // Reset squat-specific metrics
-    this.validSquatPoses = 0;
     this.confidenceScores = [];
-    this.lateralShiftHistory = [];
-    this.maxLateralShift = 0;
-    this.maxShiftDepth = null;
 
-    // Reset bar path and rep counting state
-    this.barPathHistory = [];
-    this.maxBarPathDeviation = 0;
-    this.startingBarPosition = null;
-    this.currentRepPhase = 'standing';
-    this.currentRep = null;
-    this.completedReps = [];
-    this.repCount = 0;
+    // Reset metrics tracker and rep counter
+    this.metricsTracker.reset();
+    this.repCounter.reset();
 
-    // Reset pose validity stabilizer
+    // Reset calibration
+    this.resetCalibration();
+
+    // Reset both stabilizers
     this.resetPoseValidityStabilizer();
+    this.resetVisibilityStabilizer();
 
     // Call parent cleanup
     super.cleanup();
 
-    errorMonitor.reportError('SquatPoseAnalyzer cleanup completed', 'custom', 'low', {
-      finalMetrics,
-    });
+    errorMonitor.reportError('SquatPoseAnalyzer cleanup completed', 'custom', 'low', {});
   }
 
   /**
@@ -942,65 +760,32 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
   }
 
   /**
-   * Get confidence scores array for testing
-   */
-  public getConfidenceScores(): number[] {
-    return [...this.confidenceScores];
-  }
-
-  /**
-   * Get valid squat poses count for testing
-   */
-  public getValidSquatPoses(): number {
-    return this.validSquatPoses;
-  }
-
-  /**
-   * Get total frames processed count for testing
-   */
-  public getTotalFrames(): number {
-    return this.totalFrames;
-  }
-
-  /**
    * Reset lateral shift history (for new rep or testing)
    */
   public resetShiftHistory(): void {
-    this.lateralShiftHistory = [];
-    this.maxLateralShift = 0;
-    this.maxShiftDepth = null;
+    this.metricsTracker.resetLateralShift();
   }
 
   /**
-   * Get current rep counting data for testing
+   * Reset visibility stabilizer state
    */
-  public getRepCountingData() {
-    return {
-      currentRep: this.currentRep,
-      repCount: this.repCount,
-      phase: this.currentRepPhase,
-      completedReps: [...this.completedReps],
-    };
-  }
-
-  /**
-   * Get bar path history for testing
-   */
-  public getBarPathHistory(): BarPathPoint[] {
-    return [...this.barPathHistory];
+  public resetVisibilityStabilizer(): void {
+    this.visibilityStabilizer.reset();
   }
 
   /**
    * Reset rep counting state (for new session or testing)
    */
   public resetRepCounting(): void {
-    this.currentRepPhase = 'standing';
-    this.currentRep = null;
-    this.completedReps = [];
-    this.repCount = 0;
-    this.resetBarPathTracking();
+    this.repCounter.reset();
+    this.metricsTracker.resetBarPath();
+    this.resetCalibration();
+  }
 
-    // Reset dynamic baseline calibration
+  /**
+   * Reset calibration state
+   */
+  private resetCalibration(): void {
     this.standingHipY = null;
     this.standingKneeY = null;
     this.calibrationFrames = 0;
@@ -1010,10 +795,7 @@ export class SquatPoseAnalyzer extends BasePoseDetector {
    * Reset pose validity stabilizer (for testing or session reset)
    */
   private resetPoseValidityStabilizer(): void {
-    // Use a type assertion to bypass readonly restriction for reset
-    // This is safe as it's only used for cleanup/reset scenarios
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-    (this as any).poseValidityStabilizer = new PoseValidityStabilizer();
+    this.poseValidityStabilizer = new PoseValidityStabilizer(this.exerciseConfig);
   }
 }
 

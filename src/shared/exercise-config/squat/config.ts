@@ -2,8 +2,7 @@
  * Squat exercise detection configuration
  *
  * This module provides the centralized configuration for squat pose detection
- * and validity stabilization. These values are used across both the business
- * logic (PoseValidityStabilizer) and test utilities (ConfidenceStreamGenerator).
+ * and validity stabilization.
  *
  * Configuration rationale:
  * - upperThreshold (0.7): Requires 70% confidence to enter valid state

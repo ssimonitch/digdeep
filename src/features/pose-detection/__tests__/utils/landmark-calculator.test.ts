@@ -3,12 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 // Import the functions we'll be testing
 import { LandmarkCalculator } from '../../utils/landmark-calculator.util';
-import { LANDMARK_INDICES, SQUAT_FIXTURES } from '../pose-detection/fixtures/landmark-fixtures';
-import {
-  approximatelyEqual,
-  createAngleTestLandmarks,
-  createDistanceTestLandmarks,
-} from '../pose-detection/utils/test-utilities';
+import { LANDMARK_INDICES, SQUAT_FIXTURES } from '../fixtures/landmark-fixtures';
+import { approximatelyEqual, createAngleTestLandmarks, createDistanceTestLandmarks } from '../utils/test-utilities';
 
 /**
  * Test suite for angle calculations

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type ErrorContext, errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
-import { BasePoseDetector } from '../../services/base-pose-detector';
+import { BasePoseDetector } from '../../services/core/base-pose-detector';
 import {
   createLowConfidenceResult,
   createMockVideoElement,
@@ -12,11 +12,11 @@ import {
   type MockVisionModule,
   resetMockMediaPipeConfig,
   setMockMediaPipeConfig,
-} from '../pose-detection/mocks/mediapipe-mocks';
+} from '../mocks/mediapipe-mocks';
 
 // Mock the MediaPipe imports first (before other imports to avoid hoisting issues)
 vi.mock('@mediapipe/tasks-vision', async () => {
-  const mocks = await import('../pose-detection/mocks/mediapipe-mocks');
+  const mocks = await import('../mocks/mediapipe-mocks');
   return {
     FilesetResolver: mocks.MockFilesetResolver,
     PoseLandmarker: mocks.MockPoseLandmarker,

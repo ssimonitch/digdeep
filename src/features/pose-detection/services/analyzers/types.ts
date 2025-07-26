@@ -49,6 +49,12 @@ export interface ExerciseAnalyzer<TAnalysis, TMetrics, TConfig = unknown> {
    * @param config - Partial configuration to update
    */
   updateConfig(config: Partial<TConfig>): void;
+
+  /**
+   * Get empty/default metrics based on current configuration
+   * @returns Empty metrics that respect the current configuration
+   */
+  getEmptyMetrics(): TMetrics;
 }
 
 /**
@@ -71,8 +77,6 @@ export interface BaseExerciseMetrics {
 export interface UseExerciseAnalysisOptions<TAnalysis, TMetrics, TConfig> {
   /** Factory function to create the exercise-specific analyzer */
   analyzerFactory: (config?: TConfig) => ExerciseAnalyzer<TAnalysis, TMetrics, TConfig>;
-  /** Empty/default metrics to use when no analysis has been performed */
-  emptyMetrics: TMetrics;
   /** Whether to auto-start analysis when camera is ready */
   autoStart?: boolean;
   /** Configuration for the exercise analyzer */

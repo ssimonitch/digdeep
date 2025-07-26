@@ -1,6 +1,8 @@
 import type { FC } from 'react';
+import { memo } from 'react';
 
-import type { DetectionState } from '@/features/pose-detection/services/pose-validity-stabilizer';
+import type { VisibilityFlags } from '@/features/pose-detection/adapters/squat/squat-analyzer-adapter';
+import type { DetectionState } from '@/features/pose-detection/services';
 
 /**
  * Props for the PoseGuidanceOverlay component
@@ -21,16 +23,43 @@ interface PoseGuidanceOverlayProps {
   confidence: number;
 
   /**
-   * Visibility scores for key body landmarks (0-1)
+   * Boolean visibility flags for key body landmarks
    * Used to provide specific guidance about which body parts need adjustment
    */
-  keyLandmarkVisibility?: {
-    shoulders: number;
-    hips: number;
-    knees: number;
-    ankles: number;
-  };
+  visibilityFlags: VisibilityFlags;
 }
+
+/**
+ * Custom comparison function for React.memo optimization
+ * Only re-render if:
+ * - detectionState changes (always re-render)
+ * - confidence changes significantly (more than 5%)
+ * - visibility flags change
+ */
+const arePropsEqual = (prevProps: PoseGuidanceOverlayProps, nextProps: PoseGuidanceOverlayProps): boolean => {
+  // Always re-render if detection state changes
+  if (prevProps.detectionState !== nextProps.detectionState) {
+    return false;
+  }
+
+  // Only re-render if confidence changes significantly (5% threshold)
+  const confidenceThreshold = 0.05;
+  if (Math.abs(prevProps.confidence - nextProps.confidence) > confidenceThreshold) {
+    return false;
+  }
+
+  // Compare visibility flags
+  if (
+    prevProps.visibilityFlags.shoulders !== nextProps.visibilityFlags.shoulders ||
+    prevProps.visibilityFlags.hips !== nextProps.visibilityFlags.hips ||
+    prevProps.visibilityFlags.knees !== nextProps.visibilityFlags.knees ||
+    prevProps.visibilityFlags.ankles !== nextProps.visibilityFlags.ankles
+  ) {
+    return false;
+  }
+
+  return true; // Props are considered equal, skip re-render
+};
 
 /**
  * PoseGuidanceOverlay - Enhanced feedback component for pose detection
@@ -41,25 +70,26 @@ interface PoseGuidanceOverlayProps {
  * - Confidence percentage with visual progress bar
  * - Smart guidance messages prioritizing most critical missing body parts
  * - Smooth transitions between states with color-coded feedback
+ * - Optimized with React.memo to prevent unnecessary re-renders
  *
  * @example
  * ```tsx
  * <PoseGuidanceOverlay
  *   detectionState={isValidPose ? 'valid' : confidence > 0.5 ? 'detecting' : 'invalid'}
  *   confidence={0.85}
- *   keyLandmarkVisibility={{
- *     shoulders: 0.9,
- *     hips: 0.8,
- *     knees: 0.9,
- *     ankles: 0.85
+ *   visibilityFlags={{
+ *     shoulders: true,
+ *     hips: true,
+ *     knees: true,
+ *     ankles: true
  *   }}
  * />
  * ```
  */
-export const PoseGuidanceOverlay: FC<PoseGuidanceOverlayProps> = ({
+const PoseGuidanceOverlayComponent: FC<PoseGuidanceOverlayProps> = ({
   detectionState,
   confidence,
-  keyLandmarkVisibility,
+  visibilityFlags,
 }) => {
   // Determine background color based on detection state
   const getBackgroundClass = () => {
@@ -102,34 +132,26 @@ export const PoseGuidanceOverlay: FC<PoseGuidanceOverlayProps> = ({
 
   // Get specific guidance for invalid state based on landmark visibility
   const getInvalidStateGuidance = () => {
-    if (!keyLandmarkVisibility) {
-      return 'Make sure your full body is visible';
-    }
+    const { shoulders, hips, knees, ankles } = visibilityFlags;
 
-    const { shoulders, hips, knees, ankles } = keyLandmarkVisibility;
-    const visibilityThreshold = 0.5;
+    // Check if all landmarks are not visible
+    const allNotVisible = !shoulders && !hips && !knees && !ankles;
 
-    // Check if all landmarks have low visibility
-    if (
-      shoulders < visibilityThreshold &&
-      hips < visibilityThreshold &&
-      knees < visibilityThreshold &&
-      ankles < visibilityThreshold
-    ) {
+    if (allNotVisible) {
       return 'Step back and ensure full body is visible';
     }
 
     // Priority order: hips > knees > ankles > shoulders
-    if (hips < visibilityThreshold) {
+    if (!hips) {
       return 'Hips not visible - step back from camera';
     }
-    if (knees < visibilityThreshold) {
+    if (!knees) {
       return 'Knees not visible - ensure full body is in frame';
     }
-    if (ankles < visibilityThreshold) {
+    if (!ankles) {
       return 'Ankles not visible - step back from camera';
     }
-    if (shoulders < visibilityThreshold) {
+    if (!shoulders) {
       return 'Shoulders not visible - adjust your position';
     }
 
@@ -189,3 +211,6 @@ export const PoseGuidanceOverlay: FC<PoseGuidanceOverlayProps> = ({
     </div>
   );
 };
+
+// Export the memoized component
+export const PoseGuidanceOverlay = memo(PoseGuidanceOverlayComponent, arePropsEqual);

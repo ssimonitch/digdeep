@@ -6,9 +6,9 @@ import {
   createMockPoseResult,
   LANDMARK_INDICES,
   SQUAT_FIXTURES,
-} from '@/features/pose-detection/__tests__/pose-detection/fixtures/landmark-fixtures';
+} from '@/features/pose-detection/__tests__/fixtures/landmark-fixtures';
 // Import mocks we need
-import { createMockVideoElement } from '@/features/pose-detection/__tests__/pose-detection/mocks/mediapipe-mocks';
+import { createMockVideoElement } from '@/features/pose-detection/__tests__/mocks/mediapipe-mocks';
 import type { UseSquatAnalysisReturn } from '@/features/pose-detection/hooks/useSquatAnalysis';
 // Removed MockMediaStream import - using null for jsdom compatibility
 
@@ -93,6 +93,12 @@ export const createMockUseSquatAnalysis = (
     confidence: 0,
     isValidPose: false,
     detectionState: 'invalid',
+    visibilityFlags: {
+      shoulders: false,
+      hips: false,
+      knees: false,
+      ankles: false,
+    },
   },
   isAnalyzing: false,
   isInitialized: false,
@@ -146,6 +152,12 @@ export const mockAnalysisWithDirectLandmarks = () => {
       confidence: 0.9,
       isValidPose: true,
       detectionState: 'valid',
+      visibilityFlags: {
+        shoulders: true,
+        hips: true,
+        knees: true,
+        ankles: true,
+      },
     },
     fps: 30,
     processingTime: 25,
@@ -193,6 +205,12 @@ export const mockAnalysisWithNestedLandmarks = () => {
       confidence: 0.9,
       isValidPose: true,
       detectionState: 'valid',
+      visibilityFlags: {
+        shoulders: true,
+        hips: true,
+        knees: true,
+        ankles: true,
+      },
     },
     fps: 30,
     processingTime: 25,
@@ -316,6 +334,12 @@ export const mockLowConfidencePose = () => {
       confidence: 0.4,
       isValidPose: false,
       detectionState: 'invalid',
+      visibilityFlags: {
+        shoulders: false,
+        hips: false,
+        knees: false,
+        ankles: false,
+      },
     },
     fps: 28,
     processingTime: 30,

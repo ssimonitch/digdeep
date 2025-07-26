@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
+import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
-import { usePerformanceMonitoring } from '@/shared/hooks/usePerformanceMonitoring';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
 interface PerformanceDashboardProps {

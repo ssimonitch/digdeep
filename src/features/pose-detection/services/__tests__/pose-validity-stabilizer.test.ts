@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { DEFAULT_EXERCISE_CONFIG } from '@/shared/exercise-config';
 
-import { PoseValidityStabilizer } from '../pose-validity-stabilizer';
+import { PoseValidityStabilizer } from '../stabilizers/pose-validity-stabilizer';
 
 describe('PoseValidityStabilizer', () => {
   let stabilizer: PoseValidityStabilizer;
