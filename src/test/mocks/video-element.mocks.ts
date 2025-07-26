@@ -13,10 +13,10 @@ interface ExtendedHTMLVideoElement extends HTMLVideoElement {
  */
 export function setupVideoElementMock(): () => void {
   // Store original methods for restoration
-  // eslint-disable-next-line @typescript-eslint/unbound-method
+
   const originalPlay = HTMLVideoElement.prototype.play;
   const originalSrcObject = Object.getOwnPropertyDescriptor(HTMLVideoElement.prototype, 'srcObject');
-  // eslint-disable-next-line @typescript-eslint/unbound-method
+
   const originalGetBoundingClientRect = HTMLVideoElement.prototype.getBoundingClientRect;
 
   // Override play to return a resolved promise (jsdom default returns undefined)
@@ -76,7 +76,6 @@ export function setupVideoElementMock(): () => void {
  * Useful for testing different video sizes
  */
 export function createMockVideoElementWithDimensions(dimensions: { width: number; height: number }): () => void {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalGetBoundingClientRect = HTMLVideoElement.prototype.getBoundingClientRect;
 
   HTMLVideoElement.prototype.getBoundingClientRect = function () {

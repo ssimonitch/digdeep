@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSquatAnalysis } from '@/features/pose-detection/hooks/useSquatAnalysis';
-import { setupMediaStreamMock, setupResizeObserverMock, setupVideoElementMock } from '@/test-utils/mocks';
+import { setupMediaStreamMock, setupResizeObserverMock, setupVideoElementMock } from '@/test/mocks';
 
-import { ActiveAnalysisScreen } from '../ActiveAnalysisScreen';
+import { ActiveAnalysisScreen } from '../../ActiveAnalysisScreen';
 import {
   createMockUseSquatAnalysis,
   mockAnalysisError,

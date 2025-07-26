@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createTestDatabaseFactory } from '@/test/test-database-factory';
+import { createTestDatabaseFactory } from '@/infrastructure/storage/dexie/test-database-factory';
 import {
   createMockAnalysis,
   createMockExercise,
   createMockSet,
   createMockUserProfile,
   createMockWorkoutSession,
-} from '@/test/test-utils';
+} from '@/infrastructure/storage/dexie/test-utils';
 import type { Exercise, Set, SquatAnalysis, WorkoutSession } from '@/types/workout.types';
 
 import { DexieStorageService, DigDeepDatabase } from './dexie-storage.service';

@@ -1,2 +1,2 @@
-export * from './landmark-calculator.util';
+export * from './landmark-calculator';
 export * from './landmark-validator';

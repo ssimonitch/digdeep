@@ -5,7 +5,7 @@ import { SQUAT_EXERCISE_CONFIG, validateSquatAnalysisConfig } from '@/shared/exe
 import { errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
-import { LandmarkCalculator } from '../../../utils/landmark-calculator.util';
+import { LandmarkCalculator } from '../../../utils/landmark-calculator';
 import { LandmarkValidator } from '../../../utils/landmark-validator';
 import { BasePoseDetector } from '../../core/base-pose-detector';
 import type { DetectionState } from '../../core/types';

@@ -5,26 +5,22 @@ import { errorMonitor } from '@/shared/services/error-monitor.service';
 import { performanceMonitor } from '@/shared/services/performance-monitor.service';
 
 import {
-  getSquatPoseAnalyzer,
-  type SquatPoseAnalysis,
-  SquatPoseAnalyzer,
-} from '../../services/analyzers/squat/squat-pose-analyzer';
-import {
   createDefaultLandmarks,
   createMockPoseResult,
   LANDMARK_INDICES,
   SQUAT_FIXTURES,
-} from '../fixtures/landmark-fixtures';
+} from '../../../__tests__/fixtures/landmark-fixtures';
 import {
   createMockVideoElement,
   MockPoseLandmarker,
   resetMockMediaPipeConfig,
   setMockMediaPipeConfig,
-} from '../mocks/mediapipe-mocks';
+} from '../../../__tests__/mocks/mediapipe-mocks';
+import { getSquatPoseAnalyzer, type SquatPoseAnalysis, SquatPoseAnalyzer } from './squat-pose-analyzer';
 
 // Mock the MediaPipe imports first (before other imports to avoid hoisting issues)
 vi.mock('@mediapipe/tasks-vision', async () => {
-  const mocks = await import('../mocks/mediapipe-mocks');
+  const mocks = await import('../../../__tests__/mocks/mediapipe-mocks');
   return {
     FilesetResolver: mocks.MockFilesetResolver,
     PoseLandmarker: mocks.MockPoseLandmarker,
